@@ -386,10 +386,5 @@ Available for remote contract work: FastAPI backends, LLM/RAG pipelines, WhatsAp
 **Remote clients ke liye available — FastAPI backend, LLM/RAG pipelines, WhatsApp integrations, aur multi-tenant SaaS projects.**
 
 - 💻 **GitHub:** [@sohail2365](https://github.com/sohail2365)
-- 💼 **Upwork:** `[Add your Upwork profile URL]`
-- 🔗 **LinkedIn:** `[Add your LinkedIn URL]`
-- ✉️ **Email:** `[Add your email]`
-
----
 
 *Built in rural Pakistan 🇵🇰 · Powered by FastAPI, Groq, and Supabase*
