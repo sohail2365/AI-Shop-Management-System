@@ -2,12 +2,24 @@
 """
 Voice input support — audio ko Groq Whisper se transcribe karta hai.
 
-NOTE: Whisper "Urdu" language code Urdu script (اردو) ke liye trained hai,
-Roman Urdu (Latin script) ke liye nahi. Isliye hum language parameter
-CHHOTA nahi karte — Whisper ko khud detect karne dete hain, aur agar
-Urdu script mein transcribe kare, to woh bhi theek hai kyunki humara
-AI parser (ai_parser.py) already Urdu + English dono samajhta hai.
-Roman Urdu transcription bhi ati hai zyada tar cases mein.
+IMPORTANT — Roman Urdu transcription ka masla aur fix:
+Whisper ko agar language decide karne diya jaye (ya "ur" force kiya jaye),
+to Urdu bolne pe woh transcription URDU SCRIPT (بلال نے) mein deta hai,
+Roman Urdu (Latin letters — "bilal ne") mein NAHI. Yeh Whisper ki apni
+training ki wajah se hai — iska koi "Roman Urdu" mode nahi hota.
+
+Iska direct nuksan: humara ai_parser.py aur inventory.py dono Roman/English
+text expect karte hain. Agar Whisper Urdu script bhej de, to:
+  1. AI parser ke examples (SYSTEM_PROMPT) Roman Urdu mein hain — match nahi hoga
+  2. inventory.py ka matching (LOWER(item_name) LIKE ...) sirf Latin letters
+     pe kaam karta hai — Urdu script se kabhi match nahi hoga, isliye price/
+     stock database se nahi aata (yehi woh bug tha jo report hua)
+
+FIX: language="en" force karna — is se Whisper "English sun raha hoon" samajh
+kar jo bhi sunta hai wahi Latin letters mein likhta hai (phonetic spelling).
+Yeh community-verified workaround hai jab Groq jaisa hosted Whisper use ho
+raha ho (jahan specialized Roman-Urdu fine-tuned model available nahi).
+100% perfect nahi hoga, lekin Urdu-script output se kahin behtar hai.
 """
 import io
 from groq import Groq
@@ -46,8 +58,7 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "voice.webm") -> dict:
             model=WHISPER_MODEL,
             response_format="text",
             temperature=0,
-            # language parameter jaan-boojh kar nahi de rahe — Whisper ko
-            # khud detect karne do (Urdu script ya Roman ya English, jo bhi ho)
+            language="en",  # Roman/Latin script output force karne ke liye — upar comment dekho
         )
 
         # response_format="text" mode mein SDK seedha string return karta hai

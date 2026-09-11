@@ -54,6 +54,43 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 
 /* Sidebar */
 .sidebar{width:220px;background:#1e293b;flex-shrink:0;overflow-y:auto;padding:12px 0;}
+
+/* ---- Mobile responsive sidebar (hamburger drawer) ---- */
+.hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;margin-right:4px;}
+.sidebar-overlay{display:none;}
+
+@media (max-width: 768px) {
+  .hamburger-btn{display:block;}
+  .topbar-shop{display:none;} /* space bachao chhoti screen pe */
+  .app-body{position:relative;}
+  .sidebar{
+    position:fixed;
+    top:60px; /* topbar ki height */
+    left:-260px;
+    width:240px;
+    height:calc(100vh - 60px);
+    z-index:1000;
+    transition:left 0.25s ease;
+    box-shadow:2px 0 12px rgba(0,0,0,0.3);
+  }
+  .sidebar.open{left:0;}
+  .sidebar-overlay{
+    display:block;
+    position:fixed;
+    top:60px; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.45);
+    z-index:999;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.25s ease;
+  }
+  .sidebar-overlay.show{opacity:1;pointer-events:auto;}
+  .main-content{padding:12px;width:100%;}
+}
+
+@media (max-width: 480px) {
+  .datetime-box{display:none;} /* bahut chhoti screen (phone) pe clock hide, jagah bachao */
+}
 .nav-section{padding:6px 14px 4px;font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;}
 .nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;color:#94a3b8;font-size:14px;transition:all 0.15s;border-left:3px solid transparent;margin:1px 0;}
 .nav-item:hover{background:#334155;color:#e2e8f0;}
@@ -267,6 +304,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
+      <button class="hamburger-btn" onclick="toggleSidebar()" id="hamburger-btn">☰</button>
       <div class="topbar-logo">🏪 Dukaan <span>AI</span></div>
       <div class="topbar-shop" id="shop-name-display">Shop</div>
     </div>
@@ -283,7 +321,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   <div class="app-body">
 
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="app-sidebar">
       <div style="height:8px;"></div>
       <div class="nav-section">Main</div>
       <div class="nav-item active" onclick="showPage('entry')" id="nav-entry">
@@ -331,6 +369,9 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         <span class="nav-icon">📊</span><span>Dashboard</span>
       </div>
     </div>
+
+    <!-- Mobile-only overlay — sidebar khuli ho to tap kar ke band karo -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -961,6 +1002,17 @@ function showPage(name) {
   document.getElementById(`page-${name}`).classList.add('active');
   const navEl = document.getElementById(`nav-${name}`);
   if (navEl) navEl.classList.add('active');
+  closeSidebar(); // mobile pe: page change hote hi sidebar apne aap band ho jaye
+}
+
+// ---- Mobile sidebar (hamburger drawer) ----
+function toggleSidebar() {
+  document.getElementById('app-sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('app-sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
 }
 
 // ---- Calculator ----

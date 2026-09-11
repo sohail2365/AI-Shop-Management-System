@@ -334,6 +334,15 @@ async def parse_voice_entry(audio: UploadFile = File(...), authorization: Option
     transcript = result["text"]
     log.debug(f"Voice transcript: {transcript}")
 
+    # Safety net: agar Whisper phir bhi Urdu/Arabic script mein de de (rare
+    # edge case, language="en" force karne ke bawajood), to saaf warning do
+    # — chup-chaap fail hone ya galat item match hone se behtar hai.
+    if any('\u0600' <= ch <= '\u06FF' for ch in transcript):
+        return {
+            "error": "Awaaz Urdu script mein transcribe hui — dobara saaf bolo ya English/Roman mein likh kar entry karo",
+            "transcript": transcript
+        }
+
     data = parse_entry(transcript)
     if not data:
         return {"error": "AI parse nahi kar saka", "transcript": transcript}
