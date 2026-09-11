@@ -1,9 +1,32 @@
 # ai_parser.py
 import json
+import re
 from groq import Groq
 from config import GROQ_API_KEY, AI_MODEL
 
 client = Groq(api_key=GROQ_API_KEY)
+
+
+def _extract_json(raw: str) -> dict:
+    """
+    Naye models (gpt-oss-120b) kabhi kabhi ```json ... ``` fences ya extra
+    text ke saath wrap kar dete hain. Yeh safety-net hai — pehle plain
+    json.loads try karo, phir markdown fence strip karke retry karo.
+    """
+    raw = raw.strip()
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+    # ```json { ... } ``` ya ``` { ... } ``` fences hata do
+    fence_match = re.search(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", raw, re.DOTALL)
+    if fence_match:
+        return json.loads(fence_match.group(1))
+    # Fallback: pehla { ya [ se lekar aakhri } ya ] tak nikal lo
+    bracket_match = re.search(r"(\{.*\}|\[.*\])", raw, re.DOTALL)
+    if bracket_match:
+        return json.loads(bracket_match.group(1))
+    raise json.JSONDecodeError("No JSON found in response", raw, 0)
 
 SYSTEM_PROMPT = """Tu ek Karyana shop ka assistant hai.
 User Urdu ya English mein batayega ke kisne kya liya ya kisne paisa diya.
@@ -61,14 +84,16 @@ def parse_purchase(user_input: str) -> dict:
     try:
         response = client.chat.completions.create(
             model=AI_MODEL,
-            max_tokens=100,
+            max_tokens=200,
             temperature=0,
+            reasoning_effort="low",
+            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": PURCHASE_PROMPT},
                 {"role": "user", "content": user_input}
             ]
         )
-        return json.loads(response.choices[0].message.content)
+        return _extract_json(response.choices[0].message.content)
     except json.JSONDecodeError:
         print("❌ AI ne galat format diya")
         return None
@@ -80,14 +105,16 @@ def parse_entry(user_input: str) -> dict:
     try:
         response = client.chat.completions.create(
             model=AI_MODEL,
-            max_tokens=100,
+            max_tokens=200,
             temperature=0,
+            reasoning_effort="low",
+            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_input}
             ]
         )
-        return json.loads(response.choices[0].message.content)
+        return _extract_json(response.choices[0].message.content)
     except json.JSONDecodeError:
         print("❌ AI ne galat format diya — dobara try karo")
         return None
@@ -98,17 +125,19 @@ def parse_multi_entry(user_input: str) -> dict:
     try:
         response = client.chat.completions.create(
             model=AI_MODEL,
-            max_tokens=300,
+            max_tokens=500,
             temperature=0,
+            reasoning_effort="low",
+            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": MULTI_ITEM_PROMPT},
                 {"role": "user", "content": user_input}
             ]
         )
-        return json.loads(response.choices[0].message.content)
+        return _extract_json(response.choices[0].message.content)
     except json.JSONDecodeError:
         print("❌ AI ne galat format diya")
         return None
     except Exception as e:
         print(f"❌ AI error: {e}")
-        return None    
+        return None

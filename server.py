@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Header, Request
+from fastapi import FastAPI, Header, Request, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pathlib import Path
@@ -13,6 +13,7 @@ from inventory import (get_item_price, get_item_by_id, update_stock, update_stoc
                        update_stock_purchase, get_variants, add_item, get_all_items,
                        edit_item, delete_item)
 from ai_parser import parse_entry, parse_purchase, parse_multi_entry
+from voice import transcribe_audio
 from database import setup_database, get_connection
 from auth import verify_token, register_shop, login_shop, reset_password
 from whatsapp import (build_whatsapp_payload, compose_entry_receipt,
@@ -312,6 +313,51 @@ def parse_natural_entry(req: EntryRequest, authorization: Optional[str] = Header
             data["manual"] = True
             data["from_sheet"] = False
     return data
+
+@app.post("/entry/voice-parse")
+async def parse_voice_entry(audio: UploadFile = File(...), authorization: Optional[str] = Header(None)):
+    """
+    Voice se entry parse karta hai. Flow: audio -> Whisper transcription -> parse_entry()
+    Response shape /entry/parse jaisa hi hai, bas extra "transcript" field ke saath
+    taake frontend user ko dikha sake "yeh suna gaya".
+    """
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    audio_bytes = await audio.read()
+    result = transcribe_audio(audio_bytes, filename=audio.filename or "voice.webm")
+
+    if result["error"]:
+        return {"error": result["error"]}
+
+    transcript = result["text"]
+    log.debug(f"Voice transcript: {transcript}")
+
+    data = parse_entry(transcript)
+    if not data:
+        return {"error": "AI parse nahi kar saka", "transcript": transcript}
+
+    # Same inventory-matching logic as /entry/parse — consistent behavior
+    if not data.get("price"):
+        item = data.get("item", "")
+        if item:
+            inv_item = get_item_price(item, shop_id)
+            if inv_item:
+                data["price"] = inv_item["price"]
+                data["stock"] = inv_item["stock"]
+                data["inventory_id"] = inv_item["id"]
+                data["from_sheet"] = True
+            else:
+                data["manual"] = True
+                data["from_sheet"] = False
+        else:
+            data["manual"] = True
+            data["from_sheet"] = False
+
+    data["transcript"] = transcript
+    return data
+
 
 @app.post("/entry/save")
 def save_entry(req: SingleEntrySaveRequest, authorization: Optional[str] = Header(None)):

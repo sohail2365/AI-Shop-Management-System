@@ -1,15 +1,14 @@
 {
     "version": 2,
-    "builds": [
+    "rewrites": [
       {
-        "src": "server.py",
-        "use": "@vercel/python"
+        "source": "/(.*)",
+        "destination": "/server.py"
       }
     ],
-    "routes": [
-      {
-        "src": "/(.*)",
-        "dest": "server.py"
+    "functions": {
+      "server.py": {
+        "maxDuration": 60
       }
-    ]
+    }
   }
