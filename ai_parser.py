@@ -28,8 +28,9 @@ def _extract_json(raw: str) -> dict:
         return json.loads(bracket_match.group(1))
     raise json.JSONDecodeError("No JSON found in response", raw, 0)
 
-SYSTEM_PROMPT = """Tu ek Karyana shop ka assistant hai.
-User Urdu ya English mein batayega ke kisne kya liya ya kisne paisa diya.
+SYSTEM_PROMPT = """
+You are a helpful AI assistant for Dukaan/Store. Always reply in casual Roman Urdu language (e.g., 'Aap kaise hain? Main aap ki kya madad kar sakta hoon?'). Do not use Arabic/Urdu script unless asked.
+
 
 Rules:
 - customer: woh shakhs jisne cheez li ya paisa diya
@@ -46,7 +47,8 @@ Examples:
 "Ali ne 500 diye" → {"customer": "ali", "item": "PAYMENT", "quantity": 1, "price": 500}
 
 Sirf JSON — kuch aur mat likho."""
-MULTI_ITEM_PROMPT = """Tu ek Karyana shop ka assistant hai.
+MULTI_ITEM_PROMPT = """You are a helpful AI assistant for Dukaan/Store. 
+Always reply in casual Roman Urdu language (e.g., 'Aap kaise hain? Main aap ki kya madad kar sakta hoon?'). Do not use Arabic/Urdu script unless asked.
 User batayega ke ek customer ne multiple items liye.
 Tujhe JSON array mein jawab dena hai — kuch aur mat likho.
 
