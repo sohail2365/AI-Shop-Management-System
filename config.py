@@ -21,7 +21,7 @@ CREDENTIALS_FILE = "credentials.json"
 AI_MODEL = os.getenv("AI_MODEL", "openai/gpt-oss-120b")
 
 # Whisper model for voice transcription (still active, not deprecated)
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "qwen/qwen3.6-27b")
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "whisper-large-v3-turbo")
 
 # Validation
 if not GROQ_API_KEY:
