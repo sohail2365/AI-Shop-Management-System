@@ -1,16 +1,41 @@
 # ai_parser.py
 import json
 import re
+import time
+import functools
 from groq import Groq
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from config import GROQ_API_KEY, AI_MODEL
 from logger import get_logger
+
 
 log = get_logger("dukaan.ai_parser")
 
 client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
-_RETRYABLE = (ConnectionError, TimeoutError)
+
+
+def _retry(max_attempts=3, base_delay=1, max_delay=8, retry_on=(ConnectionError, TimeoutError)):
+    """Simple retry decorator — stdlib only, koi external dep nahi."""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exc = None
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    return func(*args, **kwargs)
+                except retry_on as e:
+                    last_exc = e
+                    if attempt == max_attempts:
+                        raise
+                    delay = min(base_delay * (2 ** (attempt - 1)), max_delay)
+                    log.warning(f"{func.__name__} attempt {attempt} failed: {e} — retrying in {delay}s")
+                    time.sleep(delay)
+                except Exception:
+                    raise  # non-retryable
+            if last_exc:
+                raise last_exc
+        return wrapper
+    return decorator
 
 
 def _extract_json(raw: str) -> dict:
@@ -39,12 +64,7 @@ def _extract_json(raw: str) -> dict:
     raise json.JSONDecodeError("No JSON found in response", raw, 0)
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=8),
-    retry=retry_if_exception_type(_RETRYABLE),
-    reraise=True,
-)
+@retry(max_attempts=3, base_delay=1, max_delay=8)
 def _groq_call(system_prompt: str, user_input: str, max_tokens: int = 200) -> str:
     """Groq call with retry on transient network errors."""
     if client is None:
