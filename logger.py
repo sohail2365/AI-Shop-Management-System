@@ -1,5 +1,4 @@
 # logger.py — centralized logging setup for Dukaan AI
-# Vercel logs mein structured lines aati hain, filter karna aasan hota hai
 import logging
 import os
 import sys
@@ -12,7 +11,6 @@ def get_logger(name: str = "dukaan") -> logging.Logger:
     global _configured
     logger = logging.getLogger(name)
     if not _configured:
-        # Root config sirf ek dafa
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter(
             "[%(asctime)s] %(levelname)s %(name)s: %(message)s",

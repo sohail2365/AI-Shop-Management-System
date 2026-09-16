@@ -8,13 +8,13 @@ from sqlalchemy import text
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from customers import add_khaata_entry, add_customer
+from customers import add_khaata_entry, add_customer, get_customer
 from inventory import (get_item_price, get_item_by_id, update_stock, update_stock_by_id,
                        update_stock_purchase, get_variants, add_item, get_all_items,
-                       edit_item, delete_item)
+                       edit_item, delete_item, adjust_stock_in_conn)
 from ai_parser import parse_entry, parse_purchase, parse_multi_entry
 from voice import transcribe_audio
-from database import setup_database, get_connection
+from database import setup_database, get_connection, engine
 from auth import verify_token, register_shop, login_shop, reset_password
 from whatsapp import (build_whatsapp_payload, compose_entry_receipt,
                       compose_payment_receipt, compose_reminder, AUTO_SEND_ENABLED)
@@ -23,7 +23,7 @@ from logger import get_logger
 log = get_logger("dukaan.server")
 
 limiter = Limiter(key_func=get_remote_address)
-app = FastAPI(title="Dukaan AI", version="1.1")
+app = FastAPI(title="Dukaan AI", version="1.2")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -42,16 +42,15 @@ from fastapi.responses import JSONResponse
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError):
-    """Pydantic ke technical errors ko user-friendly Roman Urdu mein badal do."""
     errors = exc.errors()
     if errors:
         first = errors[0]
         msg = first.get("msg", "Input galat hai")
-        # Pydantic v2 "Value error, X" prefix hata do
         if msg.startswith("Value error, "):
             msg = msg[len("Value error, "):]
         return JSONResponse(status_code=422, content={"error": msg})
     return JSONResponse(status_code=422, content={"error": "Input galat hai"})
+
 
 # ---- Models ----
 def _clean_name(v: str, field: str = "Name") -> str:
@@ -62,17 +61,18 @@ def _clean_name(v: str, field: str = "Name") -> str:
         raise ValueError(f"{field} bahut lamba hai (max 100)")
     return v
 
+
 def _clean_phone(v: str) -> str:
     if not v:
         return "unknown"
     v = v.strip()
     if v.lower() == "unknown" or v == "":
         return "unknown"
-    # Digits, +, spaces, dashes allowed
     digits = "".join(c for c in v if c.isdigit())
     if len(digits) < 10:
         raise ValueError("Phone number kam az kam 10 digits ka hona chahiye (ya 'unknown' likho)")
     return v
+
 
 class AuthRequest(BaseModel):
     username: str
@@ -83,14 +83,17 @@ class AuthRequest(BaseModel):
     @classmethod
     def _u(cls, v): return v.strip().lower()
 
+
 class ResetRequest(BaseModel):
     username: str
     shop_name: str
     new_password: str
 
+
 class EntryRequest(BaseModel):
     text: str
     manual_price: float = 0
+
 
 class MultiEntryRequest(BaseModel):
     text: str
@@ -118,10 +121,10 @@ class SingleEntrySaveRequest(BaseModel):
     @field_validator("price")
     @classmethod
     def _p(cls, v):
-        # 0 valid hai kyunki payment mein price alag handle hoti hai (negative bhi)
         if abs(v) > 100000000:
             raise ValueError("Price bahut zyada hai")
         return v
+
 
 class MultiItemSave(BaseModel):
     item: str
@@ -141,11 +144,13 @@ class MultiItemSave(BaseModel):
             raise ValueError("Quantity 0 se zyada honi chahiye")
         return v
 
+
 class MultiEntrySaveRequest(BaseModel):
     text: str = ""
     customer: str = ""
     customer_override: str = ""
     items: List[MultiItemSave] = []
+
 
 class CustomerRequest(BaseModel):
     name: str
@@ -158,6 +163,7 @@ class CustomerRequest(BaseModel):
     @field_validator("phone")
     @classmethod
     def _ph(cls, v): return _clean_phone(v)
+
 
 class CustomerEditRequest(BaseModel):
     old_name: str
@@ -172,6 +178,7 @@ class CustomerEditRequest(BaseModel):
     @classmethod
     def _ph(cls, v): return _clean_phone(v)
 
+
 class EntryEditRequest(BaseModel):
     entry_id: int
     item_name: str
@@ -179,8 +186,10 @@ class EntryEditRequest(BaseModel):
     price_per_item: float
     date: str
 
+
 class PurchaseRequest(BaseModel):
     text: str
+
 
 class PurchaseEditRequest(BaseModel):
     purchase_id: int
@@ -190,6 +199,7 @@ class PurchaseEditRequest(BaseModel):
     purchase_rate: float
     date: str
 
+
 class InventoryItemRequest(BaseModel):
     item_name: str
     sale_price: float
@@ -197,6 +207,7 @@ class InventoryItemRequest(BaseModel):
     stock: float = 0
     category: str = ""
     reorder_level: int = 5
+
 
 class InventoryEditRequest(BaseModel):
     item_id: int
@@ -206,6 +217,7 @@ class InventoryEditRequest(BaseModel):
     stock: float = 0
     category: str = ""
     reorder_level: int = 5
+
 
 # ---- Auth Helper ----
 def get_shop_id(authorization: Optional[str] = None) -> Optional[int]:
@@ -217,8 +229,8 @@ def get_shop_id(authorization: Optional[str] = None) -> Optional[int]:
         return None
     return payload.get("shop_id")
 
+
 def get_customer_phone_and_baaki(customer_name: str, shop_id: int):
-    """Customer ka phone + current total baaki nikalta hai (WhatsApp ke liye)."""
     with get_connection() as conn:
         row = conn.execute(
             text("""
@@ -234,6 +246,7 @@ def get_customer_phone_and_baaki(customer_name: str, shop_id: int):
         return None, 0
     return row[1], row[2]
 
+
 def get_shop_name(shop_id: int) -> str:
     with get_connection() as conn:
         row = conn.execute(
@@ -242,15 +255,29 @@ def get_shop_name(shop_id: int) -> str:
         ).fetchone()
     return row[0] if row else "Dukaan AI"
 
+
 # ---- Home ----
 @app.get("/")
 def home():
     return {"message": "Dukaan AI server chal raha hai!"}
 
+
+@app.get("/health")
+def health():
+    """Simple health check — DB connectivity verify karta hai."""
+    try:
+        with get_connection() as conn:
+            conn.execute(text("SELECT 1"))
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
+
+
 @app.get("/ui")
 def serve_ui():
     html_content = Path("index.html").read_text(encoding="utf-8")
     return HTMLResponse(content=html_content)
+
 
 # ---- Auth ----
 @app.post("/auth/register")
@@ -265,6 +292,7 @@ def register(request: Request, req: AuthRequest):
         log.warning(f"Register failed: {req.username} — {result.get('error')}")
     return result
 
+
 @app.post("/auth/login")
 @limiter.limit("10/minute")
 def login(request: Request, req: AuthRequest):
@@ -275,6 +303,7 @@ def login(request: Request, req: AuthRequest):
         log.warning(f"Login failed: {req.username} from {get_remote_address(request)}")
     return result
 
+
 @app.post("/auth/reset-password")
 @limiter.limit("3/hour")
 def reset_pwd(request: Request, req: ResetRequest):
@@ -284,6 +313,7 @@ def reset_pwd(request: Request, req: ResetRequest):
     else:
         log.warning(f"Password reset failed: {req.username} from {get_remote_address(request)}")
     return result
+
 
 # ---- Entry ----
 @app.post("/entry/parse")
@@ -314,13 +344,9 @@ def parse_natural_entry(req: EntryRequest, authorization: Optional[str] = Header
             data["from_sheet"] = False
     return data
 
+
 @app.post("/entry/voice-parse")
 async def parse_voice_entry(audio: UploadFile = File(...), authorization: Optional[str] = Header(None)):
-    """
-    Voice se entry parse karta hai. Flow: audio -> Whisper transcription -> parse_entry()
-    Response shape /entry/parse jaisa hi hai, bas extra "transcript" field ke saath
-    taake frontend user ko dikha sake "yeh suna gaya".
-    """
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
@@ -334,20 +360,12 @@ async def parse_voice_entry(audio: UploadFile = File(...), authorization: Option
     transcript = result["text"]
     log.debug(f"Voice transcript: {transcript}")
 
-    # Safety net: agar Whisper phir bhi Urdu/Arabic script mein de de (rare
-    # edge case, language="en" force karne ke bawajood), to saaf warning do
-    # — chup-chaap fail hone ya galat item match hone se behtar hai.
-    if any('\u0600' <= ch <= '\u06FF' for ch in transcript):
-        return {
-            "error": "Awaaz Urdu script mein transcribe hui — dobara saaf bolo ya English/Roman mein likh kar entry karo",
-            "transcript": transcript
-        }
+    
 
     data = parse_entry(transcript)
     if not data:
         return {"error": "AI parse nahi kar saka", "transcript": transcript}
 
-    # Same inventory-matching logic as /entry/parse — consistent behavior
     if not data.get("price"):
         item = data.get("item", "")
         if item:
@@ -392,8 +410,8 @@ def save_entry(req: SingleEntrySaveRequest, authorization: Optional[str] = Heade
     if not data.get("customer"):
         return {"error": "Customer missing hai"}
 
+    # ---- Payment path ----
     if data.get("item") == "PAYMENT":
-        from customers import get_customer
         customer = get_customer(data["customer"], shop_id)
         if not customer:
             return {"error": f"'{data['customer']}' nahi mila"}
@@ -412,6 +430,7 @@ def save_entry(req: SingleEntrySaveRequest, authorization: Optional[str] = Heade
         return {"success": True, "type": "payment", "data": data,
                 "whatsapp": build_whatsapp_payload(phone, wa_msg)}
 
+    # ---- Sale path ----
     if not data.get("item"):
         return {"error": "Item missing hai"}
 
@@ -433,7 +452,8 @@ def save_entry(req: SingleEntrySaveRequest, authorization: Optional[str] = Heade
         return {"error": "Price missing hai"}
 
     success = add_khaata_entry(
-        data["customer"], data["item"], data["quantity"], data["price"], shop_id
+        data["customer"], data["item"], data["quantity"], data["price"], shop_id,
+        inventory_id=data.get("inventory_id")
     )
 
     if success:
@@ -453,60 +473,91 @@ def save_entry(req: SingleEntrySaveRequest, authorization: Optional[str] = Heade
     return {"success": True, "type": "udhaar", "data": data,
             "whatsapp": build_whatsapp_payload(phone, wa_msg)}
 
+
 @app.put("/entry/edit")
 def edit_entry(req: EntryEditRequest, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    with get_connection() as conn:
-        entry = conn.execute(
+
+    with engine.begin() as conn:
+        # Fetch OLD entry
+        old = conn.execute(
             text("""
-                SELECT k.* FROM khaata k
-                JOIN customers c ON c.customer_id = k.customer_id
+                SELECT k.id, k.item_name, k.quantity, k.inventory_id
+                FROM khaata k JOIN customers c ON c.customer_id = k.customer_id
                 WHERE k.id = :eid AND c.shop_id = :shop_id
             """),
             {"eid": req.entry_id, "shop_id": shop_id}
         ).fetchone()
-        if not entry:
+        if not old:
             return {"error": f"Entry #{req.entry_id} nahi mili"}
+
+        old_item, old_qty, old_inv_id = old[1], old[2], old[3]
+
+        # Resolve new inventory_id by name (agar naya item alag hai)
+        new_item_lower = req.item_name.lower().strip()
+        new_inv_row = conn.execute(
+            text("""SELECT id FROM inventory
+                    WHERE shop_id = :sid AND LOWER(item_name) LIKE :val
+                    ORDER BY LENGTH(item_name) ASC LIMIT 1"""),
+            {"sid": shop_id, "val": f"%{new_item_lower}%"}
+        ).fetchone()
+        new_inv_id = new_inv_row[0] if new_inv_row else None
+
+        # Stock adjustments (payments ko skip karo)
+        old_is_payment = (old_item or "").upper() == "PAYMENT"
+        new_is_payment = new_item_lower == "payment"
+        if not old_is_payment:
+            adjust_stock_in_conn(conn, shop_id, +old_qty, old_inv_id, old_item)
+        if not new_is_payment:
+            adjust_stock_in_conn(conn, shop_id, -req.quantity, new_inv_id, req.item_name)
+
+        # Update khaata row
         total = round(req.quantity * req.price_per_item, 2)
         conn.execute(
             text("""
-                UPDATE khaata SET item_name=:item_name, quantity=:qty, price_per_item=:price, total=:total, date=:date
+                UPDATE khaata SET item_name=:item_name, quantity=:qty,
+                price_per_item=:price, total=:total, date=:date, inventory_id=:inv_id
                 WHERE id=:eid AND customer_id IN (SELECT customer_id FROM customers WHERE shop_id=:shop_id)
             """),
-            {"item_name": req.item_name.lower(), "qty": req.quantity, "price": req.price_per_item,
-             "total": total, "date": req.date, "eid": req.entry_id, "shop_id": shop_id}
+            {"item_name": new_item_lower, "qty": req.quantity, "price": req.price_per_item,
+             "total": total, "date": req.date, "eid": req.entry_id, "shop_id": shop_id,
+             "inv_id": new_inv_id}
         )
-        conn.commit()
     return {"success": True}
+
 
 @app.delete("/entry/{entry_id}")
 def delete_entry(entry_id: int, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    with get_connection() as conn:
+
+    with engine.begin() as conn:
         entry = conn.execute(
             text("""
-                SELECT k.* FROM khaata k
-                JOIN customers c ON c.customer_id = k.customer_id
-                WHERE k.id = :eid AND c.shop_id = :shop_id
+                SELECT k.id, k.item_name, k.quantity, k.inventory_id
+                FROM khaata k JOIN customers c ON c.customer_id = k.customer_id
+                WHERE k.id = :eid AND c.shop_id = :shop_id AND k.deleted_at IS NULL
             """),
             {"eid": entry_id, "shop_id": shop_id}
         ).fetchone()
         if not entry:
             return {"error": f"Entry #{entry_id} nahi mili"}
+
+        # Stock wapas add karo (payment ho to skip)
+        if (entry[1] or "").upper() != "PAYMENT":
+            adjust_stock_in_conn(conn, shop_id, +entry[2], entry[3], entry[1])
+
         conn.execute(
-            text("""
-                UPDATE khaata SET deleted_at = NOW()
-                WHERE id = :eid AND customer_id IN (SELECT customer_id FROM customers WHERE shop_id = :shop_id)
-            """),
-            {"eid": entry_id, "shop_id": shop_id}
+            text("UPDATE khaata SET deleted_at = NOW() WHERE id = :eid"),
+            {"eid": entry_id}
         )
-        log.info(f"Entry soft-deleted: id={entry_id}, shop={shop_id}")
-        conn.commit()
+
+    log.info(f"Entry soft-deleted + stock restored: id={entry_id}, shop={shop_id}")
     return {"success": True}
+
 
 # ---- Khaata ----
 @app.get("/khaata/{customer_name}")
@@ -541,6 +592,7 @@ def get_khaata(customer_name: str, authorization: Optional[str] = Header(None)):
         "total_baaki": total
     }
 
+
 # ---- Customers ----
 @app.post("/customer/add")
 def new_customer(req: CustomerRequest, authorization: Optional[str] = Header(None)):
@@ -550,12 +602,12 @@ def new_customer(req: CustomerRequest, authorization: Optional[str] = Header(Non
     add_customer(req.name, req.phone, shop_id)
     return {"success": True, "customer": req.name}
 
+
 @app.put("/customer/edit")
 def edit_customer(req: CustomerEditRequest, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    from customers import get_customer
     customer = get_customer(req.old_name, shop_id)
     if not customer:
         return {"error": f"'{req.old_name}' nahi mila"}
@@ -571,29 +623,37 @@ def edit_customer(req: CustomerEditRequest, authorization: Optional[str] = Heade
     except Exception as e:
         return {"error": str(e)}
 
+
 @app.delete("/customer/{customer_name}")
 def delete_customer(customer_name: str, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    from customers import get_customer
     customer = get_customer(customer_name, shop_id)
     if not customer:
         return {"error": f"'{customer_name}' nahi mila"}
-    # Whole customer delete = permanent (confirm dialog already warns user).
-    # Hard delete khaata (active + trashed both) to avoid FK constraint issue.
-    with get_connection() as conn:
-        deleted = conn.execute(
-            text("DELETE FROM khaata WHERE customer_id = :cid"),
+
+    with engine.begin() as conn:
+        # Pehle har active entry ka stock wapas add karo
+        active_entries = conn.execute(
+            text("""SELECT item_name, quantity, inventory_id FROM khaata
+                    WHERE customer_id = :cid AND deleted_at IS NULL"""),
             {"cid": customer[0]}
-        )
+        ).fetchall()
+        for item_name, qty, inv_id in active_entries:
+            if (item_name or "").upper() != "PAYMENT":
+                adjust_stock_in_conn(conn, shop_id, +qty, inv_id, item_name)
+
+        # Ab customer aur uski saari khaata entries hard-delete
+        conn.execute(text("DELETE FROM khaata WHERE customer_id = :cid"), {"cid": customer[0]})
         conn.execute(
             text("DELETE FROM customers WHERE customer_id = :cid AND shop_id = :shop_id"),
             {"cid": customer[0], "shop_id": shop_id}
         )
-        conn.commit()
-    log.info(f"Customer deleted: {customer_name} (shop={shop_id}, khaata rows removed)")
+
+    log.info(f"Customer deleted + stock restored: {customer_name} (shop={shop_id})")
     return {"success": True}
+
 
 @app.get("/customers/all")
 def all_customers(authorization: Optional[str] = Header(None)):
@@ -622,6 +682,7 @@ def all_customers(authorization: Optional[str] = Header(None)):
         "grand_total": sum(r[2] for r in customers)
     }
 
+
 # ---- Inventory ----
 @app.get("/inventory/all")
 def get_inventory(authorization: Optional[str] = Header(None)):
@@ -632,6 +693,7 @@ def get_inventory(authorization: Optional[str] = Header(None)):
     low_stock = [i for i in items if i["low_stock"]]
     return {"items": items, "total": len(items), "low_stock_count": len(low_stock)}
 
+
 @app.post("/inventory/add")
 def add_inventory_item(req: InventoryItemRequest, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -639,6 +701,7 @@ def add_inventory_item(req: InventoryItemRequest, authorization: Optional[str] =
         return {"error": "Login zaroori hai"}
     return add_item(shop_id, req.item_name, req.sale_price,
                     req.purchase_rate, req.stock, req.category, req.reorder_level)
+
 
 @app.put("/inventory/edit")
 def edit_inventory_item(req: InventoryEditRequest, authorization: Optional[str] = Header(None)):
@@ -648,12 +711,14 @@ def edit_inventory_item(req: InventoryEditRequest, authorization: Optional[str] 
     return edit_item(req.item_id, shop_id, req.item_name, req.sale_price,
                      req.purchase_rate, req.stock, req.category, req.reorder_level)
 
+
 @app.delete("/inventory/item/{item_id}")
 def delete_inventory_item(item_id: int, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
     return delete_item(item_id, shop_id)
+
 
 @app.get("/inventory/variants/{keyword}")
 def get_item_variants(keyword: str, authorization: Optional[str] = Header(None)):
@@ -663,16 +728,14 @@ def get_item_variants(keyword: str, authorization: Optional[str] = Header(None))
     variants = get_variants(keyword, shop_id)
     return {"variants": variants, "count": len(variants)}
 
+
 @app.get("/inventory/{item_name}")
 def check_inventory(item_name: str, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    # Pehle sab variants dhundo — agar multiple mile toh sab wapas karo,
-    # ek hi ho toh usko convenience ke liye "match" field mein bhi rakh do
     variants = get_variants(item_name, shop_id)
     if not variants:
-        # Fallback: fuzzy single lookup
         result = get_item_price(item_name, shop_id)
         if result:
             return {"variants": [result], "count": 1, "match": result}
@@ -682,6 +745,7 @@ def check_inventory(item_name: str, authorization: Optional[str] = Header(None))
         "count": len(variants),
         "match": variants[0] if len(variants) == 1 else None,
     }
+
 
 # ---- Purchase ----
 @app.post("/purchase/parse")
@@ -707,6 +771,7 @@ def parse_purchase_entry(req: PurchaseRequest, authorization: Optional[str] = He
         data["found_in_sheet"] = False
     return data
 
+
 @app.post("/purchase/save")
 def save_purchase(req: PurchaseRequest, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -722,20 +787,26 @@ def save_purchase(req: PurchaseRequest, authorization: Optional[str] = Header(No
     if not data.get("rate"):
         return {"error": "Rate missing hai"}
     total_cost = round(data["quantity"] * data["rate"], 2)
+
+    # Inventory se match karo taake inventory_id store kar sakein
+    inv_item = get_item_price(data["item"], shop_id)
+    inv_id = inv_item["id"] if inv_item else None
+
     with get_connection() as conn:
         conn.execute(
             text("""
-                INSERT INTO purchases (shop_id, supplier_name, item_name, quantity, purchase_rate, total_cost)
-                VALUES (:shop_id, :supplier, :item, :qty, :rate, :total)
+                INSERT INTO purchases (shop_id, supplier_name, item_name, quantity, purchase_rate, total_cost, inventory_id)
+                VALUES (:shop_id, :supplier, :item, :qty, :rate, :total, :inv_id)
             """),
             {"shop_id": shop_id, "supplier": data.get("supplier", "unknown"),
              "item": data["item"].lower(), "qty": data["quantity"],
-             "rate": data["rate"], "total": total_cost}
+             "rate": data["rate"], "total": total_cost, "inv_id": inv_id}
         )
         conn.commit()
     update_stock_purchase(data["item"], data["quantity"], shop_id)
     log.info(f"Purchase: {data['item']} x{data['quantity']} Rs.{total_cost} shop={shop_id}")
     return {"success": True, "data": data, "total_cost": total_cost}
+
 
 @app.put("/purchase/edit")
 def edit_purchase(req: PurchaseEditRequest, authorization: Optional[str] = Header(None)):
@@ -762,6 +833,7 @@ def edit_purchase(req: PurchaseEditRequest, authorization: Optional[str] = Heade
         conn.commit()
     return {"success": True}
 
+
 @app.delete("/purchase/{purchase_id}")
 def delete_purchase(purchase_id: int, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -780,6 +852,7 @@ def delete_purchase(purchase_id: int, authorization: Optional[str] = Header(None
         )
         conn.commit()
     return {"success": True}
+
 
 @app.get("/purchases/all")
 def get_all_purchases(authorization: Optional[str] = Header(None)):
@@ -808,6 +881,8 @@ def get_all_purchases(authorization: Optional[str] = Header(None)):
         "grand_total": grand_total
     }
 
+
+# ---- Multi Entry ----
 @app.post("/entry/multi/parse")
 def parse_multi(req: MultiEntryRequest, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -845,6 +920,7 @@ def parse_multi(req: MultiEntryRequest, authorization: Optional[str] = Header(No
     data["grand_total"] = round(sum(i["total"] for i in enriched_items), 2)
     return data
 
+
 @app.post("/entry/multi/save")
 def save_multi(req: MultiEntrySaveRequest, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -871,53 +947,90 @@ def save_multi(req: MultiEntrySaveRequest, authorization: Optional[str] = Header
     if not items:
         return {"error": "Items missing hain"}
 
-    saved_items = []
-    for item in items:
-        item_name = item.item.strip()
-        qty = item.quantity
-        price = item.price
-        inventory_id = item.inventory_id
+    # ---- Customer ensure karo (taake transaction ke andar sirf ek id use ho) ----
+    customer = get_customer(customer_name, shop_id)
+    if not customer:
+        add_customer(customer_name, "unknown", shop_id)
+        customer = get_customer(customer_name, shop_id)
+    if not customer:
+        return {"error": f"Customer '{customer_name}' create nahi ho saka"}
+    customer_id = customer[0]
 
-        if inventory_id:
-            inv = get_item_by_id(inventory_id, shop_id)
-            if not inv:
-                return {"error": f"'{item_name}' inventory mein nahi mila"}
-            item_name = inv["name"]
-            if price <= 0:
-                price = inv["price"]
-        elif price <= 0:
-            inv = get_item_price(item_name, shop_id)
-            if inv:
-                inventory_id = inv["id"]
-                item_name = inv["name"]
-                price = inv["price"]
+    # ---- Poora multi-save EK TRANSACTION mein ----
+    try:
+        saved_items = []
+        with engine.begin() as conn:
+            for item in items:
+                item_name = item.item.strip()
+                qty = item.quantity
+                price = item.price
+                inventory_id = item.inventory_id
 
-        if not item_name or qty <= 0 or price <= 0:
-            continue
+                # Resolve inventory
+                if inventory_id:
+                    inv_row = conn.execute(
+                        text("SELECT id, item_name, sale_price FROM inventory WHERE id = :id AND shop_id = :sid"),
+                        {"id": inventory_id, "sid": shop_id}
+                    ).fetchone()
+                    if not inv_row:
+                        raise ValueError(f"'{item_name}' inventory mein nahi mila")
+                    item_name = inv_row[1]
+                    if price <= 0:
+                        price = inv_row[2]
+                elif price <= 0:
+                    inv_row = conn.execute(
+                        text("""SELECT id, item_name, sale_price FROM inventory
+                                WHERE shop_id = :sid AND LOWER(item_name) LIKE :val
+                                ORDER BY LENGTH(item_name) ASC LIMIT 1"""),
+                        {"sid": shop_id, "val": f"%{item_name.lower()}%"}
+                    ).fetchone()
+                    if inv_row:
+                        inventory_id = inv_row[0]
+                        item_name = inv_row[1]
+                        price = inv_row[2]
 
-        success = add_khaata_entry(customer_name, item_name, qty, price, shop_id)
-        if success:
-            if inventory_id:
-                update_stock_by_id(inventory_id, qty, shop_id)
-            elif item.found:
-                update_stock(item_name, qty, shop_id)
-            saved_items.append({
-                "item": item_name,
-                "quantity": qty,
-                "price": price,
-                "inventory_id": inventory_id,
-                "total": round(qty * price, 2)
-            })
+                if not item_name or qty <= 0 or price <= 0:
+                    raise ValueError(f"Item '{item_name}' ka data adhoora hai")
+
+                total = round(qty * price, 2)
+                conn.execute(
+                    text("""INSERT INTO khaata
+                            (customer_id, item_name, quantity, price_per_item, total, inventory_id)
+                            VALUES (:cid, :item, :qty, :price, :total, :inv_id)"""),
+                    {"cid": customer_id, "item": item_name.lower(),
+                     "qty": qty, "price": price, "total": total, "inv_id": inventory_id}
+                )
+
+                if inventory_id:
+                    conn.execute(
+                        text("UPDATE inventory SET stock = stock - :qty WHERE id = :id AND shop_id = :sid"),
+                        {"qty": qty, "id": inventory_id, "sid": shop_id}
+                    )
+
+                saved_items.append({
+                    "item": item_name,
+                    "quantity": qty,
+                    "price": price,
+                    "inventory_id": inventory_id,
+                    "total": total,
+                })
+
+            if not saved_items:
+                raise ValueError("Koi valid item nahi mila")
+    except ValueError as e:
+        log.warning(f"Multi-save rejected: {e}")
+        return {"error": str(e)}
+    except Exception as e:
+        log.error(f"Multi-save failed: {e}")
+        return {"error": "Save nahi hua — kuch items ka masla tha"}
 
     grand_total = round(sum(i["total"] for i in saved_items), 2)
     log.info(f"Multi-entry: {customer_name} {len(saved_items)} items Rs.{grand_total} shop={shop_id}")
 
-    whatsapp = None
-    if saved_items:
-        phone, baaki = get_customer_phone_and_baaki(customer_name, shop_id)
-        wa_msg = compose_entry_receipt(get_shop_name(shop_id), customer_name,
-                                       saved_items, grand_total, baaki)
-        whatsapp = build_whatsapp_payload(phone, wa_msg)
+    phone, baaki = get_customer_phone_and_baaki(customer_name, shop_id)
+    wa_msg = compose_entry_receipt(get_shop_name(shop_id), customer_name,
+                                   saved_items, grand_total, baaki)
+    whatsapp = build_whatsapp_payload(phone, wa_msg)
 
     return {
         "success": True,
@@ -928,23 +1041,21 @@ def save_multi(req: MultiEntrySaveRequest, authorization: Optional[str] = Header
         "whatsapp": whatsapp
     }
 
+
 # ---- WhatsApp ----
 class SetPhoneRequest(BaseModel):
     customer: str
     phone: str
-    resend_message: str = ""   # if provided, returns new wa link with same message
+    resend_message: str = ""
+
 
 @app.post("/customer/set-phone")
 def set_customer_phone(req: SetPhoneRequest, authorization: Optional[str] = Header(None)):
-    """Phone save karta hai customer ke record mein, aur agar resend_message diya ho
-    toh naya wa.me link wapas karta hai — dialog se save karke direct WhatsApp kholne ke liye."""
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    from customers import get_customer
     customer = get_customer(req.customer, shop_id)
     if not customer:
-        # Customer exist nahi karta — bana do
         add_customer(req.customer, req.phone, shop_id)
     else:
         with get_connection() as conn:
@@ -958,12 +1069,15 @@ def set_customer_phone(req: SetPhoneRequest, authorization: Optional[str] = Head
         result["whatsapp"] = build_whatsapp_payload(req.phone, req.resend_message)
     return result
 
+
 class ReminderRequest(BaseModel):
     customer: str
 
+
 class BulkReminderRequest(BaseModel):
-    customers: List[str] = []   # khaali = sab jinke baaki > 0
+    customers: List[str] = []
     min_baaki: float = 1
+
 
 @app.post("/whatsapp/reminder")
 def whatsapp_reminder(req: ReminderRequest, authorization: Optional[str] = Header(None)):
@@ -977,10 +1091,9 @@ def whatsapp_reminder(req: ReminderRequest, authorization: Optional[str] = Heade
     return {"success": True, "customer": req.customer, "baaki": baaki,
             "whatsapp": build_whatsapp_payload(phone, msg)}
 
+
 @app.post("/whatsapp/bulk-reminders")
 def whatsapp_bulk_reminders(req: BulkReminderRequest, authorization: Optional[str] = Header(None)):
-    """Group messaging: selected customers (ya sab jinke baaki hai) ke liye
-    ready-made reminder links. Cloud API configured ho toh auto-send bhi."""
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
@@ -1015,7 +1128,8 @@ def whatsapp_bulk_reminders(req: BulkReminderRequest, authorization: Optional[st
     return {"success": True, "count": len(results),
             "auto_send_enabled": AUTO_SEND_ENABLED, "reminders": results}
 
-# ---- Reports / Dashboard ----
+
+# ---- Reports ----
 @app.get("/reports/dashboard")
 def reports_dashboard(authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -1081,10 +1195,12 @@ def reports_dashboard(authorization: Optional[str] = Header(None)):
         "low_stock": [{"item": r[0].title(), "stock": r[1], "reorder_level": r[2]} for r in low_stock],
     }
 
-# ---- CSV Export (backup) ----
+
+# ---- CSV Export ----
 from fastapi.responses import PlainTextResponse
 import csv
 import io
+
 
 def _csv_response(rows, headers, filename):
     buf = io.StringIO()
@@ -1095,6 +1211,7 @@ def _csv_response(rows, headers, filename):
         buf.getvalue(), media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
 
 @app.get("/export/customers")
 def export_customers(authorization: Optional[str] = Header(None)):
@@ -1112,6 +1229,7 @@ def export_customers(authorization: Optional[str] = Header(None)):
         [(r[0].title(), r[1], r[2], r[3]) for r in rows],
         ["Customer", "Phone", "Total Baaki", "Entries"], "customers.csv")
 
+
 @app.get("/export/khaata")
 def export_khaata(authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
@@ -1126,6 +1244,7 @@ def export_khaata(authorization: Optional[str] = Header(None)):
     return _csv_response(
         [(r[0].title(), str(r[1]), r[2].title(), r[3], r[4], r[5]) for r in rows],
         ["Customer", "Date", "Item", "Quantity", "Price", "Total"], "khaata.csv")
+
 
 @app.get("/export/inventory")
 def export_inventory(authorization: Optional[str] = Header(None)):
@@ -1142,10 +1261,10 @@ def export_inventory(authorization: Optional[str] = Header(None)):
         ["Item", "Category", "Sale Price", "Purchase Rate", "Stock", "Reorder Level"],
         "inventory.csv")
 
-# ---- Trash (soft-deleted entries) ----
+
+# ---- Trash ----
 @app.get("/trash/khaata")
 def trash_khaata(authorization: Optional[str] = Header(None)):
-    """Last 30 days ke deleted entries — restore ho sakti hain."""
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
@@ -1168,28 +1287,34 @@ def trash_khaata(authorization: Optional[str] = Header(None)):
         "count": len(rows)
     }
 
+
 @app.post("/trash/restore/{entry_id}")
 def trash_restore(entry_id: int, authorization: Optional[str] = Header(None)):
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
-    with get_connection() as conn:
-        result = conn.execute(text("""
-            UPDATE khaata SET deleted_at = NULL
-            WHERE id = :eid AND customer_id IN (SELECT customer_id FROM customers WHERE shop_id = :sid)
-              AND deleted_at IS NOT NULL
-            RETURNING id
+
+    with engine.begin() as conn:
+        entry = conn.execute(text("""
+            SELECT k.id, k.item_name, k.quantity, k.inventory_id
+            FROM khaata k JOIN customers c ON c.customer_id = k.customer_id
+            WHERE k.id = :eid AND c.shop_id = :sid AND k.deleted_at IS NOT NULL
         """), {"eid": entry_id, "sid": shop_id}).fetchone()
-        conn.commit()
-    if not result:
-        return {"error": f"Entry #{entry_id} trash mein nahi mili"}
-    log.info(f"Entry restored: id={entry_id}, shop={shop_id}")
+        if not entry:
+            return {"error": f"Entry #{entry_id} trash mein nahi mili"}
+
+        # Restore karte waqt stock dobara minus karo (kyunki delete pe plus kiya tha)
+        if (entry[1] or "").upper() != "PAYMENT":
+            adjust_stock_in_conn(conn, shop_id, -entry[2], entry[3], entry[1])
+
+        conn.execute(text("UPDATE khaata SET deleted_at = NULL WHERE id = :eid"), {"eid": entry_id})
+
+    log.info(f"Entry restored + stock consumed: id={entry_id}, shop={shop_id}")
     return {"success": True, "id": entry_id}
+
 
 @app.delete("/trash/purge")
 def trash_purge(authorization: Optional[str] = Header(None)):
-    """30+ din purani deleted entries permanently hata do. Frontend se
-    manually trigger hoti hai — user ko dikhata hai kitni entries hatengi."""
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}

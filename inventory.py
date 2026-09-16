@@ -5,6 +5,7 @@ from logger import get_logger
 
 log = get_logger("dukaan.inventory")
 
+
 def get_item_price(item_name: str, shop_id: int):
     try:
         with get_connection() as conn:
@@ -48,6 +49,7 @@ def get_item_price(item_name: str, shop_id: int):
         log.error(f"Inventory error: {e}")
         return None
 
+
 def get_variants(keyword: str, shop_id: int) -> list:
     try:
         with get_connection() as conn:
@@ -75,6 +77,7 @@ def get_variants(keyword: str, shop_id: int) -> list:
         log.error(f"Variants error: {e}")
         return []
 
+
 def get_item_by_id(item_id: int, shop_id: int):
     try:
         with get_connection() as conn:
@@ -86,8 +89,9 @@ def get_item_by_id(item_id: int, shop_id: int):
             return None
         return {"id": row[0], "name": row[1], "price": row[2], "stock": int(row[3])}
     except Exception as e:
-        print(f"Inventory by id error: {e}")
+        log.error(f"Inventory by id error: {e}")
         return None
+
 
 def update_stock_by_id(item_id: int, quantity_sold: float, shop_id: int) -> bool:
     try:
@@ -97,7 +101,7 @@ def update_stock_by_id(item_id: int, quantity_sold: float, shop_id: int) -> bool
                 {"id": item_id, "shop_id": shop_id}
             ).fetchone()
             if not row:
-                print(f"Item id nahi mila: {item_id}")
+                log.warning(f"Item id nahi mila: {item_id}")
                 return False
             new_stock = row[0] - quantity_sold
             conn.execute(
@@ -105,15 +109,14 @@ def update_stock_by_id(item_id: int, quantity_sold: float, shop_id: int) -> bool
                 {"stock": new_stock, "id": item_id, "shop_id": shop_id}
             )
             conn.commit()
-        print(f"Stock updated by id: {item_id} -> {new_stock}")
         return True
     except Exception as e:
-        print(f"Stock by id update error: {e}")
+        log.error(f"Stock by id update error: {e}")
         return False
+
 
 def update_stock(item_name: str, quantity_sold: float, shop_id: int) -> bool:
     try:
-        print(f"update_stock: {item_name}, qty: {quantity_sold}")
         with get_connection() as conn:
             item_lower = item_name.lower().strip()
 
@@ -134,7 +137,6 @@ def update_stock(item_name: str, quantity_sold: float, shop_id: int) -> bool:
                         break
 
             if not row:
-                log.debug("Item nahi mila")
                 return False
 
             new_stock = row[1] - quantity_sold
@@ -143,12 +145,12 @@ def update_stock(item_name: str, quantity_sold: float, shop_id: int) -> bool:
                 {"stock": new_stock, "id": row[0]}
             )
             conn.commit()
-            print(f"Stock updated: {item_name} -> {new_stock}")
             return True
 
     except Exception as e:
-        print(f"Stock update error: {e}")
+        log.error(f"Stock update error: {e}")
         return False
+
 
 def update_stock_purchase(item_name: str, quantity_bought: float, shop_id: int) -> bool:
     try:
@@ -172,7 +174,6 @@ def update_stock_purchase(item_name: str, quantity_bought: float, shop_id: int) 
                         break
 
             if not row:
-                print(f"Purchase item nahi mila: {item_name}")
                 return False
 
             new_stock = row[1] + quantity_bought
@@ -181,12 +182,44 @@ def update_stock_purchase(item_name: str, quantity_bought: float, shop_id: int) 
                 {"stock": new_stock, "id": row[0]}
             )
             conn.commit()
-            print(f"Purchase stock updated: {item_name} -> +{quantity_bought}")
             return True
 
     except Exception as e:
-        print(f"Purchase stock error: {e}")
+        log.error(f"Purchase stock error: {e}")
         return False
+
+
+def adjust_stock_in_conn(conn, shop_id: int, delta: float,
+                         inventory_id: int = None, item_name: str = None) -> bool:
+    """
+    Stock ko `delta` se badhao (positive) ya ghatao (negative) — EK EXISTING
+    TRANSACTION KE ANDAR. inventory_id preferred hai; na ho to item_name se match.
+
+    Yeh delete/restore/edit flows mein use hota hai jahan poora operation
+    ek atomic transaction hona chahiye.
+    """
+    if inventory_id:
+        result = conn.execute(
+            text("UPDATE inventory SET stock = stock + :delta WHERE id = :id AND shop_id = :sid RETURNING id"),
+            {"delta": delta, "id": inventory_id, "sid": shop_id}
+        ).fetchone()
+        if result:
+            return True
+
+    if item_name:
+        item_lower = item_name.lower().strip()
+        result = conn.execute(
+            text("""UPDATE inventory SET stock = stock + :delta
+                    WHERE id = (SELECT id FROM inventory
+                                WHERE shop_id = :sid AND LOWER(item_name) LIKE :val
+                                ORDER BY LENGTH(item_name) ASC LIMIT 1)
+                    RETURNING id"""),
+            {"delta": delta, "sid": shop_id, "val": f"%{item_lower}%"}
+        ).fetchone()
+        return result is not None
+
+    return False
+
 
 # ---- Inventory CRUD ----
 def add_item(shop_id: int, item_name: str, sale_price: float,
@@ -214,10 +247,10 @@ def add_item(shop_id: int, item_name: str, sale_price: float,
                 }
             )
             conn.commit()
-        print(f"Item added: {item_name}")
         return {"success": True}
     except Exception as e:
         return {"error": str(e)}
+
 
 def get_all_items(shop_id: int) -> list:
     with get_connection() as conn:
@@ -237,6 +270,7 @@ def get_all_items(shop_id: int) -> list:
         }
         for r in rows
     ]
+
 
 def edit_item(item_id: int, shop_id: int, item_name: str, sale_price: float,
               purchase_rate: float, stock: float, category: str, reorder_level: int) -> dict:
@@ -258,6 +292,7 @@ def edit_item(item_id: int, shop_id: int, item_name: str, sale_price: float,
         return {"success": True}
     except Exception as e:
         return {"error": str(e)}
+
 
 def delete_item(item_id: int, shop_id: int) -> dict:
     with get_connection() as conn:

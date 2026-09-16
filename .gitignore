@@ -1,7 +1,33 @@
+# Env
 .env
-*.db
-.venv/
-credentials.json
+.env.*
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.venv/
+venv/
+
+# Backups
+backup_before_voice_v2/
+backups/
+*.bak
+
+# Test files (temporary)
+test_urdu.py
+test_*.py
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Sensitive
+credentials.json
+*.db
+
 migrate.py

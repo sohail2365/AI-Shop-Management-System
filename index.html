@@ -34,7 +34,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .app{display:none;height:100vh;flex-direction:column;}
 .app.show{display:flex;}
 
-/* Header */
 .topbar{background:#7591be;color:white;padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,0.3);}
 .topbar-left{display:flex;align-items:center;gap:14px;}
 .topbar-logo{font-size:18px;font-weight:700;color:white;}
@@ -49,23 +48,20 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .topbar-btn.danger{background:#dc2626;}
 .topbar-btn.danger:hover{background:#b91c1c;}
 
-/* Body layout */
 .app-body{display:flex;flex:1;overflow:hidden;}
 
-/* Sidebar */
 .sidebar{width:220px;background:#1e293b;flex-shrink:0;overflow-y:auto;padding:12px 0;}
 
-/* ---- Mobile responsive sidebar (hamburger drawer) ---- */
 .hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;margin-right:4px;}
 .sidebar-overlay{display:none;}
 
 @media (max-width: 768px) {
   .hamburger-btn{display:block;}
-  .topbar-shop{display:none;} /* space bachao chhoti screen pe */
+  .topbar-shop{display:none;}
   .app-body{position:relative;}
   .sidebar{
     position:fixed;
-    top:60px; /* topbar ki height */
+    top:60px;
     left:-260px;
     width:240px;
     height:calc(100vh - 60px);
@@ -89,7 +85,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 }
 
 @media (max-width: 480px) {
-  .datetime-box{display:none;} /* bahut chhoti screen (phone) pe clock hide, jagah bachao */
+  .datetime-box{display:none;}
 }
 .nav-section{padding:6px 14px 4px;font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;}
 .nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;color:#94a3b8;font-size:14px;transition:all 0.15s;border-left:3px solid transparent;margin:1px 0;}
@@ -98,17 +94,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .nav-icon{font-size:18px;width:24px;text-align:center;}
 .nav-divider{height:1px;background:#334155;margin:8px 14px;}
 
-/* Main content */
 .main-content{flex:1;overflow-y:auto;padding:20px;}
 .page{display:none;}
 .page.active{display:block;}
 
-/* Cards */
 .card{background:white;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.06);margin-bottom:16px;}
 .card-title{font-size:15px;font-weight:700;color:#1e293b;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;}
 .card-title .icon{font-size:18px;}
 
-/* Stats row */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;}
 .stat-card{background:white;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);text-align:center;}
 .stat-num{font-size:26px;font-weight:700;color:#6366f1;}
@@ -117,7 +110,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .stat-num.amber{color:#f59e0b;}
 .stat-lbl{font-size:12px;color:#64748b;margin-top:2px;}
 
-/* Form elements */
 .input-row{display:flex;gap:10px;margin-bottom:4px;}
 input[type="text"],input[type="number"],input[type="date"],input[type="password"]{flex:1;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;color:#1e293b;}
 input:focus{border-color:#6366f1;}
@@ -131,7 +123,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .btn-outline{background:transparent;border:1.5px solid #e2e8f0;color:#64748b;}
 .btn-outline:hover{background:#f8fafc;border-color:#6366f1;color:#6366f1;}
 
-/* Result boxes */
 .result-box{margin-top:14px;padding:16px;background:#f8faff;border-radius:10px;border:1px solid #e0e7ff;display:none;}
 .result-box.show{display:block;}
 .parsed-row{display:flex;justify-content:space-between;padding:7px 0;font-size:14px;border-bottom:1px solid #f1f5f9;}
@@ -139,42 +130,35 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .parsed-row .lbl{color:#94a3b8;font-size:13px;}
 .parsed-row .val{font-weight:600;color:#1e293b;}
 
-/* Badges */
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;}
 .badge-green{background:#dcfce7;color:#16a34a;}
 .badge-red{background:#fee2e2;color:#dc2626;}
 .badge-blue{background:#e0f2fe;color:#0369a1;}
 .badge-amber{background:#fef3c7;color:#d97706;}
 
-/* Action buttons */
 .action-btns{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
 .edit-btn{padding:3px 8px;background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 .del-btn{padding:3px 8px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 
-/* Khaata entries */
 .entry-table{width:100%;}
 .entry-row{display:grid;grid-template-columns:0.8fr 1.5fr 0.6fr 1fr;padding:8px 4px;border-bottom:1px solid #f1f5f9;font-size:13px;align-items:center;gap:8px;}
 .entry-row:last-child{border-bottom:none;}
 .entry-header{font-weight:700;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;}
 
-/* Total bar */
 .total-bar{background:linear-gradient(135deg,#fef9ee,#fef3c7);border-radius:10px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-top:12px;}
 .total-bar .lbl{font-size:13px;color:#92400e;font-weight:600;}
 .total-bar .val{font-size:18px;font-weight:700;color:#d97706;}
 .total-bar.success .lbl{color:#166534;}
 .total-bar.success .val{color:#16a34a;}
 
-/* Manual box */
 .manual-box{background:#fef9ee;padding:14px;border-radius:10px;border:1px solid #fde68a;margin:12px 0;display:none;}
 .manual-box p{font-size:13px;color:#92400e;margin-bottom:10px;font-weight:500;}
 .manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .manual-grid label{font-size:12px;color:#64748b;display:block;margin-bottom:4px;}
 .manual-grid input{width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;flex:unset;}
 
-/* Stock warning */
 .stock-warning{background:#fef9ee;padding:12px 14px;border-radius:10px;border:1px solid #fde68a;margin:10px 0;display:none;font-size:13px;color:#92400e;}
 
-/* Variant box */
 .variant-box{background:#eff6ff;padding:14px;border-radius:10px;border:1px solid #bfdbfe;margin:12px 0;display:none;}
 .variant-box p{font-size:13px;color:#1d4ed8;font-weight:600;margin-bottom:10px;}
 .variant-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
@@ -184,17 +168,14 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .variant-name{font-size:13px;font-weight:600;color:#1e293b;}
 .variant-meta{display:flex;gap:8px;align-items:center;}
 
-/* Confirm buttons */
 .confirm-btns{display:flex;gap:10px;margin-top:14px;}
 
-/* Inventory table */
 .inv-table{width:100%;border-collapse:collapse;font-size:13px;}
 .inv-table th{background:#f8fafc;padding:10px 8px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;}
 .inv-table td{padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#1e293b;}
 .inv-table tr:hover td{background:#f8fafc;}
 .search-bar{display:flex;gap:10px;margin-bottom:14px;}
 
-/* Modal */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
 .modal.show{display:flex;}
 .modal-box{background:white;border-radius:16px;padding:28px;width:380px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
@@ -208,7 +189,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .modal-grid-2 input{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;flex:unset;outline:none;}
 .modal-btns{display:flex;gap:10px;margin-top:4px;}
 
-/* Calculator */
 .calc-panel{position:fixed;top:70px;right:16px;width:260px;background:white;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.2);z-index:999;overflow:hidden;display:none;}
 .calc-panel.show{display:block;}
 .calc-screen{background:#1e293b;color:#ffffff !important;padding:14px 16px;text-align:right;}
@@ -223,7 +203,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .cb-clear{background:#fee2e2 !important;color:#dc2626;font-weight:700;}
 .cb-zero{grid-column:span 2;}
 
-/* Toast */
 .toast{position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;color:white;font-size:14px;font-weight:500;opacity:0;transition:opacity 0.3s;z-index:2000;box-shadow:0 4px 20px rgba(0,0,0,0.2);}
 .toast.show{opacity:1;}
 .toast.success{background:#16a34a;}
@@ -232,12 +211,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 #mic-btn.recording{background:#dc2626 !important;color:#fff;border-color:#dc2626 !important;animation:mic-pulse 1.2s infinite;}
 @keyframes mic-pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5);}70%{box-shadow:0 0 0 10px rgba(220,38,38,0);}100%{box-shadow:0 0 0 0 rgba(220,38,38,0);}}
 
-/* Page header */
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .page-title{font-size:20px;font-weight:700;color:#1e293b;}
 .page-subtitle{font-size:13px;color:#64748b;margin-top:2px;}
 
-/* ---- WhatsApp + Reports ---- */
 .wa-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#075e54;color:#fff;padding:12px 16px;border-radius:12px;display:none;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:9999;max-width:90vw;}
 .wa-banner.show{display:flex;}
 .wa-banner a{background:#25d366;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;white-space:nowrap;font-size:14px;}
@@ -251,12 +228,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .stat-card.green .stat-value{color:#16a34a;}
 .stat-card.red .stat-value{color:#dc2626;}
 .stat-card.blue .stat-value{color:#2563eb;}
-@media(prefers-color-scheme:dark){.stat-card{background:#fff;}}
 </style>
 </head>
 <body>
 
-<!-- =============== LOGIN PAGE =============== -->
 <div class="login-page" id="login-page">
 <div class="login-box">
   <div class="login-logo">
@@ -271,14 +246,12 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     <div class="auth-tab" id="tab-forgot" onclick="switchTab('forgot')">Forgot Password</div>
   </div>
 
-  <!-- Login -->
   <div id="form-login">
     <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="username" onkeydown="if(event.key==='Enter')handleLogin()"></div>
     <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="password" onkeydown="if(event.key==='Enter')handleLogin()"></div>
     <button class="btn-primary" onclick="handleLogin()">Login karo</button>
   </div>
 
-  <!-- Register -->
   <div id="form-register" style="display:none;">
     <div class="form-group"><label>Shop Name</label><input type="text" id="reg-shopname" placeholder="jaise: Ali Karyana Store"></div>
     <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="username (min 3 chars)"></div>
@@ -286,7 +259,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     <button class="btn-primary" onclick="handleRegister()" style="background:linear-gradient(135deg,#16a34a,#15803d);">Account banao</button>
   </div>
 
-  <!-- Forgot -->
   <div id="form-forgot" style="display:none;">
     <div class="info-box">ℹ️ Username aur exact shop name dono sahi hone chahiye</div>
     <div class="form-group"><label>Username</label><input type="text" id="reset-username" placeholder="username"></div>
@@ -298,10 +270,8 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 </div>
 </div>
 
-<!-- =============== MAIN APP =============== -->
 <div class="app" id="main-app">
 
-  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
       <button class="hamburger-btn" onclick="toggleSidebar()" id="hamburger-btn">☰</button>
@@ -320,7 +290,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
   <div class="app-body">
 
-    <!-- Sidebar -->
     <div class="sidebar" id="app-sidebar">
       <div style="height:8px;"></div>
       <div class="nav-section">Main</div>
@@ -341,7 +310,8 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       </div>
       <div class="nav-item" onclick="showPage('whatsapp');loadBulkReminders()" id="nav-whatsapp">
         <span class="nav-icon">📱</span><span>WhatsApp Reminders</span>
-      </div>      <div class="nav-item" onclick="showPage('trash');loadTrash()" id="nav-trash">
+      </div>
+      <div class="nav-item" onclick="showPage('trash');loadTrash()" id="nav-trash">
         <span class="nav-icon">🗑️</span><span>Trash</span>
       </div>
 
@@ -370,13 +340,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       </div>
     </div>
 
-    <!-- Mobile-only overlay — sidebar khuli ho to tap kar ke band karo -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-    <!-- Main Content -->
     <div class="main-content">
 
-      <!-- ===== PAGE: ENTRY ===== -->
       <div class="page active" id="page-entry">
         <div class="page-header">
           <div>
@@ -388,11 +355,13 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           <div class="card-title"><span class="icon">🤖</span> AI Entry</div>
           <div class="input-row">
             <input type="text" id="entry-input" placeholder="Sale: 'bilal ne 2 brite liya'  ya  Payment: 'bilal ne 500 diye'" onkeydown="if(event.key==='Enter')parseEntry()">
-            <button type="button" id="mic-btn" onclick="toggleVoiceEntry()" title="Bol kar entry karo" style="flex:unset;width:46px;font-size:18px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;">🎤</button>
+            <button type="button" id="mic-btn" onclick="toggleVoiceEntry()" title="Urdu men bol kar entry karo" style="flex:unset;width:46px;font-size:18px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;">🎤</button>
             <button onclick="parseEntry()" id="parse-btn">Parse karo</button>
           </div>
           <div style="margin-top:8px;font-size:12px;color:#64748b;">
-            💡 <b>Payment record karna hai?</b> Likho <i>"customer_name ne X diye"</i> (jaise "asif traders ne 1000 diye")
+            🎤 <b>Voice:</b> Urdu ya Roman Urdu mein bolo — dono kaam karte hain
+            &nbsp;•&nbsp;
+            💡 <b>Payment record karna hai?</b> Likho <i>"customer_name ne X diye"</i>>Payment record karna hai?</b> Likho <i>"customer_name ne X diye"</i> (jaise "asif traders ne 1000 diye")
             &nbsp;•&nbsp;
             <a href="#" onclick="openQuickPayment();return false;" style="color:#6366f1;font-weight:600;">Quick Payment karo</a>
           </div>
@@ -432,7 +401,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
       </div>
-      <!-- ===== PAGE: MULTI ENTRY ===== -->
+
       <div class="page" id="page-multi-entry">
         <div class="page-header">
           <div>
@@ -443,9 +412,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         <div class="card">
           <div class="card-title"><span class="icon">🤖</span> AI Multi Entry</div>
           <div class="input-row">
-            <input type="text" id="multi-input"
-              placeholder="Ali ne brite 2, surf excel 1, pepsi 3 liya..."
-              onkeydown="if(event.key==='Enter')parseMultiEntry()">
+            <input type="text" id="multi-input" placeholder="Ali ne brite 2, surf excel 1, pepsi 3 liya..." onkeydown="if(event.key==='Enter')parseMultiEntry()">
             <button onclick="parseMultiEntry()" id="multi-btn">Parse karo</button>
           </div>
 
@@ -453,9 +420,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
             <div class="parsed-row">
               <span class="lbl">Customer</span>
               <span class="val">
-                <input type="text" id="multi-customer"
-                  style="border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:14px;width:220px;flex:unset;outline:none;"
-                  placeholder="Customer naam">
+                <input type="text" id="multi-customer" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:14px;width:220px;flex:unset;outline:none;" placeholder="Customer naam">
               </span>
             </div>
 
@@ -496,7 +461,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: KHAATA ===== -->
       <div class="page" id="page-khaata">
         <div class="page-header">
           <div>
@@ -520,7 +484,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: ALL CUSTOMERS ===== -->
       <div class="page" id="page-customers">
         <div class="page-header">
           <div>
@@ -554,7 +517,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: INVENTORY CHECK ===== -->
       <div class="page" id="page-inventory-check">
         <div class="page-header">
           <div>
@@ -571,7 +533,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: INVENTORY MANAGE ===== -->
       <div class="page" id="page-inventory-manage">
         <div class="page-header">
           <div>
@@ -601,7 +562,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: PURCHASE ===== -->
       <div class="page" id="page-purchase">
         <div class="page-header">
           <div>
@@ -631,7 +591,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: PURCHASE HISTORY ===== -->
       <div class="page" id="page-purchase-history">
         <div class="page-header">
           <div>
@@ -650,8 +609,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-
-      <!-- WhatsApp Reminders -->
       <div class="page" id="page-whatsapp">
         <div class="page-header">
           <div>
@@ -672,7 +629,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- Reports Dashboard -->
       <div class="page" id="page-reports">
         <div class="page-header">
           <div>
@@ -707,8 +663,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-
-      <!-- Trash / Deleted Entries -->
       <div class="page" id="page-trash">
         <div class="page-header">
           <div>
@@ -728,12 +682,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-    </div><!-- end main-content -->
-  </div><!-- end app-body -->
-</div><!-- end app -->
+    </div>
+  </div>
+</div>
 
-
-<!-- Quick Payment Modal -->
 <div id="quick-pay-modal" class="modal">
   <div class="modal-box" style="width:400px;">
     <h3>💰 Quick Payment</h3>
@@ -754,7 +706,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- WhatsApp Phone Request Modal -->
 <div id="wa-phone-modal" class="modal">
   <div class="modal-box" style="width:380px;">
     <h3>📱 Phone Number Chahiye</h3>
@@ -772,16 +723,12 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- WhatsApp send banner -->
 <div class="wa-banner" id="wa-banner">
   <span id="wa-banner-text">Receipt tayyar hai</span>
   <a id="wa-banner-link" href="#" target="_blank" rel="noopener" onclick="hideWaBanner()">📱 WhatsApp bhejein</a>
   <span class="wa-close" onclick="hideWaBanner()">✕</span>
 </div>
 
-<!-- =============== MODALS =============== -->
-
-<!-- Item Modal -->
 <div id="item-modal" class="modal">
   <div class="modal-box" style="width:440px;">
     <h3 id="item-modal-title">📦 Naya Item Add karo</h3>
@@ -807,7 +754,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- Customer Edit Modal -->
 <div id="customer-modal" class="modal">
   <div class="modal-box">
     <h3>✏️ Customer Edit karo</h3>
@@ -821,7 +767,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- Entry Edit Modal -->
 <div id="entry-modal" class="modal">
   <div class="modal-box">
     <h3>✏️ Entry Edit karo</h3>
@@ -839,7 +784,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- Purchase Edit Modal -->
 <div id="purchase-modal" class="modal">
   <div class="modal-box">
     <h3>✏️ Purchase Edit karo</h3>
@@ -858,7 +802,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- Calculator -->
 <div class="calc-panel" id="calc-panel">
   <div class="calc-screen">
     <div class="calc-expr" id="calc-expr"></div>
@@ -888,7 +831,18 @@ const API = window.location.origin;
 let parsedData = null;
 let allInventoryItems = [];
 
-// ---- Helpers ----
+// ---------- HTML escape (XSS protection) ----------
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ---------- Helpers ----------
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type} show`;
@@ -899,9 +853,10 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 function getToken() { return localStorage.getItem('dukaan_token'); }
 function getShopName() { return localStorage.getItem('shop_name'); }
 function toTitleCase(text) {
-  return String(text || '').toLowerCase().replace(/\w/g, c => c.toUpperCase());
+  return String(text || '').toLowerCase().replace(/\w/g, c => c.toUpperCase());
 }
 function saveToken(t, s) { localStorage.setItem('dukaan_token', t); localStorage.setItem('shop_name', s); }
+function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 
 async function apiFetch(url, options = {}) {
   const token = getToken();
@@ -911,7 +866,7 @@ async function apiFetch(url, options = {}) {
   return fetch(API + url, options);
 }
 
-// ---- DateTime ----
+// ---------- DateTime ----------
 function updateDateTime() {
   const now = new Date();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -925,7 +880,7 @@ function updateDateTime() {
 setInterval(updateDateTime, 1000);
 updateDateTime();
 
-// ---- Auth tabs ----
+// ---------- Auth tabs ----------
 function switchTab(tab) {
   ['login','register','forgot'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t===tab);
@@ -933,7 +888,6 @@ function switchTab(tab) {
   });
 }
 
-// ---- Login/Register/Reset ----
 async function handleLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
@@ -995,17 +949,16 @@ window.onload = () => {
   else document.getElementById('login-page').classList.add('show');
 };
 
-// ---- Navigation ----
+// ---------- Navigation ----------
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${name}`).classList.add('active');
   const navEl = document.getElementById(`nav-${name}`);
   if (navEl) navEl.classList.add('active');
-  closeSidebar(); // mobile pe: page change hote hi sidebar apne aap band ho jaye
+  closeSidebar();
 }
 
-// ---- Mobile sidebar (hamburger drawer) ----
 function toggleSidebar() {
   document.getElementById('app-sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('show');
@@ -1015,7 +968,7 @@ function closeSidebar() {
   document.getElementById('sidebar-overlay').classList.remove('show');
 }
 
-// ---- Calculator ----
+// ---------- Calculator ----------
 let calcCurrent='0', calcPrev='', calcOperator='', calcNewNum=true;
 function toggleCalc() { document.getElementById('calc-panel').classList.toggle('show'); }
 function calcUpdate() { document.getElementById('calc-display').textContent = calcCurrent; }
@@ -1027,7 +980,7 @@ function calcClear() { calcCurrent='0';calcPrev='';calcOperator='';calcNewNum=tr
 function calcSign() { calcCurrent=String(parseFloat(calcCurrent)*-1); calcUpdate(); }
 function calcPercent() { calcCurrent=String(parseFloat(calcCurrent)/100); calcUpdate(); }
 
-// ---- Entry ----
+// ---------- Entry ----------
 async function renderParsedEntry(data) {
   parsedData = data;
   parsedData._selectedItemName = data.inventory_id ? data.item : null;
@@ -1074,59 +1027,36 @@ async function parseEntry() {
   btn.disabled = false; btn.textContent = 'Parse karo';
 }
 
-// ---- Voice Entry ----
+// ---------- Voice ----------
 let voiceRecorder = null;
 let voiceChunks = [];
 let voiceStream = null;
 
 async function toggleVoiceEntry() {
   const micBtn = document.getElementById('mic-btn');
-
-  // Agar already recording ho rahi hai — stop karo
-  if (voiceRecorder && voiceRecorder.state === 'recording') {
-    voiceRecorder.stop();
-    return;
-  }
-
-  // Naya recording shuru karo
-  try {
-    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch (e) {
-    showToast('Microphone permission nahi mili — browser settings check karo', 'error');
-    return;
-  }
-
+  if (voiceRecorder && voiceRecorder.state === 'recording') { voiceRecorder.stop(); return; }
+  try { voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { showToast('Microphone permission nahi mili','error'); return; }
   voiceChunks = [];
-  // Browser jo bhi format support karta hai wo use karo (webm zyada tar jagah, mp4 Safari pe)
   const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
   voiceRecorder = new MediaRecorder(voiceStream, { mimeType });
-
   voiceRecorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunks.push(e.data); };
-
   voiceRecorder.onstop = async () => {
     voiceStream.getTracks().forEach(track => track.stop());
     micBtn.classList.remove('recording');
     micBtn.textContent = '🎤';
-
     const audioBlob = new Blob(voiceChunks, { type: mimeType });
-    if (audioBlob.size < 500) {
-      showToast('Recording bahut chhoti thi — dobara try karo', 'error');
-      return;
-    }
+    if (audioBlob.size < 500) { showToast('Recording bahut chhoti thi','error'); return; }
     await uploadVoiceEntry(audioBlob, mimeType);
   };
-
   voiceRecorder.start();
   micBtn.classList.add('recording');
   micBtn.textContent = '⏹️';
   showToast('Recording shuru — bolo, phir button dobara dabao', 'info');
-
-  // Safety: 30 second se zyada recording auto-stop (chhoti dukaan entries
-  // 5-15 second ki hoti hain; yeh sirf galti se mic khula reh jaye us se bachata hai)
   setTimeout(() => {
     if (voiceRecorder && voiceRecorder.state === 'recording') {
       voiceRecorder.stop();
-      showToast('30 second poore ho gaye — recording auto-stop hui', 'info');
+      showToast('30 second poore — auto-stop', 'info');
     }
   }, 30000);
 }
@@ -1137,7 +1067,6 @@ async function uploadVoiceEntry(audioBlob, mimeType) {
   const ext = mimeType.includes('webm') ? 'webm' : 'mp4';
   const formData = new FormData();
   formData.append('audio', audioBlob, `voice.${ext}`);
-
   showToast('Awaaz samjhi jaa rahi hai...', 'info');
   try {
     const token = getToken();
@@ -1148,14 +1077,10 @@ async function uploadVoiceEntry(audioBlob, mimeType) {
     });
     const data = await res.json();
     if (data.error) { showToast(data.error, 'error'); micBtn.disabled = false; return; }
-
-    // Transcript text box mein dikhao — taake user verify/edit kar sake
     document.getElementById('entry-input').value = data.transcript || '';
     await renderParsedEntry(data);
-    showToast(`\uD83D\uDD0A Suna: "${data.transcript}"`, 'success');
-  } catch (e) {
-    showToast('Voice upload fail hui — dobara try karo', 'error');
-  }
+    showToast(`🔊 Suna: "${data.transcript}"`, 'success');
+  } catch (e) { showToast('Voice upload fail hui', 'error'); }
   micBtn.disabled = false;
 }
 
@@ -1190,7 +1115,7 @@ function showVariants(variants) {
   vb.style.display = 'block';
   document.getElementById('variant-list').innerHTML = variants.map((v,i) => `
     <div class="variant-item" onclick="selectVariant(${i})" id="vi-${i}">
-      <span class="variant-name">${v.name}</span>
+      <span class="variant-name">${esc(v.name)}</span>
       <span class="variant-meta">
         <span style="font-size:13px;color:#64748b;">Rs. ${v.price}</span>
         <span class="badge ${v.stock>0?'badge-green':'badge-red'}">${v.stock>0?v.stock+' baaki':'Out of stock'}</span>
@@ -1265,10 +1190,8 @@ function cancelEntry() {
   window._variants=null; parsedData=null;
 }
 
-// ---- Multi Item Entry ----
+// ---------- Multi Entry ----------
 let multiParsedData = null;
-
-function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 
 function recalcMultiTotals() {
   if (!multiParsedData) return;
@@ -1283,26 +1206,21 @@ function renderMultiTable() {
     const variantSelect = item.variants && item.variants.length > 1 ? `
       <select onchange="selectMultiVariant(${i}, this.value)" style="margin-top:5px;width:100%;padding:5px;border:1.5px solid #bfdbfe;border-radius:6px;font-size:12px;background:#eff6ff;color:#1d4ed8;">
         <option value="">Variant select karo</option>
-        ${item.variants.map((v,vi) => `<option value="${vi}" ${item.inventory_id===v.id?'selected':''}>${v.name} - Rs. ${v.price} - Stock ${v.stock}</option>`).join('')}
+        ${item.variants.map((v,vi) => `<option value="${vi}" ${item.inventory_id===v.id?'selected':''}>${esc(v.name)} - Rs. ${v.price} - Stock ${v.stock}</option>`).join('')}
       </select>` : '';
     return `
     <tr style="border-bottom:1px solid #f1f5f9;">
       <td style="padding:9px 8px;min-width:190px;">
-        <input type="text" value="${item.item || ''}" onchange="setMultiItemName(${i}, this.value)"
-          style="width:100%;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;flex:unset;">
+        <input type="text" value="${esc(item.item || '')}" onchange="setMultiItemName(${i}, this.value)" style="width:100%;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;flex:unset;">
         ${variantSelect}
         ${item.variants && item.variants.length > 1 ? '<span class="badge badge-blue" style="margin-top:5px;font-size:10px;">Variant optional</span>' : ''}
         ${!item.found && !item.needs_variant ? '<span class="badge badge-amber" style="margin-top:5px;font-size:10px;">Manual</span>' : ''}
       </td>
       <td style="padding:9px 8px;text-align:center;">
-        <input type="number" value="${item.quantity}" min="0" step="0.01"
-          style="width:70px;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;text-align:center;font-size:13px;flex:unset;"
-          oninput="updateMultiItem(${i}, 'quantity', this.value)">
+        <input type="number" value="${item.quantity}" min="0" step="0.01" style="width:70px;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;text-align:center;font-size:13px;flex:unset;" oninput="updateMultiItem(${i}, 'quantity', this.value)">
       </td>
       <td style="padding:9px 8px;text-align:right;">
-        <input type="number" value="${item.price || ''}" min="0" step="0.01"
-          style="width:90px;padding:5px;border:1.5px solid ${item.found?'#e2e8f0':'#fde68a'};border-radius:6px;text-align:right;font-size:13px;flex:unset;"
-          oninput="updateMultiItem(${i}, 'price', this.value)" placeholder="Price">
+        <input type="number" value="${item.price || ''}" min="0" step="0.01" style="width:90px;padding:5px;border:1.5px solid ${item.found?'#e2e8f0':'#fde68a'};border-radius:6px;text-align:right;font-size:13px;flex:unset;" oninput="updateMultiItem(${i}, 'price', this.value)" placeholder="Price">
       </td>
       <td style="padding:9px 8px;text-align:right;font-weight:700;color:#1e293b;" id="multi-item-total-${i}">Rs. ${item.total}</td>
       <td style="padding:9px 8px;text-align:center;">
@@ -1391,7 +1309,6 @@ async function saveMultiEntry(withPrint) {
   const missingPrice = multiParsedData.items.find(i => !i.price || i.price <= 0);
   if (missingPrice) { showToast(`${missingPrice.item} ka price daalo!`,'error'); return; }
 
-  // ---- Step 1: Save to backend ----
   let data;
   try {
     const payloadItems = multiParsedData.items.map(i => ({
@@ -1412,23 +1329,17 @@ async function saveMultiEntry(withPrint) {
     data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
   } catch(e) {
-    // Sirf network/parsing error yahan aayega — save fail hua actually
     showToast('Server se connect nahi hua','error');
     return;
   }
 
-  // ---- Step 2: Save ho gaya — ab success toast + WhatsApp + optional print ----
   multiParsedData.customer = customer;
   showToast(`✅ ${data.items_saved} items save ho gaye! Total: Rs. ${data.grand_total}`);
   showWhatsAppPrompt(data.whatsapp, 'Bill receipt tayyar hai —', data.customer);
 
   if (withPrint) {
-    // Print alag try/catch mein — popup blocked ho toh bhi save success hi rahega
-    try {
-      printBill();
-    } catch(e) {
-      showToast('Print window nahi khula (popup blocker check karo). Save ho gaya hai.','error');
-    }
+    try { printBill(); }
+    catch(e) { showToast('Print window nahi khula. Save ho gaya hai.','error'); }
   }
   cancelMultiEntry();
 }
@@ -1443,29 +1354,17 @@ function printBill() {
   const timeStr = now.toLocaleTimeString('en-PK', {hour:'2-digit', minute:'2-digit'});
 
   const billWindow = window.open('', '_blank', 'width=360,height=640');
-  if (!billWindow) {
-    showToast('Print window nahi khula — browser popup allow karo','error');
-    return;
-  }
+  if (!billWindow) { showToast('Print window nahi khula — popup allow karo','error'); return; }
   billWindow.document.write(`
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Receipt - ${customer}</title>
+      <title>Receipt - ${esc(customer)}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         @page { size: 80mm auto; margin: 3mm; }
-        body {
-          width: 72mm;
-          margin: 0 auto;
-          padding: 3mm 2mm;
-          font-family: 'Courier New', monospace;
-          font-size: 11px;
-          color: #111;
-          background: #fff;
-        }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
+        body { width: 72mm; margin: 0 auto; padding: 3mm 2mm; font-family: 'Courier New', monospace; font-size: 11px; color: #111; background: #fff; }
+        .center { text-align: center; } .bold { font-weight: bold; }
         .shop { font-size: 15px; line-height: 1.2; }
         .meta { font-size: 10px; line-height: 1.45; }
         .line { border-top: 1px dashed #111; margin: 6px 0; }
@@ -1480,33 +1379,27 @@ function printBill() {
         .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
         .no-print { margin-top: 10px; }
         .print-btn { padding: 8px 18px; background:#1e293b; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
-        @media print {
-          body { width: 72mm; padding: 0; }
-          .no-print { display: none; }
-        }
+        @media print { body { width: 72mm; padding: 0; } .no-print { display: none; } }
       </style>
     </head>
     <body>
-      <div class="center bold shop">${shopName}</div>
+      <div class="center bold shop">${esc(shopName)}</div>
       <div class="center meta">Karyana Shop Receipt</div>
       <div class="double-line"></div>
-      <div class="meta">Date: ${dateStr}</div>
-      <div class="meta">Time: ${timeStr}</div>
-      <div class="meta">Customer: <span class="bold">${customer}</span></div>
+      <div class="meta">Date: ${esc(dateStr)}</div>
+      <div class="meta">Time: ${esc(timeStr)}</div>
+      <div class="meta">Customer: <span class="bold">${esc(customer)}</span></div>
       <div class="line"></div>
       <table>
-        <thead>
-          <tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr>
-        </thead>
+        <thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead>
         <tbody>
           ${multiParsedData.items.map(item => `
             <tr>
-              <td class="item">${toTitleCase(item.item)}</td>
+              <td class="item">${esc(toTitleCase(item.item))}</td>
               <td class="qty">${item.quantity}</td>
               <td class="rate">${item.price}</td>
               <td class="amt">${item.total}</td>
-            </tr>
-          `).join('')}
+            </tr>`).join('')}
         </tbody>
         <tfoot>
           <tr><td colspan="4"><div class="line"></div></td></tr>
@@ -1517,7 +1410,7 @@ function printBill() {
       <div class="center meta">Shukriya! Dobara zaroor aana</div>
       <div class="center meta">Powered by Dukaan AI</div>
       <div class="center no-print"><button class="print-btn" onclick="window.print()">Print Receipt</button></div>
-      <scr'+'ipt>setTimeout(() => window.print(), 500);</scr'+'ipt>
+      <scr` + `ipt>setTimeout(() => window.print(), 500);</scr` + `ipt>
     </body>
     </html>
   `);
@@ -1530,22 +1423,22 @@ function cancelMultiEntry() {
   multiParsedData = null;
 }
 
-// ---- Khaata ----
+// ---------- Khaata ----------
 async function getKhaata() {
   const name = document.getElementById('khaata-input').value.trim();
   if (!name) return;
   try {
-    const res = await apiFetch(`/khaata/${name}`);
+    const res = await apiFetch(`/khaata/${encodeURIComponent(name)}`);
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
     document.getElementById('khaata-entries').innerHTML = data.entries.map(e => `
       <div class="entry-row">
-        <span style="color:#64748b;font-size:12px;">${e.date}</span>
-        <span style="font-weight:500;">${e.item==='PAYMENT'?'💰 Payment':e.item}</span>
-        <span>${e.item==='PAYMENT'?'—':'x'+e.quantity}</span>
+        <span style="color:#64748b;font-size:12px;">${esc(e.date)}</span>
+        <span style="font-weight:500;">${e.item==='PAYMENT'?'💰 Payment':esc(e.item)}</span>
+        <span>${e.item==='PAYMENT'?'—':'x'+esc(e.quantity)}</span>
         <span class="action-btns">
           <span style="color:${e.total<0?'#16a34a':'#1e293b'};font-weight:600;">Rs. ${Math.abs(e.total)} ${e.total<0?'✓':''}</span>
-          ${e.item!=='PAYMENT'?`<button class="edit-btn" onclick="editEntry(${e.id},'${e.item}',${e.quantity},${e.price},'${e.date}')">✏️</button>`:''}
+          ${e.item!=='PAYMENT'?`<button class="edit-btn" onclick="editEntry(this.dataset.id,this.dataset.item,this.dataset.qty,this.dataset.price,this.dataset.date)" data-id="${e.id}" data-item="${esc(e.item)}" data-qty="${e.quantity}" data-price="${e.price}" data-date="${esc(e.date)}">✏️</button>`:''}
           <button class="del-btn" onclick="deleteEntry(${e.id})">🗑️</button>
         </span>
       </div>`).join('');
@@ -1556,7 +1449,7 @@ async function getKhaata() {
   } catch(e) { showToast('Server error','error'); }
 }
 
-// ---- All Customers ----
+// ---------- All Customers ----------
 let allCustomersCache = [];
 let allCustomersGrandTotal = 0;
 
@@ -1591,14 +1484,14 @@ function renderFilteredCustomers() {
   document.getElementById('cust-count').textContent = `${list.length} of ${allCustomersCache.length}`;
   document.getElementById('all-customers-list').innerHTML = list.map(c => `
     <div class="entry-row">
-      <span onclick="viewCustomer('${c.name}')" style="cursor:pointer;color:#6366f1;font-weight:600;">${c.name}</span>
-      <span style="color:#64748b;">${c.phone}</span>
+      <span onclick="viewCustomer(this.dataset.name)" data-name="${esc(c.name)}" style="cursor:pointer;color:#6366f1;font-weight:600;">${esc(c.name)}</span>
+      <span style="color:#64748b;">${esc(c.phone)}</span>
       <span style="color:#64748b;">${c.total_entries} entries</span>
       <span class="action-btns">
         <span style="font-weight:700;color:${c.total_baaki>0?'#dc2626':'#16a34a'};">Rs. ${c.total_baaki}</span>
-        <button class="wa-btn" onclick="sendReminder('${c.name.toLowerCase()}')" title="WhatsApp reminder">📱</button>
-        <button class="edit-btn" onclick="editCustomer('${c.name}','${c.phone}')">✏️</button>
-        <button class="del-btn" onclick="deleteCustomer('${c.name}')">🗑️</button>
+        <button class="wa-btn" onclick="sendReminder(this.dataset.name)" data-name="${esc(c.name.toLowerCase())}" title="WhatsApp reminder">📱</button>
+        <button class="edit-btn" onclick="editCustomer(this.dataset.name,this.dataset.phone)" data-name="${esc(c.name)}" data-phone="${esc(c.phone)}">✏️</button>
+        <button class="del-btn" onclick="deleteCustomer(this.dataset.name)" data-name="${esc(c.name)}">🗑️</button>
       </span>
     </div>`).join('') || '<div style="padding:20px;color:#64748b;text-align:center;">Koi customer nahi mila</div>';
   document.getElementById('grand-total').textContent = `Rs. ${list.reduce((s,c) => s + Number(c.total_baaki||0), 0)}`;
@@ -1612,7 +1505,7 @@ function viewCustomer(name) {
 async function deleteCustomer(name) {
   if (!confirm(`⚠️ ${name} aur uski saari entries delete ho jaayengi!`)) return;
   try {
-    const res = await apiFetch(`/customer/${name}`, {method:'DELETE'});
+    const res = await apiFetch(`/customer/${encodeURIComponent(name)}`, {method:'DELETE'});
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
     showToast(`🗑️ ${name} delete ho gaya!`);
@@ -1680,7 +1573,7 @@ async function saveEntryEdit() {
   } catch(e){showToast('Update nahi hua','error');}
 }
 
-// ---- Inventory Check ----
+// ---------- Inventory Check ----------
 async function checkInventory() {
   const item = document.getElementById('inv-input').value.trim();
   if (!item) return;
@@ -1690,36 +1583,32 @@ async function checkInventory() {
     const res = await apiFetch(`/inventory/${encodeURIComponent(item)}`);
     const data = await res.json();
     if (data.error) {
-      container.innerHTML = `<div style="text-align:center;color:#dc2626;padding:20px;">❌ ${data.error}</div>`;
+      container.innerHTML = `<div style="text-align:center;color:#dc2626;padding:20px;">❌ ${esc(data.error)}</div>`;
       return;
     }
     const variants = data.variants || [];
-    const countLabel = variants.length === 1
-      ? '<b>1 item</b> mila'
-      : `<b>${variants.length} variants</b> mile — sab dekho:`;
+    const countLabel = variants.length === 1 ? '<b>1 item</b> mila' : `<b>${variants.length} variants</b> mile — sab dekho:`;
     const rows = variants.map(v => {
       const stockBadge = v.stock > 0
         ? `<span class="badge badge-green">${v.stock} baaki</span>`
         : `<span class="badge badge-red">Out of stock</span>`;
       return `
         <div class="entry-row" style="cursor:default;">
-          <span style="font-weight:600;">${v.name}</span>
+          <span style="font-weight:600;">${esc(v.name)}</span>
           <span style="color:#16a34a;font-weight:700;">Rs. ${v.price}</span>
           <span>${stockBadge}</span>
         </div>`;
     }).join('');
     container.innerHTML = `
       <div style="font-size:13px;color:#64748b;margin-bottom:8px;">${countLabel}</div>
-      <div class="entry-row entry-header">
-        <span>Item</span><span>Sale Price</span><span>Stock</span>
-      </div>
+      <div class="entry-row entry-header"><span>Item</span><span>Sale Price</span><span>Stock</span></div>
       ${rows}`;
   } catch(e) {
     container.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;">Server error</div>';
   }
 }
 
-// ---- Inventory Management ----
+// ---------- Inventory Management ----------
 async function loadInventory() {
   try {
     const res=await apiFetch('/inventory/all');
@@ -1739,13 +1628,13 @@ function renderInventoryTable(items) {
   if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Koi item nahi mila</td></tr>';return;}
   tbody.innerHTML=items.map(item=>`
     <tr>
-      <td style="font-weight:600;color:#1e293b;">${item.name}</td>
-      <td style="color:#64748b;">${item.category||'—'}</td>
+      <td style="font-weight:600;color:#1e293b;">${esc(item.name)}</td>
+      <td style="color:#64748b;">${esc(item.category)||'—'}</td>
       <td style="color:#16a34a;font-weight:600;">Rs. ${item.price}</td>
       <td style="color:#64748b;">Rs. ${item.purchase_rate||0}</td>
       <td><span class="badge ${item.stock<=0?'badge-red':item.low_stock?'badge-amber':'badge-green'}">${item.stock<=0?'❌ '+item.stock:item.low_stock?'⚠️ '+item.stock:'✅ '+item.stock}</span></td>
       <td style="color:#64748b;">${item.reorder_level}</td>
-      <td><div class="action-btns"><button class="edit-btn" onclick="editItem(${item.id})">✏️</button><button class="del-btn" onclick="deleteInventoryItem(${item.id},'${item.name.replace(/'/g,"\\'")}')">🗑️</button></div></td>
+      <td><div class="action-btns"><button class="edit-btn" onclick="editItem(${item.id})">✏️</button><button class="del-btn" onclick="deleteInventoryItem(this.dataset.id,this.dataset.name)" data-id="${item.id}" data-name="${esc(item.name)}">🗑️</button></div></td>
     </tr>`).join('');
 }
 
@@ -1811,7 +1700,7 @@ async function deleteInventoryItem(itemId,itemName) {
   } catch(e){showToast('Delete nahi hua','error');}
 }
 
-// ---- Purchase ----
+// ---------- Purchase ----------
 async function parsePurchase() {
   const text=document.getElementById('purchase-input').value.trim();
   if(!text)return;
@@ -1855,12 +1744,12 @@ async function getPurchaseHistory() {
     if(data.error){showToast(data.error,'error');return;}
     document.getElementById('purchase-history-list').innerHTML=data.purchases.map(p=>`
       <div class="entry-row">
-        <span style="color:#64748b;font-size:12px;">${p.date}</span>
-        <span style="font-weight:500;">${p.item}<br><small style="color:#94a3b8;">${p.supplier}</small></span>
+        <span style="color:#64748b;font-size:12px;">${esc(p.date)}</span>
+        <span style="font-weight:500;">${esc(p.item)}<br><small style="color:#94a3b8;">${esc(p.supplier)}</small></span>
         <span style="color:#64748b;">x${p.quantity} @ Rs.${p.rate}</span>
         <span class="action-btns">
           <span style="font-weight:700;">Rs. ${p.total}</span>
-          <button class="edit-btn" onclick="editPurchase(${p.id},'${p.supplier}','${p.item}',${p.quantity},${p.rate},'${p.date}')">✏️</button>
+          <button class="edit-btn" onclick="editPurchase(this.dataset.id,this.dataset.supplier,this.dataset.item,this.dataset.qty,this.dataset.rate,this.dataset.date)" data-id="${p.id}" data-supplier="${esc(p.supplier)}" data-item="${esc(p.item)}" data-qty="${p.quantity}" data-rate="${p.rate}" data-date="${esc(p.date)}">✏️</button>
           <button class="del-btn" onclick="deletePurchase(${p.id})">🗑️</button>
         </span>
       </div>`).join('');
@@ -1906,16 +1795,14 @@ async function deletePurchase(id) {
   } catch(e){showToast('Delete nahi hua','error');}
 }
 
-// ================= WhatsApp + Reports =================
+// ---------- WhatsApp + Reports ----------
 let waBannerTimer = null;
-
-let waPendingContext = null;  // {customer, message} — modal complete hone ke baad use hota hai
+let waPendingContext = null;
 
 function showWhatsAppPrompt(wa, label, customerName) {
   if (!wa || !wa.link) return;
   if (wa.auto_sent) { showToast('📱 WhatsApp message customer ko bhej diya gaya!'); return; }
   if (!wa.phone_valid && customerName) {
-    // Phone missing — dialog dikhao, banner nahi
     waPendingContext = {customer: customerName, message: wa.message, fallbackLink: wa.link};
     document.getElementById('wa-phone-modal-name').textContent = `${customerName.charAt(0).toUpperCase()+customerName.slice(1)} ka contact save nahi hai — abhi daal do?`;
     document.getElementById('wa-phone-modal-input').value = '';
@@ -1955,7 +1842,6 @@ async function saveWaPhoneAndSend() {
 }
 
 function skipWaPhone() {
-  // Bina save kiye — sirf plain wa.me link kholo, user khud contact chunega
   if (waPendingContext && waPendingContext.fallbackLink) {
     window.open(waPendingContext.fallbackLink, '_blank');
   }
@@ -1973,7 +1859,6 @@ async function sendReminder(name) {
     if (data.error) { showToast(data.error,'error'); return; }
     if (data.whatsapp.auto_sent) { showToast(`📱 ${name} ko reminder bhej diya!`); return; }
     if (!data.whatsapp.phone_valid) {
-      // Phone missing — dialog
       waPendingContext = {customer: name, message: data.whatsapp.message, fallbackLink: data.whatsapp.link};
       document.getElementById('wa-phone-modal-name').textContent = `${name.charAt(0).toUpperCase()+name.slice(1)} ka contact save nahi hai — abhi daal do?`;
       document.getElementById('wa-phone-modal-input').value = '';
@@ -1997,8 +1882,8 @@ async function loadBulkReminders() {
       data.auto_send_enabled ? '✅ Auto-send ON (Cloud API)' : 'ℹ️ Har button WhatsApp kholega — free mode';
     document.getElementById('wa-reminder-list').innerHTML = waReminders.map((r,i) => `
       <div class="entry-row" id="wa-row-${i}">
-        <span style="font-weight:600;">${r.customer}</span>
-        <span style="color:#64748b;">${r.phone_valid ? r.phone : '⚠️ ' + (r.phone || 'no phone')}</span>
+        <span style="font-weight:600;">${esc(r.customer)}</span>
+        <span style="color:#64748b;">${r.phone_valid ? esc(r.phone) : '⚠️ ' + esc(r.phone || 'no phone')}</span>
         <span style="font-weight:700;color:#dc2626;">Rs. ${r.baaki}</span>
         <span>${r.auto_sent
           ? '<span style="color:#16a34a;font-weight:600;">✅ Bhej diya</span>'
@@ -2011,15 +1896,12 @@ function openReminder(i) {
   const r = waReminders[i];
   if (!r) return;
   if (!r.phone_valid) {
-    // Phone missing — dialog, aur save hone ke baad list refresh
     waPendingContext = {
       customer: r.customer.toLowerCase(),
-      message: r.message || '',  // bulk endpoint message wapas karta hai? Nahi — sendReminder call karo
+      message: r.message || '',
       fallbackLink: r.link,
       _bulkIndex: i
     };
-    // Bulk endpoint message string wapas nahi karta, sirf link — proper reminder message chahiye
-    // Isliye sendReminder wala flow use karo jo backend se message + link dono deta hai
     sendReminder(r.customer.toLowerCase());
     return;
   }
@@ -2028,10 +1910,7 @@ function openReminder(i) {
   if (btn) { btn.disabled = true; btn.textContent = '✅ Khula'; }
 }
 
-let waQueueIndex = 0;
 function sendAllReminders() {
-  // wa.me ek waqt mein ek hi chat khol sakta hai — is liye queue:
-  // har click pe agla customer khulta hai
   const pending = waReminders.map((r,i)=>i).filter(i => {
     const btn = document.getElementById(`wa-btn-${i}`);
     return btn && !btn.disabled;
@@ -2058,13 +1937,13 @@ async function loadDashboard() {
     document.getElementById('stat-customers').textContent = data.customer_count;
     document.getElementById('top-baaki-list').innerHTML = data.top_baaki.map(c => `
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-        <span style="cursor:pointer;color:#6366f1;" onclick="viewCustomer('${c.name.toLowerCase()}')">${c.name}</span>
+        <span style="cursor:pointer;color:#6366f1;" onclick="viewCustomer(this.dataset.name)" data-name="${esc(c.name.toLowerCase())}">${esc(c.name)}</span>
         <span><b style="color:#dc2626;">Rs. ${c.baaki}</b>
-        <button class="wa-btn" style="margin-left:8px;" onclick="sendReminder('${c.name.toLowerCase()}')">📱</button></span>
+        <button class="wa-btn" style="margin-left:8px;" onclick="sendReminder(this.dataset.name)" data-name="${esc(c.name.toLowerCase())}">📱</button></span>
       </div>`).join('') || '<div style="color:#64748b;">Koi baaki nahi 🎉</div>';
     document.getElementById('low-stock-list').innerHTML = data.low_stock.map(i => `
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-        <span>${i.item}</span><span style="color:${i.stock<=0?'#dc2626':'#d97706'};font-weight:700;">${i.stock} left</span>
+        <span>${esc(i.item)}</span><span style="color:${i.stock<=0?'#dc2626':'#d97706'};font-weight:700;">${i.stock} left</span>
       </div>`).join('') || '<div style="color:#64748b;">Sab stock theek hai ✅</div>';
   } catch(e) { showToast('Dashboard load nahi hua','error'); }
 }
@@ -2083,7 +1962,7 @@ async function exportCSV(kind) {
   } catch(e) { showToast('Export nahi hua','error'); }
 }
 
-// ---------------- Trash ----------------
+// ---------- Trash ----------
 async function loadTrash() {
   try {
     const res = await apiFetch('/trash/khaata');
@@ -2091,10 +1970,10 @@ async function loadTrash() {
     if (data.error) { showToast(data.error,'error'); return; }
     document.getElementById('trash-list').innerHTML = data.entries.map(e => `
       <div class="entry-row">
-        <span style="font-weight:600;">${e.customer}</span>
-        <span>${e.item} <small style="color:#94a3b8;">x${e.quantity}</small></span>
+        <span style="font-weight:600;">${esc(e.customer)}</span>
+        <span>${esc(e.item)} <small style="color:#94a3b8;">x${e.quantity}</small></span>
         <span style="font-weight:700;">Rs. ${e.total}</span>
-        <span style="color:#94a3b8;font-size:12px;">${new Date(e.deleted_at).toLocaleString('en-PK')}</span>
+        <span style="color:#94a3b8;font-size:12px;">${esc(new Date(e.deleted_at).toLocaleString('en-PK'))}</span>
         <span><button class="btn-primary" style="padding:4px 10px;font-size:13px;" onclick="restoreEntry(${e.id})">↩️ Restore</button></span>
       </div>`).join('') || '<div style="padding:20px;color:#64748b;text-align:center;">Trash khali hai ✨</div>';
   } catch(e) { showToast('Trash load nahi hua','error'); }
@@ -2121,15 +2000,14 @@ async function purgeOldTrash() {
   } catch(e) { showToast('Purge fail','error'); }
 }
 
-// ---- Quick Payment ----
+// ---------- Quick Payment ----------
 async function openQuickPayment() {
-  // Pre-populate customer datalist from cache
   const dl = document.getElementById('qp-customer-list');
   if (dl) {
     if (!allCustomersCache.length) {
       try { await getAllCustomers(); } catch(_){}
     }
-    dl.innerHTML = allCustomersCache.map(c => `<option value="${c.name.toLowerCase()}">`).join('');
+    dl.innerHTML = allCustomersCache.map(c => `<option value="${esc(c.name.toLowerCase())}">`).join('');
   }
   document.getElementById('qp-customer').value = '';
   document.getElementById('qp-amount').value = '';
