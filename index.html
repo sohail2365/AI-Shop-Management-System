@@ -55,21 +55,31 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;margin-right:4px;}
 .sidebar-overlay{display:none;}
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .hamburger-btn{display:block;}
   .topbar-shop{display:none;}
-  .app-body{position:relative;}
+
+  /* Sidebar — fixed, off-screen by default, slides in with translateX */
   .sidebar{
     position:fixed;
     top:60px;
-    left:-260px;
-    width:240px;
+    left:0;
+    width:260px;
+    max-width:80vw;
     height:calc(100vh - 60px);
     z-index:1000;
-    transition:left 0.25s ease;
+    transform:translateX(-100%);
+    transition:transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow:2px 0 12px rgba(0,0,0,0.3);
+    will-change:transform;
+    pointer-events:none;
   }
-  .sidebar.open{left:0;}
+  .sidebar.open{
+    transform:translateX(0);
+    pointer-events:auto;
+  }
+
+  /* Overlay — dims the content behind the open sidebar */
   .sidebar-overlay{
     display:block;
     position:fixed;
@@ -80,7 +90,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
     pointer-events:none;
     transition:opacity 0.25s ease;
   }
-  .sidebar-overlay.show{opacity:1;pointer-events:auto;}
+  .sidebar-overlay.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+
   .main-content{padding:12px;width:100%;}
 }
 
@@ -111,7 +125,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .stat-lbl{font-size:12px;color:#64748b;margin-top:2px;}
 
 .input-row{display:flex;gap:10px;margin-bottom:4px;}
-input[type="text"],input[type="number"],input[type="date"],input[type="password"]{flex:1;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;color:#1e293b;}
+input[type="text"],input[type="number"],input[type="date"],input[type="password"]{flex:1;min-width:0;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;color:#1e293b;}
 input:focus{border-color:#6366f1;}
 button{padding:10px 18px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;transition:all 0.2s;white-space:nowrap;font-weight:500;}
 button:hover{background:#4f46e5;}
