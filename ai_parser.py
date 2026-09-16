@@ -64,7 +64,7 @@ def _extract_json(raw: str) -> dict:
     raise json.JSONDecodeError("No JSON found in response", raw, 0)
 
 
-@retry(max_attempts=3, base_delay=1, max_delay=8)
+@_retry(max_attempts=3, base_delay=1, max_delay=8)
 def _groq_call(system_prompt: str, user_input: str, max_tokens: int = 200) -> str:
     """Groq call with retry on transient network errors."""
     if client is None:
