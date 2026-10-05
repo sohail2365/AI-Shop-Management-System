@@ -17,7 +17,7 @@ from database import get_connection
 # ---- YEH 3 CHEEZEIN SET KARO ----
 SHEET_ID = "1FBOBFMsmygArr5HjpPUdpA6taAoKK8KBIr0EgGy2rnw"   # Sheet URL se ID
 WORKSHEET_NAME = "Inventory"                                  # Tab ka naam
-SHOP_USERNAME = "asdf"                                       # Tumhara login username
+SHOP_USERNAME = "sohail"                                       # Tumhara login username
 
 # ---- Sheet ke column numbers (0-indexed) — apni sheet ke hisaab se check karo ----
 COL_ITEM_NAME = 0

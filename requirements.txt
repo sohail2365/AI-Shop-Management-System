@@ -8,3 +8,7 @@ SQLAlchemy
 psycopg2-binary
 slowapi
 python-multipart
+bcrypt
+gspread
+google-auth
+psycopg[binary]

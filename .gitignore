@@ -5,3 +5,39 @@ credentials.json
 __pycache__/
 *.pyc
 migrate.py
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.db
+dukaan.db
+backups/
+screenshots/*.png
+test_min.py
+check_items.py
+clear_state.py
+
+# Credentials
+credentials.json

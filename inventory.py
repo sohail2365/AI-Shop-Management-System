@@ -10,32 +10,46 @@ def get_item_price(item_name: str, shop_id: int):
         with get_connection() as conn:
             item_lower = item_name.lower().strip()
 
-            queries = [
-                ("LOWER(item_name) = :val", item_lower),
-                ("LOWER(item_name) LIKE :val", f"{item_lower}%"),
-                ("LOWER(item_name) LIKE :val", f"%{item_lower}%"),
-            ]
+            # Priority: exact > starts-with > contains
+            # Then: in-stock preferred, longer name preferred
+            row = conn.execute(
+                text("""
+                    SELECT id, item_name, sale_price, stock
+                    FROM inventory
+                    WHERE shop_id = :shop_id
+                      AND LOWER(item_name) LIKE :val
+                    ORDER BY
+                        CASE
+                            WHEN LOWER(item_name) = :exact THEN 0
+                            WHEN LOWER(item_name) LIKE :starts THEN 1
+                            ELSE 2
+                        END,
+                        CASE WHEN stock > 0 THEN 0 ELSE 1 END,
+                        LENGTH(item_name) DESC
+                    LIMIT 1
+                """),
+                {
+                    "shop_id": shop_id,
+                    "val": f"%{item_lower}%",
+                    "exact": item_lower,
+                    "starts": f"{item_lower}%",
+                }
+            ).fetchone()
 
-            for where_clause, value in queries:
-                row = conn.execute(
-                    text(f"""
-                        SELECT id, item_name, sale_price, stock FROM inventory
-                        WHERE shop_id = :shop_id AND {where_clause}
-                        ORDER BY LENGTH(item_name) ASC
-                        LIMIT 1
-                    """),
-                    {"shop_id": shop_id, "val": value}
-                ).fetchone()
-                if row:
-                    return {"id": row[0], "name": row[1], "price": row[2], "stock": int(row[3])}
+            if row:
+                return {"id": row[0], "name": row[1], "price": row[2], "stock": int(row[3])}
 
+            # Word-level fallback
             words = [w for w in item_lower.split() if len(w) > 3]
             for word in words:
                 row = conn.execute(
                     text("""
-                        SELECT id, item_name, sale_price, stock FROM inventory
+                        SELECT id, item_name, sale_price, stock
+                        FROM inventory
                         WHERE shop_id = :shop_id AND LOWER(item_name) LIKE :val
-                        ORDER BY LENGTH(item_name) ASC
+                        ORDER BY
+                            CASE WHEN stock > 0 THEN 0 ELSE 1 END,
+                            LENGTH(item_name) DESC
                         LIMIT 1
                     """),
                     {"shop_id": shop_id, "val": f"%{word}%"}
@@ -47,7 +61,6 @@ def get_item_price(item_name: str, shop_id: int):
     except Exception as e:
         log.error(f"Inventory error: {e}")
         return None
-
 def get_variants(keyword: str, shop_id: int) -> list:
     try:
         with get_connection() as conn:

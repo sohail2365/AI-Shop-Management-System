@@ -19,6 +19,12 @@ from auth import verify_token, register_shop, login_shop, reset_password
 from whatsapp import (build_whatsapp_payload, compose_entry_receipt,
                       compose_payment_receipt, compose_reminder, AUTO_SEND_ENABLED)
 from logger import get_logger
+import httpx
+from config import (
+    WORKER_URL, WORKER_API_KEY, AGENT_ENABLED,
+    WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN,
+)
+
 
 log = get_logger("dukaan.server")
 
@@ -1203,3 +1209,179 @@ def trash_purge(authorization: Optional[str] = Header(None)):
         conn.commit()
     log.info(f"Trash purged: {len(result)} entries, shop={shop_id}")
     return {"success": True, "purged": len(result)}
+
+# =========================================================
+# AGENTIC AI — Webhook + Worker bridge
+# =========================================================
+
+class AgentMessageRequest(BaseModel):
+    channel: str                     # 'whatsapp' | 'web'
+    external_id: str
+    message: str
+    customer_id: Optional[int] = None
+
+
+@app.post("/agent/message")
+async def agent_message(req: AgentMessageRequest,
+                        authorization: Optional[str] = Header(None)):
+    """
+    Frontend ya webhook se agent ko message. Worker ko forward karta hai.
+    """
+    if not AGENT_ENABLED:
+        return {"error": "Agent disabled"}
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            f"{WORKER_URL}/agent/handle",
+            json={
+                "shop_id": shop_id,
+                "channel": req.channel,
+                "external_id": req.external_id,
+                "message": req.message,
+                "customer_id": req.customer_id,
+            },
+            headers={"X-Worker-Key": WORKER_API_KEY},
+        )
+    return resp.json()
+
+
+@app.post("/agent/schedule-reminder")
+async def agent_schedule_reminder(req: ReminderRequest,
+                                  authorization: Optional[str] = Header(None)):
+    """Manual reminder schedule karo (worker ko enqueue)."""
+    if not AGENT_ENABLED:
+        return {"error": "Agent disabled"}
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    customer = req.customer.lower().strip()
+    phone, baaki = get_customer_phone_and_baaki(customer, shop_id)
+    if phone is None and baaki == 0:
+        return {"error": f"'{req.customer}' nahi mila"}
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.post(
+            f"{WORKER_URL}/tasks/enqueue",
+            json={
+                "shop_id": shop_id,
+                "task_type": "reminder",
+                "payload": {
+                    "customer_name": customer,
+                    "phone": phone,
+                    "baaki": float(baaki),
+                    "channel": "whatsapp",
+                    "scheduled_by": "manual",
+                },
+            },
+            headers={"X-Worker-Key": WORKER_API_KEY},
+        )
+    return resp.json()
+
+
+# =========================================================
+# WHATSAPP CLOUD API WEBHOOK (incoming messages)
+# =========================================================
+
+@app.get("/whatsapp/webhook")
+def whatsapp_webhook_verify(request: Request):
+    """
+    Meta webhook verification (ek baar hota hai setup pe).
+    Meta 'hub.mode', 'hub.verify_token', 'hub.challenge' bhejta hai.
+    """
+    params = request.query_params
+    mode = params.get("hub.mode")
+    token = params.get("hub.verify_token")
+    challenge = params.get("hub.challenge")
+
+    if mode == "subscribe" and token == WHATSAPP_VERIFY_TOKEN:
+        return PlainTextResponse(challenge or "", status_code=200)
+    return PlainTextResponse("Forbidden", status_code=403)
+
+
+@app.post("/whatsapp/webhook")
+async def whatsapp_webhook_receive(request: Request):
+    """
+    Incoming WhatsApp message. Meta 5 second mein 200 expect karta hai —
+    isliye turant 200 return karo, background mein worker ko forward.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {"status": "ignored"}
+
+    # Optional signature verification
+    if WHATSAPP_APP_SECRET:
+        signature = request.headers.get("X-Hub-Signature-256", "")
+        # TODO: HMAC verify (production mein zaroori)
+        # For now, log only
+        if not signature:
+            log.warning("No webhook signature — check WHATSAPP_APP_SECRET")
+
+    # Extract message from Meta payload
+    try:
+        entries = body.get("entry", [])
+        for entry in entries:
+            for change in entry.get("changes", []):
+                value = change.get("value", {})
+                messages = value.get("messages", [])
+                metadata = value.get("metadata", {})
+                phone_number_id = metadata.get("phone_number_id")
+
+                for msg in messages:
+                    if msg.get("type") != "text":
+                        continue
+                    from_phone = msg.get("from")     # e.g. "923001234567"
+                    text = msg.get("text", {}).get("body", "")
+
+                    # Find shop by phone_number_id
+                    shop_id = None
+                    with get_connection() as conn:
+                        row = conn.execute(
+                            text("""
+                                SELECT shop_id FROM shops
+                                WHERE agent_settings->>'whatsapp_phone_id' = :pid
+                                LIMIT 1
+                            """),
+                            {"pid": phone_number_id}
+                        ).fetchone()
+                        if row:
+                            shop_id = row[0]
+
+                    # Fallback: agar single-tenant hai to first shop
+                    if not shop_id:
+                        with get_connection() as conn:
+                            row = conn.execute(
+                                text("SELECT shop_id FROM shops LIMIT 1")
+                            ).fetchone()
+                            if row:
+                                shop_id = row[0]
+
+                    if not shop_id:
+                        log.warning(f"No shop for phone_number_id={phone_number_id}")
+                        continue
+
+                    # Forward to worker
+                    if AGENT_ENABLED:
+                        try:
+                            async with httpx.AsyncClient(timeout=5.0) as client:
+                                await client.post(
+                                    f"{WORKER_URL}/agent/handle",
+                                    json={
+                                        "shop_id": shop_id,
+                                        "channel": "whatsapp",
+                                        "external_id": from_phone,
+                                        "message": text,
+                                    },
+                                    headers={"X-Worker-Key": WORKER_API_KEY},
+                                )
+                        except Exception as e:
+                            log.error(f"Worker forward failed: {e}")
+
+    except Exception as e:
+        log.error(f"Webhook parse failed: {e}")
+
+    return {"status": "ok"}    
