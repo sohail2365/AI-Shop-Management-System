@@ -1,0 +1,20 @@
+# worker/requirements.txt
+# Worker ke liye — apne service mein deploy karo (Railway/Render/Fly.io)
+
+# Core (existing ke saath match)
+fastapi
+uvicorn[standard]
+pydantic
+python-dotenv
+SQLAlchemy
+psycopg2-binary
+groq
+python-jose[cryptography]
+
+# Worker specific
+APScheduler>=3.10
+
+# Phase 1+ (baad mein zaroorat padegi, abhi comment out rakho)
+# langgraph>=0.2
+# langchain-core>=0.3
+httpx
