@@ -270,32 +270,36 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .ac-row{display:flex;justify-content:space-between;align-items:center;gap:12px;}
 .ac-loading,.ac-empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px;}
 
-/* Khaata table */
-.khaata-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px; table-layout: fixed;}
-.khaata-table th{background:#f8fafc;padding:10px 8px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;}
-.khaata-table td{padding:8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+/* Khaata table - Excel Style Grid */
+.khaata-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px; table-layout: fixed; border: 1px solid #cbd5e1;}
+.khaata-table th{background:#f1f5f9;padding:10px 8px;text-align:left;font-weight:700;color:#1e293b;font-size:12px;text-transform:uppercase;border: 1px solid #cbd5e1;}
+.khaata-table td{padding:6px;border: 1px solid #cbd5e1;vertical-align:middle; background: #fff;}
 .khaata-table tr:hover td{background:#f8fafc;}
 
-/* Column widths for perfect alignment */
+/* Column widths */
 .col-date { width: 12%; }
-.col-item { width: 32%; }
+.col-item { width: 30%; }
 .col-qty { width: 10%; }
 .col-price { width: 14%; }
 .col-total { width: 16%; text-align: right; }
-.col-action { width: 16%; text-align: center; }
+.col-action { width: 18%; text-align: center; }
 
-/* Make inputs fit perfectly inside cells */
+/* Inputs inside table */
 .khaata-table input[type="text"], 
 .khaata-table input[type="number"] {
   width: 100%;
-  padding: 6px 8px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 6px;
+  padding: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
   font-size: 13px;
   box-sizing: border-box;
   outline: none;
+  background: #f8fafc;
 }
-.khaata-table input:focus { border-color: #6366f1; }
+.khaata-table input:focus { border-color: #6366f1; background: #fff; }
+
+/* Fixed Dropdown */
+.autocomplete-dropdown{position:absolute;top:100%;left:0;width:100%;min-width:250px;background:white;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:9999;max-height:250px;overflow-y:auto;display:none;margin-top:2px;}
 
 .khaata-summary{margin-top:20px;padding-top:16px;border-top:2px solid #e2e8f0;}
 .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:14px;}
@@ -455,8 +459,8 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
             <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Pehla Udhaar</button>
           </div>
 
-          <div style="overflow-x:auto;">
-            <table class="khaata-table">
+          <div>
+            <table class="khaata-table" id="unified-table">
               <thead>
                 <tr>
                   <th class="col-date">Date</th>
@@ -1230,7 +1234,7 @@ function renderUnifiedTable() {
         <tr>
           <td class="col-date" style="color:#64748b;font-size:12px;">Aaj</td>
           <td class="col-item">
-            <div class="autocomplete-wrap">
+            <div class="autocomplete-wrap" style="width:100%;">
               <input type="text" id="new-item-${i}" value="${esc(e.item)}" oninput="updateNewEntry(${i}, 'item', this.value)" placeholder="Item name">
               <div id="new-item-suggest-${i}" class="autocomplete-dropdown"></div>
             </div>
@@ -1345,28 +1349,27 @@ async function saveUnifiedEntries() {
     const res = await apiFetch('/entry/multi/save', { method: 'POST', body: JSON.stringify(payload) });
     const data = await res.json();
     
-    if (data.error) { showToast(data.error, 'error'); btn.disabled = false; btn.textContent = '✓ Nayi Entries Save Karein'; return; }
+    if (data.error) { 
+      showToast(data.error, 'error'); 
+      btn.disabled = false; 
+      btn.textContent = '✓ Nayi Entries Save Karein'; 
+      return; 
+    }
 
     showToast(`✅ ${data.items_saved} items save ho gaye!`);
     showWhatsAppPrompt(data.whatsapp, 'Receipt tayyar hai —', data.customer);
     
+    // Nayi entries clear karein aur table fresh load karein
     unifiedNewEntries = [];
     await loadUnifiedCustomer(unifiedCustomer.customer_id); 
     
-  } catch (e) { showToast('Save nahi hua', 'error'); }
+  } catch (e) { 
+    showToast('Save nahi hua', 'error'); 
+  }
   
-  btn.disabled = false; btn.textContent = '✓ Nayi Entries Save Karein';
+  btn.disabled = false; 
+  btn.textContent = '✓ Nayi Entries Save Karein';
 }
-
-function openOpeningBalanceModal() {
-  if (!unifiedCustomer) return;
-  document.getElementById('ob-customer-id').value = unifiedCustomer.customer_id;
-  document.getElementById('ob-customer-name').value = unifiedCustomer.customer;
-  document.getElementById('ob-amount').value = unifiedCustomer.opening_balance || 0;
-  openModal('opening-balance-modal');
-  setTimeout(() => { const el = document.getElementById('ob-amount'); el.focus(); el.select(); }, 100);
-}
-
 async function saveOpeningBalance() {
   const customerId = parseInt(document.getElementById('ob-customer-id').value, 10);
   const amount = parseFloat(document.getElementById('ob-amount').value) || 0;
