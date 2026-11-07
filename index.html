@@ -55,7 +55,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 /* Sidebar */
 .sidebar{width:220px;background:#1e293b;flex-shrink:0;overflow-y:auto;padding:12px 0;}
 
-/* ---- Mobile responsive sidebar (hamburger drawer) ---- */
+/* ---- Mobile responsive sidebar ---- */
 .hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;margin-right:4px;}
 .sidebar-overlay{display:none;}
 
@@ -154,7 +154,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .edit-btn{padding:3px 8px;background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 .del-btn{padding:3px 8px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 
-/* Khaata entries (old — kept for other lists) */
+/* Khaata entries (old lists) */
 .entry-table{width:100%;}
 .entry-row{display:grid;grid-template-columns:0.8fr 1.5fr 0.6fr 1fr;padding:8px 4px;border-bottom:1px solid #f1f5f9;font-size:13px;align-items:center;gap:8px;}
 .entry-row:last-child{border-bottom:none;}
@@ -240,7 +240,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .page-title{font-size:20px;font-weight:700;color:#1e293b;}
 .page-subtitle{font-size:13px;color:#64748b;margin-top:2px;}
 
-/* ---- WhatsApp + Reports ---- */
+/* WhatsApp + Reports */
 .wa-banner{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#075e54;color:#fff;padding:12px 16px;border-radius:12px;display:none;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:9999;max-width:90vw;}
 .wa-banner.show{display:flex;}
 .wa-banner a{background:#25d366;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;white-space:nowrap;font-size:14px;}
@@ -255,7 +255,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .stat-card.red .stat-value{color:#dc2626;}
 .stat-card.blue .stat-value{color:#2563eb;}
 
-/* ============ Autocomplete dropdown ============ */
+/* Autocomplete dropdown */
 .autocomplete-wrap{position:relative;display:inline-block;width:100%;}
 .autocomplete-dropdown{position:absolute;top:100%;left:0;min-width:100%;width:max-content;max-width:340px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:200;max-height:280px;overflow-y:auto;display:none;margin-top:4px;}
 .autocomplete-dropdown.show{display:block;}
@@ -270,7 +270,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .ac-row{display:flex;justify-content:space-between;align-items:center;gap:12px;}
 .ac-loading,.ac-empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px;}
 
-/* ============ Khaata page ============ */
+/* Khaata table */
 .khaata-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px;}
 .khaata-table th{background:#f8fafc;padding:10px 8px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;}
 .khaata-table td{padding:10px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
@@ -358,7 +358,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       <div style="height:8px;"></div>
       <div class="nav-section">Main</div>
       <div class="nav-item active" onclick="showPage('entry')" id="nav-entry">
-        <span class="nav-icon">✍️</span><span>Naya Entry</span>
+        <span class="nav-icon">📒</span><span>Khaata & Entry</span>
       </div>
       <div class="nav-item" onclick="showPage('multi-entry')" id="nav-multi-entry">
         <span class="nav-icon">🧾</span><span>Multiple Items</span>
@@ -366,9 +366,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
       <div class="nav-divider"></div>
       <div class="nav-section">Customers</div>
-      <div class="nav-item" onclick="showPage('khaata')" id="nav-khaata">
-        <span class="nav-icon">📒</span><span>Customer Khaata</span>
-      </div>
       <div class="nav-item" onclick="showPage('customers');getAllCustomers()" id="nav-customers">
         <span class="nav-icon">👥</span><span>Sab Customers</span>
       </div>
@@ -410,76 +407,86 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     <!-- Main Content -->
     <div class="main-content">
 
-      <!-- ===== PAGE: ENTRY ===== -->
+      <!-- ===== PAGE: ENTRY & KHAATA (Unified) ===== -->
       <div class="page active" id="page-entry">
         <div class="page-header">
           <div>
-            <div class="page-title">✍️ Naya Khaata Entry</div>
-            <div class="page-subtitle">Customer ki sale ya payment record karo</div>
+            <div class="page-title">📒 Khaata & Naya Entry</div>
+            <div class="page-subtitle">Customer dhoondein, purana hisaab dekhein, aur naya likhein</div>
           </div>
         </div>
-        <div class="card">
-          <div class="card-title"><span class="icon">🤖</span> AI Entry</div>
-          <div class="input-row">
-            <input type="text" id="entry-input" placeholder="Sale: 'bilal ne 2 brite liya'  ya  Payment: 'bilal ne 500 diye'" onkeydown="if(event.key==='Enter')parseEntry()">
-            <button type="button" id="mic-btn" onclick="toggleVoiceEntry()" title="Urdu ya Roman Urdu mein bolo" style="flex:unset;width:46px;font-size:18px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;">🎤</button>
-            <button onclick="parseEntry()" id="parse-btn">Parse karo</button>
+
+        <!-- Search Card -->
+        <div class="card" style="padding:14px; margin-bottom:12px; border: 2px solid #6366f1;">
+          <div class="autocomplete-wrap">
+            <input type="text" id="unified-customer-search" placeholder="🔍 Customer ka Naam ya Khaata # likhein..." autocomplete="off" style="width:100%; font-size:16px; padding:12px; background:#f8faff;">
+            <div id="unified-suggestions" class="autocomplete-dropdown"></div>
           </div>
-          <div style="margin-top:8px;font-size:12px;color:#64748b;">
-            🎤 <b>Voice:</b> Urdu ya Roman Urdu mein bolo — dono kaam karte hain
-            &nbsp;•&nbsp;
-            💡 <b>Payment record karna hai?</b> Likho <i>"customer_name ne X diye"</i>
-            &nbsp;•&nbsp;
-            <a href="#" onclick="openQuickPayment();return false;" style="color:#6366f1;font-weight:600;">Quick Payment karo</a>
+        </div>
+
+        <!-- Table Card -->
+        <div class="card" id="unified-table-card" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+            <div>
+              <h3 style="font-size:20px; font-weight:700; color:#1e293b; margin:0;" id="unified-cust-name">—</h3>
+              <span style="font-size:13px; color:#64748b;" id="unified-cust-meta">—</span>
+            </div>
+            <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Pehla Udhaar</button>
           </div>
 
-          <div class="result-box" id="parse-result">
-            <div class="parsed-row"><span class="lbl">Customer</span><span class="val"><input type="text" id="r-customer" oninput="syncSingleEntryFromInputs()" style="width:220px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;"></span></div>
-            <div class="parsed-row">
-              <span class="lbl">Item</span>
-              <span class="val autocomplete-wrap" style="width:220px;">
-                <input type="text" id="r-item" oninput="syncSingleEntryFromInputs()" placeholder="Item — type karo, suggestions aayengi" autocomplete="off" style="width:100%;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;">
-                <div id="r-item-suggestions" class="autocomplete-dropdown"></div>
-              </span>
-            </div>
-            <div class="parsed-row"><span class="lbl">Quantity</span><span class="val"><input type="number" id="r-qty" min="0" step="0.01" oninput="syncSingleEntryFromInputs()" style="width:110px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;text-align:right;"></span></div>
-            <div class="parsed-row"><span class="lbl">Price per item</span><span class="val"><input type="number" id="r-price" min="0" step="0.01" oninput="syncSingleEntryFromInputs()" style="width:130px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;text-align:right;"></span></div>
-            <div class="parsed-row"><span class="lbl">Total</span><span class="val" id="r-total">-</span></div>
-            <div class="parsed-row"><span class="lbl">Stock</span><span class="val" id="r-stock">—</span></div>
+          <div style="overflow-x:auto;">
+            <table class="khaata-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th style="text-align:right;">Total</th>
+                  <th style="text-align:center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="unified-table-body"></tbody>
+            </table>
+          </div>
 
-            <div class="stock-warning" id="stock-warning">
-              ⚠️ Yeh item out of stock hai! Phir bhi save karna chahte hain?
-              <label style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer;font-weight:600;">
-                <input type="checkbox" id="force-save-check"> Haan, phir bhi save karo
-              </label>
-            </div>
+          <div style="margin-top:14px;">
+            <button class="btn-outline" onclick="addNewEntryRow()" style="font-size:13px; font-weight:600; border-color:#6366f1; color:#6366f1;">+ Naya Item Add Karein</button>
+          </div>
 
-            <div class="variant-box" id="variant-box">
-              <p>📦 Multiple variants mile — kaunsa select karein?</p>
-              <div class="variant-list" id="variant-list"></div>
+          <!-- Summary -->
+          <div class="khaata-summary">
+            <div class="summary-row">
+              <span>Purana Hisaab</span>
+              <span id="unified-past-total">Rs. 0</span>
             </div>
+            <div class="summary-row">
+              <span>Nayi Entries Ka Total</span>
+              <span id="unified-subtotal">Rs. 0</span>
+            </div>
+            <div class="summary-row">
+              <span>Pehla Udhaar</span>
+              <span id="unified-opening">Rs. 0</span>
+            </div>
+            <div class="summary-row grand" id="unified-grand-row">
+              <span>Grand Total</span>
+              <span id="unified-grand-total">Rs. 0</span>
+            </div>
+          </div>
 
-            <div class="manual-box" id="manual-box">
-              <p>⚠️ Yeh item inventory mein nahi mila — manually price daalo</p>
-              <div class="manual-grid">
-                <div><label>Price per unit (Rs.)</label><input type="number" id="manual-price" placeholder="jaise: 20" oninput="updateManualTotal()"></div>
-                <div><label>Total (auto)</label><input type="number" id="manual-total" readonly style="background:#f8fafc;"></div>
-              </div>
-            </div>
-
-            <div class="confirm-btns">
-              <button class="btn-success" onclick="saveEntry()">✓ Confirm karo</button>
-              <button class="btn-danger" onclick="cancelEntry()">✗ Cancel</button>
-            </div>
+          <div class="confirm-btns" style="margin-top:16px;">
+            <button class="btn-success" onclick="saveUnifiedEntries()" id="unified-save-btn">✓ Nayi Entries Save Karein</button>
+            <button class="btn-outline" onclick="cancelUnifiedEntries()">Cancel / Clear</button>
           </div>
         </div>
       </div>
-      <!-- ===== PAGE: MULTI ENTRY ===== -->
+
+      <!-- ===== PAGE: MULTI ENTRY (AI) ===== -->
       <div class="page" id="page-multi-entry">
         <div class="page-header">
           <div>
-            <div class="page-title">🧾 Multiple Items Entry</div>
-            <div class="page-subtitle">Ek baar mein multiple items enter karo + Bill print karo</div>
+            <div class="page-title">🧾 Multiple Items AI</div>
+            <div class="page-subtitle">AI se ek sath multiple items enter karein + Bill print karein</div>
           </div>
         </div>
         <div class="card">
@@ -533,67 +540,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
               <button class="btn-success" style="background:#0891b2;" onclick="saveMultiEntry(true)">✓ Save + Print</button>
               <button onclick="printBill()" style="background:#6366f1;">🖨️ Sirf Print</button>
               <button class="btn-danger" onclick="cancelMultiEntry()">✗ Cancel</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== PAGE: KHAATA (New) ===== -->
-      <div class="page" id="page-khaata">
-        <div class="page-header">
-          <div>
-            <div class="page-title">📒 Customer Khaata</div>
-            <div class="page-subtitle">Naam ya khaata # likho — suggestions aayengi</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="autocomplete-wrap">
-            <input type="text" id="khaata-input"
-                   placeholder="🔍 Naam ya khaata # ... (jaise 'bilal' ya '5')"
-                   autocomplete="off"
-                   style="width:100%;">
-            <div id="khaata-suggestions" class="autocomplete-dropdown"></div>
-          </div>
-        </div>
-
-        <div class="card" id="khaata-detail-card" style="display:none;">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
-            <div>
-              <div style="font-size:18px;font-weight:700;color:#1e293b;" id="khaata-customer-name">—</div>
-              <div style="font-size:13px;color:#64748b;margin-top:2px;" id="khaata-customer-meta">—</div>
-            </div>
-            <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px;padding:7px 14px;">✏️ Pehla Udhaar</button>
-          </div>
-
-          <div style="overflow-x:auto;">
-            <table class="khaata-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Item</th>
-                  <th>Qty</th>
-                  <th>Rate</th>
-                  <th style="text-align:right;">Total</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="khaata-table-body"></tbody>
-            </table>
-          </div>
-
-          <div class="khaata-summary">
-            <div class="summary-row">
-              <span>Subtotal (entries)</span>
-              <span id="khaata-subtotal">Rs. 0</span>
-            </div>
-            <div class="summary-row">
-              <span>Pehla Udhaar</span>
-              <span id="khaata-opening">Rs. 0</span>
-            </div>
-            <div class="summary-row grand" id="khaata-grand-row">
-              <span>Grand Total</span>
-              <span id="khaata-grand-total">Rs. 0</span>
             </div>
           </div>
         </div>
@@ -729,7 +675,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-
       <!-- WhatsApp Reminders -->
       <div class="page" id="page-whatsapp">
         <div class="page-header">
@@ -786,7 +731,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-
       <!-- Trash / Deleted Entries -->
       <div class="page" id="page-trash">
         <div class="page-header">
@@ -811,8 +755,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div><!-- end app-body -->
 </div><!-- end app -->
 
-
-<!-- Quick Payment Modal -->
+<!-- Modals -->
 <div id="quick-pay-modal" class="modal">
   <div class="modal-box" style="width:400px;">
     <h3>💰 Quick Payment</h3>
@@ -833,7 +776,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- WhatsApp Phone Request Modal -->
 <div id="wa-phone-modal" class="modal">
   <div class="modal-box" style="width:380px;">
     <h3>📱 Phone Number Chahiye</h3>
@@ -851,7 +793,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- Opening Balance Modal (Pehla Udhaar) -->
 <div id="opening-balance-modal" class="modal">
   <div class="modal-box" style="width:380px;">
     <h3>💰 Pehla Udhaar</h3>
@@ -875,14 +816,11 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
-<!-- WhatsApp send banner -->
 <div class="wa-banner" id="wa-banner">
   <span id="wa-banner-text">Receipt tayyar hai</span>
   <a id="wa-banner-link" href="#" target="_blank" rel="noopener" onclick="hideWaBanner()">📱 WhatsApp bhejein</a>
   <span class="wa-close" onclick="hideWaBanner()">✕</span>
 </div>
-
-<!-- =============== MODALS =============== -->
 
 <!-- Item Modal -->
 <div id="item-modal" class="modal">
@@ -988,19 +926,14 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
 <script>
 const API = window.location.origin;
-let parsedData = null;
 let allInventoryItems = [];
-let currentKhaata = null;
+let allCustomersCache = [];
+let allCustomersGrandTotal = 0;
 
-// ---- Helpers ----
+// ==================== Helpers ====================
 function esc(s) {
   if (s === null || s === undefined) return '';
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
@@ -1011,9 +944,7 @@ function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function getToken() { return localStorage.getItem('dukaan_token'); }
 function getShopName() { return localStorage.getItem('shop_name'); }
-function toTitleCase(text) {
-  return String(text || '').toLowerCase().replace(/\w/g, c => c.toUpperCase());
-}
+function toTitleCase(text) { return String(text || '').toLowerCase().replace(/\w/g, c => c.toUpperCase()); }
 function saveToken(t, s) { localStorage.setItem('dukaan_token', t); localStorage.setItem('shop_name', s); }
 function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 
@@ -1025,29 +956,13 @@ async function apiFetch(url, options = {}) {
   return fetch(API + url, options);
 }
 
-// ---- DateTime ----
-function updateDateTime() {
-  const now = new Date();
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('dt-date').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('dt-time').textContent = `${h}:${m}:${s}`;
-}
-setInterval(updateDateTime, 1000);
-updateDateTime();
-
-// ---- Auth tabs ----
+// ==================== Auth & Navigation ====================
 function switchTab(tab) {
   ['login','register','forgot'].forEach(t => {
     document.getElementById(`tab-${t}`).classList.toggle('active', t===tab);
     document.getElementById(`form-${t}`).style.display = t===tab ? 'block' : 'none';
   });
 }
-
-// ---- Login/Register/Reset ----
 async function handleLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
@@ -1060,7 +975,6 @@ async function handleLogin() {
     showMainApp();
   } catch(e) { showToast('Server se connect nahi ho saka','error'); }
 }
-
 async function handleRegister() {
   const username = document.getElementById('reg-username').value.trim();
   const password = document.getElementById('reg-password').value.trim();
@@ -1074,7 +988,6 @@ async function handleRegister() {
     showMainApp();
   } catch(e) { showToast('Server se connect nahi ho saka','error'); }
 }
-
 async function handleResetPassword() {
   const username = document.getElementById('reset-username').value.trim();
   const shopName = document.getElementById('reset-shopname').value.trim();
@@ -1090,26 +1003,21 @@ async function handleResetPassword() {
     setTimeout(() => switchTab('login'), 1500);
   } catch(e) { showToast('Reset nahi hua','error'); }
 }
-
 function logout() {
   localStorage.clear();
   document.getElementById('main-app').classList.remove('show');
   document.getElementById('login-page').classList.add('show');
 }
-
 function showMainApp() {
   document.getElementById('login-page').classList.remove('show');
   document.getElementById('main-app').classList.add('show');
   document.getElementById('shop-name-display').textContent = getShopName();
   loadInventory();
 }
-
 window.onload = () => {
   if (getToken()) showMainApp();
   else document.getElementById('login-page').classList.add('show');
 };
-
-// ---- Navigation ----
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1118,8 +1026,6 @@ function showPage(name) {
   if (navEl) navEl.classList.add('active');
   closeSidebar();
 }
-
-// ---- Mobile sidebar ----
 function toggleSidebar() {
   document.getElementById('app-sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('show');
@@ -1129,7 +1035,21 @@ function closeSidebar() {
   document.getElementById('sidebar-overlay').classList.remove('show');
 }
 
-// ---- Calculator ----
+// ==================== DateTime ====================
+function updateDateTime() {
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('dt-date').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('dt-time').textContent = `${h}:${m}:${s}`;
+}
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+// ==================== Calculator ====================
 let calcCurrent='0', calcPrev='', calcOperator='', calcNewNum=true;
 function toggleCalc() { document.getElementById('calc-panel').classList.toggle('show'); }
 function calcUpdate() { document.getElementById('calc-display').textContent = calcCurrent; }
@@ -1141,529 +1061,284 @@ function calcClear() { calcCurrent='0';calcPrev='';calcOperator='';calcNewNum=tr
 function calcSign() { calcCurrent=String(parseFloat(calcCurrent)*-1); calcUpdate(); }
 function calcPercent() { calcCurrent=String(parseFloat(calcCurrent)/100); calcUpdate(); }
 
-// ---- Entry ----
-async function renderParsedEntry(data) {
-  parsedData = data;
-  parsedData._selectedItemName = data.inventory_id ? data.item : null;
+// ==================== Autocomplete Helper ====================
+function attachAutocomplete(opts) {
+  const input = document.getElementById(opts.inputId);
+  const dropdown = document.getElementById(opts.dropdownId);
+  if (!input || !dropdown) return;
 
-  document.getElementById('r-customer').value = data.customer || '';
-  document.getElementById('r-item').value = data.item || '';
-  document.getElementById('r-qty').value = data.quantity || 1;
-  document.getElementById('r-price').value = data.price || '';
-  updateSingleTotal();
-  setSingleStock(data.stock, data.manual);
+  const endpoint = opts.endpoint || '/items/search';
+  const listKey = opts.listKey || 'items';
+  const limit = opts.limit || 8;
+  const renderItem = opts.renderItem || defaultItemRenderer;
+  const onSelect = opts.onSelect || (() => {});
+  const onEnter = opts.onEnter || null;
 
-  const sw = document.getElementById('stock-warning');
-  const fc = document.getElementById('force-save-check');
-  if (data.stock === 0 && !data.manual) { sw.style.display='block'; fc.checked=false; }
-  else { sw.style.display='none'; }
+  let debounceTimer = null;
+  let activeIndex = -1;
+  let items = [];
+  let requestId = 0;
 
-  document.getElementById('variant-box').style.display = 'none';
-  if (data.item && !data.manual) {
+  function hide() { dropdown.classList.remove('show'); dropdown.innerHTML = ''; activeIndex = -1; items = []; }
+
+  function render(list) {
+    items = list; activeIndex = -1;
+    if (!list.length) { dropdown.innerHTML = '<div class="ac-empty">Koi match nahi mila</div>'; dropdown.classList.add('show'); return; }
+    dropdown.innerHTML = list.map((it, i) => `<div class="ac-item" data-idx="${i}">${renderItem(it)}</div>`).join('');
+    dropdown.classList.add('show');
+    dropdown.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('mousedown', (e) => {
+        e.preventDefault(); const idx = parseInt(el.dataset.idx, 10); onSelect(items[idx]); hide();
+      });
+    });
+  }
+
+  async function fetchSuggestions(q) {
+    const myReq = ++requestId;
     try {
-      const vRes = await apiFetch(`/inventory/variants/${encodeURIComponent(data.item)}`);
-      const vData = await vRes.json();
-      if (vData.variants && vData.variants.length > 1) showVariants(vData.variants);
-    } catch(e) {}
+      const res = await apiFetch(`${endpoint}?q=${encodeURIComponent(q)}&limit=${limit}`);
+      const data = await res.json();
+      if (myReq !== requestId) return;
+      if (data.error) { hide(); return; }
+      render(data[listKey] || []);
+    } catch (e) { if (myReq === requestId) hide(); }
   }
 
-  const mb = document.getElementById('manual-box');
-  if (data.manual) { mb.style.display='block'; document.getElementById('manual-price').value=''; document.getElementById('manual-total').value=''; }
-  else { mb.style.display='none'; }
-
-  document.getElementById('parse-result').classList.add('show');
-}
-
-async function parseEntry() {
-  const text = document.getElementById('entry-input').value.trim();
-  if (!text) return;
-  const btn = document.getElementById('parse-btn');
-  btn.disabled = true; btn.textContent = 'AI soch raha hai...';
-  try {
-    const res = await apiFetch('/entry/parse', {method:'POST', body:JSON.stringify({text})});
-    const data = await res.json();
-    if (data.error) { showToast(data.error,'error'); return; }
-    await renderParsedEntry(data);
-  } catch(e) { showToast('Server se connection nahi hua','error'); }
-  btn.disabled = false; btn.textContent = 'Parse karo';
-}
-
-// ---- Voice Entry ----
-let voiceRecorder = null;
-let voiceChunks = [];
-let voiceStream = null;
-
-async function toggleVoiceEntry() {
-  const micBtn = document.getElementById('mic-btn');
-  if (voiceRecorder && voiceRecorder.state === 'recording') { voiceRecorder.stop(); return; }
-  try { voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
-  catch (e) { showToast('Microphone permission nahi mili — browser settings check karo', 'error'); return; }
-  voiceChunks = [];
-  const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-  voiceRecorder = new MediaRecorder(voiceStream, { mimeType });
-  voiceRecorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunks.push(e.data); };
-  voiceRecorder.onstop = async () => {
-    voiceStream.getTracks().forEach(track => track.stop());
-    micBtn.classList.remove('recording');
-    micBtn.textContent = '🎤';
-    const audioBlob = new Blob(voiceChunks, { type: mimeType });
-    if (audioBlob.size < 500) { showToast('Recording bahut chhoti thi — dobara try karo', 'error'); return; }
-    await uploadVoiceEntry(audioBlob, mimeType);
-  };
-  voiceRecorder.start();
-  micBtn.classList.add('recording');
-  micBtn.textContent = '⏹️';
-  showToast('Recording shuru — bolo, phir button dobara dabao', 'info');
-  setTimeout(() => {
-    if (voiceRecorder && voiceRecorder.state === 'recording') {
-      voiceRecorder.stop();
-      showToast('30 second poore ho gaye — recording auto-stop hui', 'info');
+  input.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => fetchSuggestions(input.value.trim()), 200); });
+  input.addEventListener('focus', () => { if (!dropdown.classList.contains('show')) fetchSuggestions(input.value.trim()); });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { hide(); return; }
+    if (e.key === 'Enter' && !dropdown.classList.contains('show') && onEnter) { e.preventDefault(); onEnter(); return; }
+    if (!dropdown.classList.contains('show')) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = Math.min(activeIndex + 1, items.length - 1); paintActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = Math.max(activeIndex - 1, -1); paintActive(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0) { onSelect(items[activeIndex]); hide(); }
+      else if (onEnter) { onEnter(); hide(); }
     }
-  }, 30000);
-}
+  });
+  input.addEventListener('blur', () => setTimeout(hide, 150));
 
-async function uploadVoiceEntry(audioBlob, mimeType) {
-  const micBtn = document.getElementById('mic-btn');
-  micBtn.disabled = true;
-  const ext = mimeType.includes('webm') ? 'webm' : 'mp4';
-  const formData = new FormData();
-  formData.append('audio', audioBlob, `voice.${ext}`);
-  showToast('Awaaz samjhi jaa rahi hai...', 'info');
-  try {
-    const token = getToken();
-    const res = await fetch(`${API}/entry/voice-parse`, {
-      method: 'POST',
-      headers: token ? { 'Authorization': `Bearer ${token}`, 'ngrok-skip-browser-warning': 'true' } : {'ngrok-skip-browser-warning': 'true'},
-      body: formData
-    });
-    const data = await res.json();
-    if (data.error) { showToast(data.error, 'error'); micBtn.disabled = false; return; }
-    document.getElementById('entry-input').value = data.transcript || '';
-    await renderParsedEntry(data);
-    showToast(`🔊 Suna: "${data.transcript}"`, 'success');
-  } catch (e) { showToast('Voice upload fail hui — dobara try karo', 'error'); }
-  micBtn.disabled = false;
-}
-
-function syncSingleEntryFromInputs() {
-  if (!parsedData) parsedData = {};
-  parsedData.customer = document.getElementById('r-customer').value.trim();
-  parsedData.item = document.getElementById('r-item').value.trim();
-  parsedData.quantity = parseFloat(document.getElementById('r-qty').value) || 0;
-  parsedData.price = parseFloat(document.getElementById('r-price').value) || 0;
-  if (parsedData.item !== parsedData._selectedItemName) {
-    parsedData.inventory_id = null;
-    parsedData.stock = undefined;
+  function paintActive() {
+    dropdown.querySelectorAll('.ac-item').forEach((el, i) => { el.classList.toggle('active', i === activeIndex); });
+    if (activeIndex >= 0) { const el = dropdown.querySelector(`.ac-item[data-idx="${activeIndex}"]`); if (el) el.scrollIntoView({ block: 'nearest' }); }
   }
-  updateSingleTotal();
 }
 
-function updateSingleTotal() {
-  const qty = parseFloat(document.getElementById('r-qty').value) || 0;
-  const price = parseFloat(document.getElementById('r-price').value) || 0;
-  document.getElementById('r-total').textContent = `Rs. ${round2(qty * price)}`;
+function defaultItemRenderer(it) {
+  return `<div class="ac-row"><span class="ac-name">${esc(it.name)}</span><span class="ac-meta"><span class="ac-price">Rs. ${it.price}</span><span class="ac-stock ${it.stock > 0 ? '' : 'out'}">${it.stock > 0 ? it.stock + ' left' : 'out'}</span></span></div>`;
+}
+function customerRenderer(it) {
+  const phone = it.phone && it.phone !== 'unknown' ? ` · ${esc(it.phone)}` : '';
+  const baakiLabel = it.baaki > 0 ? `Rs. ${it.baaki}` : 'Clear';
+  const baakiColor = it.baaki > 0 ? '#dc2626' : '#16a34a';
+  return `<div class="ac-row"><span><span class="ac-name">${esc(it.name)}</span><span style="font-size:11px;color:#94a3b8;margin-left:8px;">#${it.id}${phone}</span></span><span style="font-size:12px;font-weight:700;color:${baakiColor};">${baakiLabel}</span></div>`;
 }
 
-function setSingleStock(stock, manual=false) {
-  document.getElementById('r-stock').innerHTML = stock !== undefined && stock !== null
-    ? `<span class="badge ${stock > 0 ? 'badge-green' : 'badge-red'}">${stock > 0 ? stock+' baaki' : 'Out of stock'}</span>`
-    : `<span class="badge ${manual ? 'badge-blue' : 'badge-amber'}">${manual ? 'Manual entry' : 'Not linked'}</span>`;
-}
+// ==================== UNIFIED ENTRY & KHAATA PAGE ====================
+let unifiedCustomer = null;
+let unifiedPastEntries = [];
+let unifiedNewEntries = [];
 
-function showVariants(variants) {
-  window._variants = variants;
-  const vb = document.getElementById('variant-box');
-  vb.style.display = 'block';
-  document.getElementById('variant-list').innerHTML = variants.map((v,i) => `
-    <div class="variant-item" onclick="selectVariant(${i})" id="vi-${i}">
-      <span class="variant-name">${esc(v.name)}</span>
-      <span class="variant-meta">
-        <span style="font-size:13px;color:#64748b;">Rs. ${v.price}</span>
-        <span class="badge ${v.stock>0?'badge-green':'badge-red'}">${v.stock>0?v.stock+' baaki':'Out of stock'}</span>
-      </span>
-    </div>`).join('');
-}
-
-function selectVariant(i) {
-  const v = window._variants[i];
-  window._variants.forEach((_,j) => { const el=document.getElementById(`vi-${j}`); if(el)el.classList.remove('selected'); });
-  const el = document.getElementById(`vi-${i}`); if(el) el.classList.add('selected');
-  parsedData.item = v.name;
-  parsedData._selectedItemName = v.name;
-  parsedData.price = v.price;
-  parsedData.stock = v.stock;
-  parsedData.inventory_id = v.id;
-  parsedData.manual = false;
-  document.getElementById('r-item').value = v.name;
-  document.getElementById('r-price').value = v.price;
-  updateSingleTotal();
-  setSingleStock(v.stock, false);
-  const sw = document.getElementById('stock-warning');
-  if (v.stock===0) { sw.style.display='block'; document.getElementById('force-save-check').checked=false; }
-  else { sw.style.display='none'; }
-}
-
-function updateManualTotal() {
-  const price = parseFloat(document.getElementById('manual-price').value)||0;
-  const qty = parseFloat(document.getElementById('r-qty').value)||1;
-  const total = price*qty;
-  document.getElementById('manual-total').value = total.toFixed(0);
-  document.getElementById('r-price').value = price || '';
-  if (parsedData) { parsedData.price = price; parsedData.inventory_id = null; parsedData.manual = true; }
-  updateSingleTotal();
-}
-
-async function saveEntry() {
-  if (!parsedData) return;
-  syncSingleEntryFromInputs();
-  if (parsedData.stock===0 && !parsedData.manual) {
-    if (!document.getElementById('force-save-check').checked) { showToast('Out of stock! Checkbox check karo','error'); return; }
+attachAutocomplete({
+  inputId: 'unified-customer-search',
+  dropdownId: 'unified-suggestions',
+  endpoint: '/customers/search',
+  listKey: 'customers',
+  limit: 10,
+  renderItem: customerRenderer,
+  onSelect: (customer) => {
+    document.getElementById('unified-customer-search').value = customer.name;
+    loadUnifiedCustomer(customer.id);
+  },
+  onEnter: () => {
+    const val = document.getElementById('unified-customer-search').value.trim();
+    if (val) loadUnifiedCustomer(val);
   }
-  if (!parsedData.customer) { showToast('Customer naam daalo!','error'); return; }
-  if (!parsedData.item) { showToast('Item naam daalo!','error'); return; }
-  if (!parsedData.price || parsedData.price <= 0) { showToast('Price daalo pehle!','error'); return; }
+});
 
-  const body = {
-    text: document.getElementById('entry-input').value.trim(),
-    customer: parsedData.customer,
-    item: parsedData.item,
-    quantity: parsedData.quantity || 1,
-    price: parsedData.price,
-    manual_price: parsedData.manual ? parsedData.price : 0,
-    inventory_id: parsedData.inventory_id || null
-  };
-  try {
-    const res = await apiFetch('/entry/save', {method:'POST', body:JSON.stringify(body)});
-    const data = await res.json();
-    if (data.error) { showToast(data.error,'error'); return; }
-    showToast(`${data.type==='payment'?'Payment':'Entry'}: ${data.data?.customer} - ${data.data?.item} save ho gaya!`);
-    showWhatsAppPrompt(data.whatsapp, data.type==='payment' ? 'Payment receipt tayyar hai —' : 'Receipt tayyar hai —', data.data?.customer);
-    cancelEntry();
-  } catch(e) { showToast('Save nahi hua','error'); }
-}
-
-function cancelEntry() {
-  document.getElementById('entry-input').value='';
-  document.getElementById('parse-result').classList.remove('show');
-  document.getElementById('manual-box').style.display='none';
-  document.getElementById('variant-box').style.display='none';
-  document.getElementById('stock-warning').style.display='none';
-  window._variants=null; parsedData=null;
-}
-
-// ---- Multi Item Entry ----
-let multiParsedData = null;
-
-function recalcMultiTotals() {
-  if (!multiParsedData) return;
-  multiParsedData.items.forEach(item => { item.total = round2((item.quantity || 0) * (item.price || 0)); });
-  multiParsedData.grand_total = round2(multiParsedData.items.reduce((s,i) => s + (i.total || 0), 0));
-}
-
-function renderMultiTable() {
-  if (!multiParsedData) return;
-  recalcMultiTotals();
-  document.getElementById('multi-items-body').innerHTML = multiParsedData.items.map((item, i) => {
-    const variantSelect = item.variants && item.variants.length > 1 ? `
-      <select onchange="selectMultiVariant(${i}, this.value)" style="margin-top:5px;width:100%;padding:5px;border:1.5px solid #bfdbfe;border-radius:6px;font-size:12px;background:#eff6ff;color:#1d4ed8;">
-        <option value="">Variant select karo</option>
-        ${item.variants.map((v,vi) => `<option value="${vi}" ${item.inventory_id===v.id?'selected':''}>${esc(v.name)} - Rs. ${v.price} - Stock ${v.stock}</option>`).join('')}
-      </select>` : '';
-    return `
-    <tr style="border-bottom:1px solid #f1f5f9;">
-      <td style="padding:9px 8px;min-width:190px;">
-        <input type="text" value="${esc(item.item || '')}" onchange="setMultiItemName(${i}, this.value)"
-          style="width:100%;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;flex:unset;">
-        ${variantSelect}
-        ${item.variants && item.variants.length > 1 ? '<span class="badge badge-blue" style="margin-top:5px;font-size:10px;">Variant optional</span>' : ''}
-        ${!item.found && !item.needs_variant ? '<span class="badge badge-amber" style="margin-top:5px;font-size:10px;">Manual</span>' : ''}
-      </td>
-      <td style="padding:9px 8px;text-align:center;">
-        <input type="number" value="${item.quantity}" min="0" step="0.01"
-          style="width:70px;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;text-align:center;font-size:13px;flex:unset;"
-          oninput="updateMultiItem(${i}, 'quantity', this.value)">
-      </td>
-      <td style="padding:9px 8px;text-align:right;">
-        <input type="number" value="${item.price || ''}" min="0" step="0.01"
-          style="width:90px;padding:5px;border:1.5px solid ${item.found?'#e2e8f0':'#fde68a'};border-radius:6px;text-align:right;font-size:13px;flex:unset;"
-          oninput="updateMultiItem(${i}, 'price', this.value)" placeholder="Price">
-      </td>
-      <td style="padding:9px 8px;text-align:right;font-weight:700;color:#1e293b;" id="multi-item-total-${i}">Rs. ${item.total}</td>
-      <td style="padding:9px 8px;text-align:center;">
-        ${item.stock !== null && item.stock !== undefined
-          ? `<span class="badge ${item.stock > 0 ? 'badge-green' : 'badge-red'}">${item.stock > 0 ? item.stock : '0'}</span>`
-          : '<span class="badge badge-blue">-</span>'}
-      </td>
-      <td style="padding:9px 8px;text-align:center;"><button class="del-btn" onclick="removeMultiItem(${i})">x</button></td>
-    </tr>`;
-  }).join('');
-  document.getElementById('multi-grand-total').textContent = `Rs. ${multiParsedData.grand_total}`;
-}
-
-async function parseMultiEntry() {
-  const text = document.getElementById('multi-input').value.trim();
-  if (!text) return;
-  const btn = document.getElementById('multi-btn');
-  btn.disabled = true; btn.textContent = 'AI soch raha hai...';
-  try {
-    const res = await apiFetch('/entry/multi/parse', {method:'POST', body:JSON.stringify({text})});
-    const data = await res.json();
-    if (data.error) { showToast(data.error,'error'); return; }
-    multiParsedData = data;
-    document.getElementById('multi-customer').value = data.customer || '';
-    renderMultiTable();
-    document.getElementById('multi-result').classList.add('show');
-  } catch(e) { showToast('Server se connection nahi hua','error'); }
-  btn.disabled = false; btn.textContent = 'Parse karo';
-}
-
-function updateMultiItem(index, field, value) {
-  if (!multiParsedData) return;
-  multiParsedData.items[index][field] = parseFloat(value) || 0;
-  recalcMultiTotals();
-  const totalEl = document.getElementById(`multi-item-total-${index}`);
-  if (totalEl) totalEl.textContent = `Rs. ${multiParsedData.items[index].total}`;
-  document.getElementById('multi-grand-total').textContent = `Rs. ${multiParsedData.grand_total}`;
-}
-
-function setMultiItemName(index, value) {
-  if (!multiParsedData) return;
-  const item = multiParsedData.items[index];
-  item.item = value.trim();
-  item.inventory_id = null;
-  item.stock = null;
-  item.found = false;
-  item.needs_variant = false;
-}
-
-function selectMultiVariant(index, variantIndex) {
-  if (!multiParsedData || variantIndex === '') return;
-  const item = multiParsedData.items[index];
-  const variant = item.variants[parseInt(variantIndex, 10)];
-  if (!variant) return;
-  item.item = variant.name;
-  item.price = variant.price;
-  item.stock = variant.stock;
-  item.inventory_id = variant.id;
-  item.found = true;
-  item.needs_variant = false;
-  renderMultiTable();
-}
-
-function removeMultiItem(index) {
-  if (!multiParsedData) return;
-  multiParsedData.items.splice(index, 1);
-  renderMultiTable();
-}
-
-function addManualItem() {
-  if (!multiParsedData) {
-    multiParsedData = {customer:'', items:[], grand_total:0};
-    document.getElementById('multi-result').classList.add('show');
-  }
-  multiParsedData.items.push({item:'', quantity:1, price:0, total:0, found:false, stock:null, inventory_id:null, variants:[], needs_variant:false});
-  renderMultiTable();
-}
-
-async function saveMultiEntry(withPrint) {
-  if (!multiParsedData || !multiParsedData.items.length) { showToast('Koi item nahi!','error'); return; }
-  const customer = document.getElementById('multi-customer').value.trim();
-  if (!customer) { showToast('Customer naam daalo!','error'); return; }
-  recalcMultiTotals();
-  const missingItem = multiParsedData.items.find(i => !i.item || !i.quantity || i.quantity <= 0);
-  if (missingItem) { showToast('Har row mein item aur quantity daalo!','error'); return; }
-  const missingPrice = multiParsedData.items.find(i => !i.price || i.price <= 0);
-  if (missingPrice) { showToast(`${missingPrice.item} ka price daalo!`,'error'); return; }
-
-  let data;
-  try {
-    const payloadItems = multiParsedData.items.map(i => ({
-      item: i.item,
-      quantity: i.quantity,
-      price: i.price,
-      inventory_id: i.inventory_id || null,
-      found: !!i.found
-    }));
-    const res = await apiFetch('/entry/multi/save', {
-      method:'POST',
-      body:JSON.stringify({
-        text: document.getElementById('multi-input').value.trim(),
-        customer,
-        items: payloadItems
-      })
-    });
-    data = await res.json();
-    if (data.error) { showToast(data.error,'error'); return; }
-  } catch(e) {
-    showToast('Server se connect nahi hua','error');
-    return;
-  }
-
-  multiParsedData.customer = customer;
-  showToast(`✅ ${data.items_saved} items save ho gaye! Total: Rs. ${data.grand_total}`);
-  showWhatsAppPrompt(data.whatsapp, 'Bill receipt tayyar hai —', data.customer);
-
-  if (withPrint) {
-    try { printBill(); }
-    catch(e) { showToast('Print window nahi khula (popup blocker check karo). Save ho gaya hai.','error'); }
-  }
-  cancelMultiEntry();
-}
-
-function printBill() {
-  if (!multiParsedData) return;
-  recalcMultiTotals();
-  const customer = toTitleCase(document.getElementById('multi-customer')?.value || multiParsedData.customer || 'Customer');
-  const shopName = toTitleCase(getShopName() || 'Dukaan AI');
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-PK');
-  const timeStr = now.toLocaleTimeString('en-PK', {hour:'2-digit', minute:'2-digit'});
-
-  const billWindow = window.open('', '_blank', 'width=360,height=640');
-  if (!billWindow) {
-    showToast('Print window nahi khula — browser popup allow karo','error');
-    return;
-  }
-  billWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Receipt - ${esc(customer)}</title>
-      <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        @page { size: 80mm auto; margin: 3mm; }
-        body { width: 72mm; margin: 0 auto; padding: 3mm 2mm; font-family: 'Courier New', monospace; font-size: 11px; color: #111; background: #fff; }
-        .center { text-align: center; } .bold { font-weight: bold; }
-        .shop { font-size: 15px; line-height: 1.2; }
-        .meta { font-size: 10px; line-height: 1.45; }
-        .line { border-top: 1px dashed #111; margin: 6px 0; }
-        .double-line { border-top: 2px solid #111; margin: 7px 0; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        td, th { padding: 2px 0; vertical-align: top; }
-        th { font-size: 10px; text-align: left; }
-        .item { width: 42%; word-break: break-word; }
-        .qty { width: 14%; text-align: right; }
-        .rate { width: 20%; text-align: right; }
-        .amt { width: 24%; text-align: right; }
-        .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
-        .no-print { margin-top: 10px; }
-        .print-btn { padding: 8px 18px; background:#1e293b; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
-        @media print { body { width: 72mm; padding: 0; } .no-print { display: none; } }
-      </style>
-    </head>
-    <body>
-      <div class="center bold shop">${esc(shopName)}</div>
-      <div class="center meta">Karyana Shop Receipt</div>
-      <div class="double-line"></div>
-      <div class="meta">Date: ${esc(dateStr)}</div>
-      <div class="meta">Time: ${esc(timeStr)}</div>
-      <div class="meta">Customer: <span class="bold">${esc(customer)}</span></div>
-      <div class="line"></div>
-      <table>
-        <thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead>
-        <tbody>
-          ${multiParsedData.items.map(item => `
-            <tr>
-              <td class="item">${esc(toTitleCase(item.item))}</td>
-              <td class="qty">${item.quantity}</td>
-              <td class="rate">${item.price}</td>
-              <td class="amt">${item.total}</td>
-            </tr>`).join('')}
-        </tbody>
-        <tfoot>
-          <tr><td colspan="4"><div class="line"></div></td></tr>
-          <tr class="total-row"><td colspan="3">TOTAL</td><td class="amt">Rs. ${multiParsedData.grand_total}</td></tr>
-        </tfoot>
-      </table>
-      <div class="double-line"></div>
-      <div class="center meta">Shukriya! Dobara zaroor aana</div>
-      <div class="center meta">Powered by Dukaan AI</div>
-      <div class="center no-print"><button class="print-btn" onclick="window.print()">Print Receipt</button></div>
-      <scr` + `ipt>setTimeout(() => window.print(), 500);</scr` + `ipt>
-    </body>
-    </html>
-  `);
-  billWindow.document.close();
-}
-
-function cancelMultiEntry() {
-  document.getElementById('multi-input').value = '';
-  document.getElementById('multi-result').classList.remove('show');
-  multiParsedData = null;
-}
-
-// ==================== Khaata page ====================
-async function getKhaata() {
-  const identifier = document.getElementById('khaata-input').value.trim();
-  if (!identifier) return;
+async function loadUnifiedCustomer(identifier) {
   try {
     const res = await apiFetch(`/khaata/${encodeURIComponent(identifier)}`);
     const data = await res.json();
     if (data.error) { showToast(data.error, 'error'); return; }
-    currentKhaata = data;
-    renderKhaataDetail(data);
-  } catch (e) {
-    showToast('Server error', 'error');
-  }
+    
+    unifiedCustomer = data;
+    unifiedPastEntries = data.entries || [];
+    unifiedNewEntries = []; 
+    
+    document.getElementById('unified-cust-name').textContent = data.customer;
+    document.getElementById('unified-cust-meta').textContent = `Khaata #${data.customer_id} · ${data.phone !== 'unknown' ? data.phone : 'No phone'}`;
+    document.getElementById('unified-table-card').style.display = 'block';
+    
+    renderUnifiedTable();
+  } catch (e) { showToast('Data load nahi hua', 'error'); }
 }
 
-function renderKhaataDetail(data) {
-  document.getElementById('khaata-customer-name').textContent = data.customer || '—';
-  const parts = [`Khaata #${data.customer_id}`];
-  if (data.phone && data.phone !== 'unknown') parts.push(data.phone);
-  document.getElementById('khaata-customer-meta').textContent = parts.join(' · ');
+function renderUnifiedTable() {
+  const tbody = document.getElementById('unified-table-body');
+  let html = '';
 
-  const tbody = document.getElementById('khaata-table-body');
-  if (!data.entries || !data.entries.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Koi entry nahi — Naya Entry karo</td></tr>';
-  } else {
-    tbody.innerHTML = data.entries.map(e => {
-      const isPayment = (e.item || '').toUpperCase() === 'PAYMENT';
-      const isCredit = e.total < 0;
-      const totalColor = isCredit ? '#16a34a' : '#1e293b';
-      const totalDisplay = isPayment
-        ? `Rs. ${Math.abs(e.total)} ✓`
-        : `Rs. ${e.total}`;
-      return `
-        <tr>
+  // Past Entries
+  if (unifiedPastEntries.length > 0) {
+    html += `<tr><td colspan="6" style="background:#f8fafc; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase;">Purana Hisaab</td></tr>`;
+    unifiedPastEntries.forEach(e => {
+      const isPay = (e.item || '').toUpperCase() === 'PAYMENT';
+      html += `
+        <tr style="background:#f8fafc;">
           <td style="color:#64748b;font-size:12px;">${esc(e.date)}</td>
-          <td style="font-weight:500;">${isPayment ? '💰 Payment' : esc(toTitleCase(e.item))}</td>
-          <td>${isPayment ? '—' : 'x' + e.quantity}</td>
-          <td>${isPayment ? '—' : 'Rs. ' + e.price}</td>
-          <td style="text-align:right;font-weight:700;color:${totalColor};">${totalDisplay}</td>
-          <td class="action-btns" style="justify-content:flex-end;">
-            ${!isPayment ? `<button class="edit-btn"
-                onclick="editEntry(this.dataset.id,this.dataset.item,this.dataset.qty,this.dataset.price,this.dataset.date)"
-                data-id="${e.id}" data-item="${esc(e.item)}" data-qty="${e.quantity}" data-price="${e.price}" data-date="${esc(e.date)}">✏️</button>` : ''}
+          <td style="font-weight:500;">${isPay ? '💰 Payment' : esc(toTitleCase(e.item))}</td>
+          <td>${isPay ? '—' : 'x'+e.quantity}</td>
+          <td>${isPay ? '—' : 'Rs. '+e.price}</td>
+          <td style="text-align:right;font-weight:700;color:${isPay ? '#16a34a' : '#1e293b'};">Rs. ${Math.abs(e.total)}</td>
+          <td style="text-align:center;">
+            ${!isPay ? `<button class="edit-btn" onclick="editEntry(this.dataset.id,this.dataset.item,this.dataset.qty,this.dataset.price,this.dataset.date)" data-id="${e.id}" data-item="${esc(e.item)}" data-qty="${e.quantity}" data-price="${e.price}" data-date="${esc(e.date)}">✏️</button>` : ''}
             <button class="del-btn" onclick="deleteEntry(${e.id})">🗑️</button>
           </td>
         </tr>`;
-    }).join('');
+    });
   }
 
-  document.getElementById('khaata-subtotal').textContent = 'Rs. ' + (data.entries_total || 0).toFixed(0);
-  document.getElementById('khaata-opening').textContent = 'Rs. ' + (data.opening_balance || 0).toFixed(0);
-  document.getElementById('khaata-grand-total').textContent = 'Rs. ' + (data.grand_total || 0).toFixed(0);
+  // New Entries
+  if (unifiedNewEntries.length > 0) {
+    html += `<tr><td colspan="6" style="background:#eff6ff; font-size:11px; font-weight:700; color:#1d4ed8; text-transform:uppercase;">Nayi Entries (Save karein)</td></tr>`;
+    unifiedNewEntries.forEach((e, i) => {
+      html += `
+        <tr>
+          <td style="color:#64748b;font-size:12px;">Aaj</td>
+          <td>
+            <div class="autocomplete-wrap" style="width:100%;">
+              <input type="text" id="new-item-${i}" value="${esc(e.item)}" oninput="updateNewEntry(${i}, 'item', this.value)" placeholder="Item name" style="padding:6px; font-size:13px; width:100%; border:1.5px solid #bfdbfe;">
+              <div id="new-item-suggest-${i}" class="autocomplete-dropdown"></div>
+            </div>
+          </td>
+          <td><input type="number" value="${e.quantity}" oninput="updateNewEntry(${i}, 'quantity', this.value)" style="width:60px; padding:6px; text-align:center; border:1.5px solid #bfdbfe;"></td>
+          <td><input type="number" value="${e.price}" oninput="updateNewEntry(${i}, 'price', this.value)" style="width:80px; padding:6px; text-align:right; border:1.5px solid #bfdbfe;"></td>
+          <td style="text-align:right;font-weight:700;color:#1e293b;" id="new-total-${i}">Rs. ${e.total}</td>
+          <td style="text-align:center;"><button class="del-btn" onclick="removeNewEntryRow(${i})">x</button></td>
+        </tr>`;
+    });
+  } else if (unifiedPastEntries.length === 0) {
+    html = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Koi entry nahi. Naya item add karein.</td></tr>';
+  }
 
-  const grandRow = document.getElementById('khaata-grand-row');
-  grandRow.classList.remove('positive', 'zero');
-  if ((data.grand_total || 0) > 0) grandRow.classList.add('positive');
-  else grandRow.classList.add('zero');
+  tbody.innerHTML = html;
+  
+  // Attach autocomplete to new rows
+  unifiedNewEntries.forEach((_, i) => {
+    attachAutocomplete({
+      inputId: `new-item-${i}`,
+      dropdownId: `new-item-suggest-${i}`,
+      onSelect: (item) => {
+        document.getElementById(`new-item-${i}`).value = item.name;
+        updateNewEntry(i, 'item', item.name);
+        updateNewEntry(i, 'price', item.price);
+        if (!unifiedNewEntries[i].inventory_id) unifiedNewEntries[i].inventory_id = item.id;
+      }
+    });
+  });
 
-  document.getElementById('khaata-detail-card').style.display = 'block';
+  calculateUnifiedTotals();
+}
+
+function updateNewEntry(index, field, value) {
+  if (field === 'quantity' || field === 'price') value = parseFloat(value) || 0;
+  unifiedNewEntries[index][field] = value;
+  
+  if (field === 'item') unifiedNewEntries[index].inventory_id = null;
+  
+  unifiedNewEntries[index].total = round2(unifiedNewEntries[index].quantity * unifiedNewEntries[index].price);
+  document.getElementById(`new-total-${index}`).textContent = `Rs. ${unifiedNewEntries[index].total}`;
+  calculateUnifiedTotals();
+}
+
+function calculateUnifiedTotals() {
+  let newTotal = 0;
+  unifiedNewEntries.forEach(e => newTotal += (e.total || 0));
+  
+  const opening = parseFloat(unifiedCustomer?.opening_balance || 0);
+  let pastBalance = parseFloat(unifiedCustomer?.entries_total || 0); 
+  let grandTotal = pastBalance + opening + newTotal;
+
+  document.getElementById('unified-past-total').textContent = `Rs. ${pastBalance}`;
+  document.getElementById('unified-subtotal').textContent = `Rs. ${newTotal}`;
+  document.getElementById('unified-opening').textContent = `Rs. ${opening}`;
+  document.getElementById('unified-grand-total').textContent = `Rs. ${grandTotal}`;
+  
+  const gRow = document.getElementById('unified-grand-row');
+  gRow.classList.remove('positive', 'zero');
+  if (grandTotal > 0) gRow.classList.add('positive');
+  else gRow.classList.add('zero');
+}
+
+function addNewEntryRow() {
+  if (!unifiedCustomer) return;
+  unifiedNewEntries.push({ item: '', quantity: 1, price: 0, total: 0, inventory_id: null });
+  renderUnifiedTable();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('[id^="new-item-"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  }, 100);
+}
+
+function removeNewEntryRow(index) {
+  unifiedNewEntries.splice(index, 1);
+  renderUnifiedTable();
+}
+
+function cancelUnifiedEntries() {
+  document.getElementById('unified-customer-search').value = '';
+  document.getElementById('unified-table-card').style.display = 'none';
+  unifiedCustomer = null;
+  unifiedNewEntries = [];
+}
+
+async function saveUnifiedEntries() {
+  if (!unifiedNewEntries.length) { showToast('Koi nayi entry nahi hai!', 'error'); return; }
+  const btn = document.getElementById('unified-save-btn');
+  btn.disabled = true; btn.textContent = 'Save ho raha hai...';
+
+  for (let e of unifiedNewEntries) {
+    if (!e.item || e.price <= 0 || e.quantity <= 0) {
+      showToast('Sab items ka naam, qty aur price daalein!', 'error');
+      btn.disabled = false; btn.textContent = '✓ Nayi Entries Save Karein';
+      return;
+    }
+  }
+
+  try {
+    const payload = {
+      customer: unifiedCustomer.customer.toLowerCase(),
+      items: unifiedNewEntries.map(e => ({
+        item: e.item, quantity: e.quantity, price: e.price,
+        inventory_id: e.inventory_id || null, found: !!e.inventory_id
+      }))
+    };
+
+    const res = await apiFetch('/entry/multi/save', { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+    
+    if (data.error) { showToast(data.error, 'error'); btn.disabled = false; btn.textContent = '✓ Nayi Entries Save Karein'; return; }
+
+    showToast(`✅ ${data.items_saved} items save ho gaye!`);
+    showWhatsAppPrompt(data.whatsapp, 'Receipt tayyar hai —', data.customer);
+    
+    unifiedNewEntries = [];
+    await loadUnifiedCustomer(unifiedCustomer.customer_id); 
+    
+  } catch (e) { showToast('Save nahi hua', 'error'); }
+  
+  btn.disabled = false; btn.textContent = '✓ Nayi Entries Save Karein';
 }
 
 function openOpeningBalanceModal() {
-  if (!currentKhaata) return;
-  document.getElementById('ob-customer-id').value = currentKhaata.customer_id;
-  document.getElementById('ob-customer-name').value = currentKhaata.customer;
-  document.getElementById('ob-amount').value = currentKhaata.opening_balance || 0;
+  if (!unifiedCustomer) return;
+  document.getElementById('ob-customer-id').value = unifiedCustomer.customer_id;
+  document.getElementById('ob-customer-name').value = unifiedCustomer.customer;
+  document.getElementById('ob-amount').value = unifiedCustomer.opening_balance || 0;
   openModal('opening-balance-modal');
-  setTimeout(() => {
-    const el = document.getElementById('ob-amount');
-    el.focus();
-    el.select();
-  }, 100);
+  setTimeout(() => { const el = document.getElementById('ob-amount'); el.focus(); el.select(); }, 100);
 }
 
 async function saveOpeningBalance() {
@@ -1672,23 +1347,23 @@ async function saveOpeningBalance() {
   if (!customerId) { showToast('Customer missing', 'error'); return; }
   try {
     const res = await apiFetch('/customer/opening-balance', {
-      method: 'PUT',
-      body: JSON.stringify({ customer_id: customerId, opening_balance: amount })
+      method: 'PUT', body: JSON.stringify({ customer_id: customerId, opening_balance: amount })
     });
     const data = await res.json();
     if (data.error) { showToast(data.error, 'error'); return; }
     showToast('✅ Pehla udhaar set ho gaya');
     closeModal('opening-balance-modal');
-    getKhaata();
-  } catch (e) {
-    showToast('Save nahi hua', 'error');
-  }
+    if (unifiedCustomer) loadUnifiedCustomer(customerId); 
+  } catch (e) { showToast('Save nahi hua', 'error'); }
 }
 
-// ---- All Customers ----
-let allCustomersCache = [];
-let allCustomersGrandTotal = 0;
+function viewCustomer(name) {
+  showPage('entry');
+  document.getElementById('unified-customer-search').value = name;
+  loadUnifiedCustomer(name);
+}
 
+// ==================== ALL CUSTOMERS ====================
 async function getAllCustomers() {
   try {
     const res = await apiFetch('/customers/all');
@@ -1733,11 +1408,6 @@ function renderFilteredCustomers() {
   document.getElementById('grand-total').textContent = `Rs. ${list.reduce((s,c) => s + Number(c.total_baaki||0), 0)}`;
 }
 
-function viewCustomer(name) {
-  document.getElementById('khaata-input').value = name.toLowerCase();
-  showPage('khaata'); getKhaata();
-}
-
 async function deleteCustomer(name) {
   if (!confirm(`⚠️ ${name} aur uski saari entries delete ho jaayengi!`)) return;
   try {
@@ -1777,7 +1447,7 @@ async function deleteEntry(entryId) {
     const data=await res.json();
     if(data.error){showToast(data.error,'error');return;}
     showToast(`🗑️ Entry delete ho gayi!`);
-    getKhaata();
+    if (unifiedCustomer) loadUnifiedCustomer(unifiedCustomer.customer_id);
   } catch(e){showToast('Delete nahi hua','error');}
 }
 
@@ -1803,11 +1473,169 @@ async function saveEntryEdit() {
     if(data.error){showToast(data.error,'error');return;}
     showToast('✅ Entry update ho gayi!');
     closeModal('entry-modal');
-    getKhaata();
+    if (unifiedCustomer) loadUnifiedCustomer(unifiedCustomer.customer_id);
   } catch(e){showToast('Update nahi hua','error');}
 }
 
-// ---- Inventory Check ----
+// ==================== MULTI ENTRY (AI) ====================
+let multiParsedData = null;
+
+function recalcMultiTotals() {
+  if (!multiParsedData) return;
+  multiParsedData.items.forEach(item => { item.total = round2((item.quantity || 0) * (item.price || 0)); });
+  multiParsedData.grand_total = round2(multiParsedData.items.reduce((s,i) => s + (i.total || 0), 0));
+}
+
+function renderMultiTable() {
+  if (!multiParsedData) return;
+  recalcMultiTotals();
+  document.getElementById('multi-items-body').innerHTML = multiParsedData.items.map((item, i) => {
+    const variantSelect = item.variants && item.variants.length > 1 ? `
+      <select onchange="selectMultiVariant(${i}, this.value)" style="margin-top:5px;width:100%;padding:5px;border:1.5px solid #bfdbfe;border-radius:6px;font-size:12px;background:#eff6ff;color:#1d4ed8;">
+        <option value="">Variant select karo</option>
+        ${item.variants.map((v,vi) => `<option value="${vi}" ${item.inventory_id===v.id?'selected':''}>${esc(v.name)} - Rs. ${v.price} - Stock ${v.stock}</option>`).join('')}
+      </select>` : '';
+    return `
+    <tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:9px 8px;min-width:190px;">
+        <input type="text" value="${esc(item.item || '')}" onchange="setMultiItemName(${i}, this.value)" style="width:100%;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;flex:unset;">
+        ${variantSelect}
+      </td>
+      <td style="padding:9px 8px;text-align:center;"><input type="number" value="${item.quantity}" min="0" step="0.01" style="width:70px;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;text-align:center;font-size:13px;flex:unset;" oninput="updateMultiItem(${i}, 'quantity', this.value)"></td>
+      <td style="padding:9px 8px;text-align:right;"><input type="number" value="${item.price || ''}" min="0" step="0.01" style="width:90px;padding:5px;border:1.5px solid ${item.found?'#e2e8f0':'#fde68a'};border-radius:6px;text-align:right;font-size:13px;flex:unset;" oninput="updateMultiItem(${i}, 'price', this.value)" placeholder="Price"></td>
+      <td style="padding:9px 8px;text-align:right;font-weight:700;color:#1e293b;" id="multi-item-total-${i}">Rs. ${item.total}</td>
+      <td style="padding:9px 8px;text-align:center;">${item.stock !== null && item.stock !== undefined ? `<span class="badge ${item.stock > 0 ? 'badge-green' : 'badge-red'}">${item.stock > 0 ? item.stock : '0'}</span>` : '<span class="badge badge-blue">-</span>'}</td>
+      <td style="padding:9px 8px;text-align:center;"><button class="del-btn" onclick="removeMultiItem(${i})">x</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('multi-grand-total').textContent = `Rs. ${multiParsedData.grand_total}`;
+}
+
+async function parseMultiEntry() {
+  const text = document.getElementById('multi-input').value.trim();
+  if (!text) return;
+  const btn = document.getElementById('multi-btn');
+  btn.disabled = true; btn.textContent = 'AI soch raha hai...';
+  try {
+    const res = await apiFetch('/entry/multi/parse', {method:'POST', body:JSON.stringify({text})});
+    const data = await res.json();
+    if (data.error) { showToast(data.error,'error'); return; }
+    multiParsedData = data;
+    document.getElementById('multi-customer').value = data.customer || '';
+    renderMultiTable();
+    document.getElementById('multi-result').classList.add('show');
+  } catch(e) { showToast('Server se connection nahi hua','error'); }
+  btn.disabled = false; btn.textContent = 'Parse karo';
+}
+
+function updateMultiItem(index, field, value) {
+  if (!multiParsedData) return;
+  multiParsedData.items[index][field] = parseFloat(value) || 0;
+  recalcMultiTotals();
+  const totalEl = document.getElementById(`multi-item-total-${index}`);
+  if (totalEl) totalEl.textContent = `Rs. ${multiParsedData.items[index].total}`;
+  document.getElementById('multi-grand-total').textContent = `Rs. ${multiParsedData.grand_total}`;
+}
+
+function setMultiItemName(index, value) {
+  if (!multiParsedData) return;
+  const item = multiParsedData.items[index];
+  item.item = value.trim();
+  item.inventory_id = null; item.stock = null; item.found = false; item.needs_variant = false;
+}
+
+function selectMultiVariant(index, variantIndex) {
+  if (!multiParsedData || variantIndex === '') return;
+  const item = multiParsedData.items[index];
+  const variant = item.variants[parseInt(variantIndex, 10)];
+  if (!variant) return;
+  item.item = variant.name; item.price = variant.price; item.stock = variant.stock; item.inventory_id = variant.id; item.found = true; item.needs_variant = false;
+  renderMultiTable();
+}
+
+function removeMultiItem(index) {
+  if (!multiParsedData) return;
+  multiParsedData.items.splice(index, 1);
+  renderMultiTable();
+}
+
+function addManualItem() {
+  if (!multiParsedData) {
+    multiParsedData = {customer:'', items:[], grand_total:0};
+    document.getElementById('multi-result').classList.add('show');
+  }
+  multiParsedData.items.push({item:'', quantity:1, price:0, total:0, found:false, stock:null, inventory_id:null, variants:[], needs_variant:false});
+  renderMultiTable();
+}
+
+async function saveMultiEntry(withPrint) {
+  if (!multiParsedData || !multiParsedData.items.length) { showToast('Koi item nahi!','error'); return; }
+  const customer = document.getElementById('multi-customer').value.trim();
+  if (!customer) { showToast('Customer naam daalo!','error'); return; }
+  recalcMultiTotals();
+  const missingItem = multiParsedData.items.find(i => !i.item || !i.quantity || i.quantity <= 0);
+  if (missingItem) { showToast('Har row mein item aur quantity daalo!','error'); return; }
+  const missingPrice = multiParsedData.items.find(i => !i.price || i.price <= 0);
+  if (missingPrice) { showToast(`${missingPrice.item} ka price daalo!`,'error'); return; }
+
+  let data;
+  try {
+    const payloadItems = multiParsedData.items.map(i => ({ item: i.item, quantity: i.quantity, price: i.price, inventory_id: i.inventory_id || null, found: !!i.found }));
+    const res = await apiFetch('/entry/multi/save', { method:'POST', body:JSON.stringify({ text: document.getElementById('multi-input').value.trim(), customer, items: payloadItems }) });
+    data = await res.json();
+    if (data.error) { showToast(data.error,'error'); return; }
+  } catch(e) { showToast('Server se connect nahi hua','error'); return; }
+
+  multiParsedData.customer = customer;
+  showToast(`✅ ${data.items_saved} items save ho gaye! Total: Rs. ${data.grand_total}`);
+  showWhatsAppPrompt(data.whatsapp, 'Bill receipt tayyar hai —', data.customer);
+
+  if (withPrint) { try { printBill(); } catch(e) { showToast('Print window nahi khula.','error'); } }
+  cancelMultiEntry();
+}
+
+function printBill() {
+  if (!multiParsedData) return;
+  recalcMultiTotals();
+  const customer = toTitleCase(document.getElementById('multi-customer')?.value || multiParsedData.customer || 'Customer');
+  const shopName = toTitleCase(getShopName() || 'Dukaan AI');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-PK');
+  const timeStr = now.toLocaleTimeString('en-PK', {hour:'2-digit', minute:'2-digit'});
+
+  const billWindow = window.open('', '_blank', 'width=360,height=640');
+  if (!billWindow) { showToast('Print window nahi khula — browser popup allow karo','error'); return; }
+  billWindow.document.write(`
+    <!DOCTYPE html><html><head><title>Receipt - ${esc(customer)}</title><style>
+        * { margin:0; padding:0; box-sizing:border-box; } @page { size: 80mm auto; margin: 3mm; }
+        body { width: 72mm; margin: 0 auto; padding: 3mm 2mm; font-family: 'Courier New', monospace; font-size: 11px; color: #111; background: #fff; }
+        .center { text-align: center; } .bold { font-weight: bold; } .shop { font-size: 15px; line-height: 1.2; } .meta { font-size: 10px; line-height: 1.45; }
+        .line { border-top: 1px dashed #111; margin: 6px 0; } .double-line { border-top: 2px solid #111; margin: 7px 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; } td, th { padding: 2px 0; vertical-align: top; }
+        th { font-size: 10px; text-align: left; } .item { width: 42%; word-break: break-word; } .qty { width: 14%; text-align: right; }
+        .rate { width: 20%; text-align: right; } .amt { width: 24%; text-align: right; } .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
+        .no-print { margin-top: 10px; } .print-btn { padding: 8px 18px; background:#1e293b; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
+        @media print { body { width: 72mm; padding: 0; } .no-print { display: none; } }
+      </style></head><body>
+      <div class="center bold shop">${esc(shopName)}</div><div class="center meta">Karyana Shop Receipt</div><div class="double-line"></div>
+      <div class="meta">Date: ${esc(dateStr)}</div><div class="meta">Time: ${esc(timeStr)}</div><div class="meta">Customer: <span class="bold">${esc(customer)}</span></div><div class="line"></div>
+      <table><thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead><tbody>
+          ${multiParsedData.items.map(item => `<tr><td class="item">${esc(toTitleCase(item.item))}</td><td class="qty">${item.quantity}</td><td class="rate">${item.price}</td><td class="amt">${item.total}</td></tr>`).join('')}
+        </tbody><tfoot><tr><td colspan="4"><div class="line"></div></td></tr><tr class="total-row"><td colspan="3">TOTAL</td><td class="amt">Rs. ${multiParsedData.grand_total}</td></tr></tfoot></table>
+      <div class="double-line"></div><div class="center meta">Shukriya! Dobara zaroor aana</div><div class="center meta">Powered by Dukaan AI</div>
+      <div class="center no-print"><button class="print-btn" onclick="window.print()">Print Receipt</button></div>
+      <scr` + `ipt>setTimeout(() => window.print(), 500);</scr` + `ipt>
+    </body></html>`);
+  billWindow.document.close();
+}
+
+function cancelMultiEntry() {
+  document.getElementById('multi-input').value = '';
+  document.getElementById('multi-result').classList.remove('show');
+  multiParsedData = null;
+}
+
+// ==================== OTHER PAGES (Inventory, Purchase, etc.) ====================
 async function checkInventory() {
   const item = document.getElementById('inv-input').value.trim();
   if (!item) return;
@@ -1816,37 +1644,17 @@ async function checkInventory() {
   try {
     const res = await apiFetch(`/inventory/${encodeURIComponent(item)}`);
     const data = await res.json();
-    if (data.error) {
-      container.innerHTML = `<div style="text-align:center;color:#dc2626;padding:20px;">❌ ${esc(data.error)}</div>`;
-      return;
-    }
+    if (data.error) { container.innerHTML = `<div style="text-align:center;color:#dc2626;padding:20px;">❌ ${esc(data.error)}</div>`; return; }
     const variants = data.variants || [];
-    const countLabel = variants.length === 1
-      ? '<b>1 item</b> mila'
-      : `<b>${variants.length} variants</b> mile — sab dekho:`;
+    const countLabel = variants.length === 1 ? '<b>1 item</b> mila' : `<b>${variants.length} variants</b> mile — sab dekho:`;
     const rows = variants.map(v => {
-      const stockBadge = v.stock > 0
-        ? `<span class="badge badge-green">${v.stock} baaki</span>`
-        : `<span class="badge badge-red">Out of stock</span>`;
-      return `
-        <div class="entry-row" style="cursor:default;">
-          <span style="font-weight:600;">${esc(v.name)}</span>
-          <span style="color:#16a34a;font-weight:700;">Rs. ${v.price}</span>
-          <span>${stockBadge}</span>
-        </div>`;
+      const stockBadge = v.stock > 0 ? `<span class="badge badge-green">${v.stock} baaki</span>` : `<span class="badge badge-red">Out of stock</span>`;
+      return `<div class="entry-row" style="cursor:default;"><span style="font-weight:600;">${esc(v.name)}</span><span style="color:#16a34a;font-weight:700;">Rs. ${v.price}</span><span>${stockBadge}</span></div>`;
     }).join('');
-    container.innerHTML = `
-      <div style="font-size:13px;color:#64748b;margin-bottom:8px;">${countLabel}</div>
-      <div class="entry-row entry-header">
-        <span>Item</span><span>Sale Price</span><span>Stock</span>
-      </div>
-      ${rows}`;
-  } catch(e) {
-    container.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;">Server error</div>';
-  }
+    container.innerHTML = `<div style="font-size:13px;color:#64748b;margin-bottom:8px;">${countLabel}</div><div class="entry-row entry-header"><span>Item</span><span>Sale Price</span><span>Stock</span></div>${rows}`;
+  } catch(e) { container.innerHTML = '<div style="text-align:center;color:#dc2626;padding:20px;">Server error</div>'; }
 }
 
-// ---- Inventory Management ----
 async function loadInventory() {
   try {
     const res=await apiFetch('/inventory/all');
@@ -1917,9 +1725,7 @@ async function saveItem() {
   if(!name||!price){showToast('Item naam aur price zaroori!','error');return;}
   const body={item_name:name,sale_price:price,purchase_rate:purchase,stock,category,reorder_level:reorder};
   try {
-    const res=id
-      ? await apiFetch('/inventory/edit',{method:'PUT',body:JSON.stringify({item_id:parseInt(id),...body})})
-      : await apiFetch('/inventory/add',{method:'POST',body:JSON.stringify(body)});
+    const res=id ? await apiFetch('/inventory/edit',{method:'PUT',body:JSON.stringify({item_id:parseInt(id),...body})}) : await apiFetch('/inventory/add',{method:'POST',body:JSON.stringify(body)});
     const data=await res.json();
     if(data.error){showToast(data.error,'error');return;}
     showToast(id?'✅ Item update ho gaya!':'✅ Item add ho gaya!');
@@ -1933,12 +1739,10 @@ async function deleteInventoryItem(itemId,itemName) {
     const res=await apiFetch(`/inventory/item/${itemId}`,{method:'DELETE'});
     const data=await res.json();
     if(data.error){showToast(data.error,'error');return;}
-    showToast(`🗑️ ${itemName} delete ho gaya!`);
-    loadInventory();
+    showToast(`🗑️ ${itemName} delete ho gaya!`); loadInventory();
   } catch(e){showToast('Delete nahi hua','error');}
 }
 
-// ---- Purchase ----
 async function parsePurchase() {
   const text=document.getElementById('purchase-input').value.trim();
   if(!text)return;
@@ -2028,12 +1832,11 @@ async function deletePurchase(id) {
     const res=await apiFetch(`/purchase/${id}`,{method:'DELETE'});
     const data=await res.json();
     if(data.error){showToast(data.error,'error');return;}
-    showToast('🗑️ Purchase delete ho gaya!');
-    getPurchaseHistory();
+    showToast('🗑️ Purchase delete ho gaya!'); getPurchaseHistory();
   } catch(e){showToast('Delete nahi hua','error');}
 }
 
-// ================= WhatsApp + Reports =================
+// ==================== WHATSAPP & REPORTS ====================
 let waBannerTimer = null;
 let waPendingContext = null;
 
@@ -2061,34 +1864,21 @@ async function saveWaPhoneAndSend() {
   const phone = document.getElementById('wa-phone-modal-input').value.trim();
   if (!phone || phone.length < 10) { showToast('Valid phone number daalo','error'); return; }
   try {
-    const res = await apiFetch('/customer/set-phone', {method:'POST', body:JSON.stringify({
-      customer: waPendingContext.customer,
-      phone: phone,
-      resend_message: waPendingContext.message
-    })});
+    const res = await apiFetch('/customer/set-phone', {method:'POST', body:JSON.stringify({ customer: waPendingContext.customer, phone: phone, resend_message: waPendingContext.message })});
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
     closeModal('wa-phone-modal');
-    if (data.whatsapp && data.whatsapp.link) {
-      window.open(data.whatsapp.link, '_blank');
-      showToast(`📱 Phone save ho gaya + WhatsApp khul raha hai`);
-    } else {
-      showToast('Phone save ho gaya');
-    }
+    if (data.whatsapp && data.whatsapp.link) { window.open(data.whatsapp.link, '_blank'); showToast(`📱 Phone save ho gaya + WhatsApp khul raha hai`); }
+    else { showToast('Phone save ho gaya'); }
     waPendingContext = null;
   } catch(e) { showToast('Save nahi hua','error'); }
 }
 
 function skipWaPhone() {
-  if (waPendingContext && waPendingContext.fallbackLink) {
-    window.open(waPendingContext.fallbackLink, '_blank');
-  }
-  closeModal('wa-phone-modal');
-  waPendingContext = null;
+  if (waPendingContext && waPendingContext.fallbackLink) window.open(waPendingContext.fallbackLink, '_blank');
+  closeModal('wa-phone-modal'); waPendingContext = null;
 }
-function hideWaBanner() {
-  document.getElementById('wa-banner').classList.remove('show');
-}
+function hideWaBanner() { document.getElementById('wa-banner').classList.remove('show'); }
 
 async function sendReminder(name) {
   try {
@@ -2116,16 +1906,13 @@ async function loadBulkReminders() {
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
     waReminders = data.reminders;
-    document.getElementById('wa-auto-status').textContent =
-      data.auto_send_enabled ? '✅ Auto-send ON (Cloud API)' : 'ℹ️ Har button WhatsApp kholega — free mode';
+    document.getElementById('wa-auto-status').textContent = data.auto_send_enabled ? '✅ Auto-send ON (Cloud API)' : 'ℹ️ Har button WhatsApp kholega — free mode';
     document.getElementById('wa-reminder-list').innerHTML = waReminders.map((r,i) => `
       <div class="entry-row" id="wa-row-${i}">
         <span style="font-weight:600;">${esc(r.customer)}</span>
         <span style="color:#64748b;">${r.phone_valid ? esc(r.phone) : '⚠️ ' + esc(r.phone || 'no phone')}</span>
         <span style="font-weight:700;color:#dc2626;">Rs. ${r.baaki}</span>
-        <span>${r.auto_sent
-          ? '<span style="color:#16a34a;font-weight:600;">✅ Bhej diya</span>'
-          : `<button class="wa-btn" onclick="openReminder(${i})" id="wa-btn-${i}">📱 Bhejein</button>`}</span>
+        <span>${r.auto_sent ? '<span style="color:#16a34a;font-weight:600;">✅ Bhej diya</span>' : `<button class="wa-btn" onclick="openReminder(${i})" id="wa-btn-${i}">📱 Bhejein</button>`}</span>
       </div>`).join('') || '<div style="padding:16px;color:#64748b;">Koi customer nahi jiska baaki Rs. '+minBaaki+' se zyada ho</div>';
   } catch(e) { showToast('List load nahi hui','error'); }
 }
@@ -2134,12 +1921,7 @@ function openReminder(i) {
   const r = waReminders[i];
   if (!r) return;
   if (!r.phone_valid) {
-    waPendingContext = {
-      customer: r.customer.toLowerCase(),
-      message: r.message || '',
-      fallbackLink: r.link,
-      _bulkIndex: i
-    };
+    waPendingContext = { customer: r.customer.toLowerCase(), message: r.message || '', fallbackLink: r.link, _bulkIndex: i };
     sendReminder(r.customer.toLowerCase());
     return;
   }
@@ -2149,15 +1931,10 @@ function openReminder(i) {
 }
 
 function sendAllReminders() {
-  const pending = waReminders.map((r,i)=>i).filter(i => {
-    const btn = document.getElementById(`wa-btn-${i}`);
-    return btn && !btn.disabled;
-  });
+  const pending = waReminders.map((r,i)=>i).filter(i => { const btn = document.getElementById(`wa-btn-${i}`); return btn && !btn.disabled; });
   if (!pending.length) { showToast('Sab ko bhej diya gaya!'); return; }
   openReminder(pending[0]);
-  if (pending.length > 1) {
-    showToast(`${pending.length - 1} aur baaki hain — WhatsApp se wapas aa kar dobara dabao`);
-  }
+  if (pending.length > 1) { showToast(`${pending.length - 1} aur baaki hain — WhatsApp se wapas aa kar dobara dabao`); }
 }
 
 async function loadDashboard() {
@@ -2200,7 +1977,6 @@ async function exportCSV(kind) {
   } catch(e) { showToast('Export nahi hua','error'); }
 }
 
-// ---------------- Trash ----------------
 async function loadTrash() {
   try {
     const res = await apiFetch('/trash/khaata');
@@ -2222,8 +1998,7 @@ async function restoreEntry(id) {
     const res = await apiFetch(`/trash/restore/${id}`, {method:'POST'});
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
-    showToast('↩️ Entry wapas aa gayi!');
-    loadTrash();
+    showToast('↩️ Entry wapas aa gayi!'); loadTrash();
   } catch(e) { showToast('Restore fail','error'); }
 }
 
@@ -2233,18 +2008,14 @@ async function purgeOldTrash() {
     const res = await apiFetch('/trash/purge', {method:'DELETE'});
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
-    showToast(`🔥 ${data.purged} entries permanently delete ho gayin`);
-    loadTrash();
+    showToast(`🔥 ${data.purged} entries permanently delete ho gayin`); loadTrash();
   } catch(e) { showToast('Purge fail','error'); }
 }
 
-// ---- Quick Payment ----
 async function openQuickPayment() {
   const dl = document.getElementById('qp-customer-list');
   if (dl) {
-    if (!allCustomersCache.length) {
-      try { await getAllCustomers(); } catch(_){}
-    }
+    if (!allCustomersCache.length) { try { await getAllCustomers(); } catch(_){} }
     dl.innerHTML = allCustomersCache.map(c => `<option value="${esc(c.name.toLowerCase())}">`).join('');
   }
   document.getElementById('qp-customer').value = '';
@@ -2261,14 +2032,7 @@ async function saveQuickPayment() {
 
   try {
     const res = await apiFetch('/entry/save', {
-      method:'POST',
-      body: JSON.stringify({
-        text: '',
-        customer: customer,
-        item: 'PAYMENT',
-        quantity: 1,
-        price: amount
-      })
+      method:'POST', body: JSON.stringify({ text: '', customer: customer, item: 'PAYMENT', quantity: 1, price: amount })
     });
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
@@ -2277,189 +2041,6 @@ async function saveQuickPayment() {
     showWhatsAppPrompt(data.whatsapp, 'Payment receipt tayyar hai —', customer);
   } catch(e) { showToast('Payment save nahi hui','error'); }
 }
-
-// ==================== Autocomplete ====================
-function attachAutocomplete(opts) {
-  const input = document.getElementById(opts.inputId);
-  const dropdown = document.getElementById(opts.dropdownId);
-  if (!input || !dropdown) return;
-
-  const endpoint = opts.endpoint || '/items/search';
-  const listKey = opts.listKey || 'items';
-  const limit = opts.limit || 8;
-  const renderItem = opts.renderItem || defaultItemRenderer;
-  const onSelect = opts.onSelect || (() => {});
-  const onEnter = opts.onEnter || null;
-
-  let debounceTimer = null;
-  let activeIndex = -1;
-  let items = [];
-  let requestId = 0;
-
-  function hide() {
-    dropdown.classList.remove('show');
-    dropdown.innerHTML = '';
-    activeIndex = -1;
-    items = [];
-  }
-
-  function render(list) {
-    items = list;
-    activeIndex = -1;
-    if (!list.length) {
-      dropdown.innerHTML = '<div class="ac-empty">Koi match nahi mila</div>';
-      dropdown.classList.add('show');
-      return;
-    }
-    dropdown.innerHTML = list.map((it, i) =>
-      `<div class="ac-item" data-idx="${i}">${renderItem(it)}</div>`
-    ).join('');
-    dropdown.classList.add('show');
-
-    dropdown.querySelectorAll('.ac-item').forEach(el => {
-      el.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        const idx = parseInt(el.dataset.idx, 10);
-        onSelect(items[idx]);
-        hide();
-      });
-    });
-  }
-
-  async function fetchSuggestions(q) {
-    const myReq = ++requestId;
-    try {
-      const res = await apiFetch(`${endpoint}?q=${encodeURIComponent(q)}&limit=${limit}`);
-      const data = await res.json();
-      if (myReq !== requestId) return;
-      if (data.error) { hide(); return; }
-      render(data[listKey] || []);
-    } catch (e) {
-      if (myReq === requestId) hide();
-    }
-  }
-
-  input.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => fetchSuggestions(input.value.trim()), 200);
-  });
-
-  input.addEventListener('focus', () => {
-    if (!dropdown.classList.contains('show')) {
-      fetchSuggestions(input.value.trim());
-    }
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { hide(); return; }
-    if (e.key === 'Enter' && !dropdown.classList.contains('show') && onEnter) {
-      e.preventDefault(); onEnter(); return;
-    }
-    if (!dropdown.classList.contains('show')) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      activeIndex = Math.min(activeIndex + 1, items.length - 1);
-      paintActive();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      activeIndex = Math.max(activeIndex - 1, -1);
-      paintActive();
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (activeIndex >= 0) {
-        onSelect(items[activeIndex]);
-        hide();
-      } else if (onEnter) {
-        onEnter();
-        hide();
-      }
-    }
-  });
-
-  input.addEventListener('blur', () => setTimeout(hide, 150));
-
-  function paintActive() {
-    dropdown.querySelectorAll('.ac-item').forEach((el, i) => {
-      el.classList.toggle('active', i === activeIndex);
-    });
-    if (activeIndex >= 0) {
-      const el = dropdown.querySelector(`.ac-item[data-idx="${activeIndex}"]`);
-      if (el) el.scrollIntoView({ block: 'nearest' });
-    }
-  }
-}
-
-function defaultItemRenderer(it) {
-  return `
-    <div class="ac-row">
-      <span class="ac-name">${esc(it.name)}</span>
-      <span class="ac-meta">
-        <span class="ac-price">Rs. ${it.price}</span>
-        <span class="ac-stock ${it.stock > 0 ? '' : 'out'}">${it.stock > 0 ? it.stock + ' left' : 'out'}</span>
-      </span>
-    </div>`;
-}
-
-function customerRenderer(it) {
-  const phone = it.phone && it.phone !== 'unknown' ? ` · ${esc(it.phone)}` : '';
-  const baakiLabel = it.baaki > 0 ? `Rs. ${it.baaki}` : 'Clear';
-  const baakiColor = it.baaki > 0 ? '#dc2626' : '#16a34a';
-  return `
-    <div class="ac-row">
-      <span>
-        <span class="ac-name">${esc(it.name)}</span>
-        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">#${it.id}${phone}</span>
-      </span>
-      <span style="font-size:12px;font-weight:700;color:${baakiColor};">${baakiLabel}</span>
-    </div>`;
-}
-
-// Wire item autocomplete on Naya Entry page
-attachAutocomplete({
-  inputId: 'r-item',
-  dropdownId: 'r-item-suggestions',
-  onSelect: (item) => {
-    document.getElementById('r-item').value = item.name;
-    document.getElementById('r-price').value = item.price;
-
-    if (!parsedData) parsedData = {};
-    parsedData.item = item.name;
-    parsedData._selectedItemName = item.name;
-    parsedData.price = item.price;
-    parsedData.stock = item.stock;
-    parsedData.inventory_id = item.id;
-    parsedData.manual = false;
-
-    updateSingleTotal();
-    setSingleStock(item.stock, false);
-
-    const sw = document.getElementById('stock-warning');
-    if (item.stock === 0) {
-      sw.style.display = 'block';
-      document.getElementById('force-save-check').checked = false;
-    } else {
-      sw.style.display = 'none';
-    }
-
-    document.getElementById('manual-box').style.display = 'none';
-    document.getElementById('variant-box').style.display = 'none';
-  },
-});
-
-// Wire customer autocomplete on Khaata page
-attachAutocomplete({
-  inputId: 'khaata-input',
-  dropdownId: 'khaata-suggestions',
-  endpoint: '/customers/search',
-  listKey: 'customers',
-  limit: 10,
-  renderItem: customerRenderer,
-  onSelect: (customer) => {
-    document.getElementById('khaata-input').value = customer.name;
-    getKhaata();
-  },
-  onEnter: () => getKhaata(),
-});
 </script>
 </body>
 </html>
