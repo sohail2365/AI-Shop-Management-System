@@ -59,21 +59,24 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 .hamburger-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;margin-right:4px;}
 .sidebar-overlay{display:none;}
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .hamburger-btn{display:block;}
-  .topbar-shop{display:none;} /* space bachao chhoti screen pe */
-  .app-body{position:relative;}
+  .topbar-shop{display:none;}
   .sidebar{
     position:fixed;
-    top:60px; /* topbar ki height */
-    left:-260px;
-    width:240px;
+    top:60px;
+    left:0;
+    width:260px;
+    max-width:80vw;
     height:calc(100vh - 60px);
     z-index:1000;
-    transition:left 0.25s ease;
+    transform:translateX(-100%);
+    transition:transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow:2px 0 12px rgba(0,0,0,0.3);
+    will-change:transform;
+    pointer-events:none;
   }
-  .sidebar.open{left:0;}
+  .sidebar.open{transform:translateX(0);pointer-events:auto;}
   .sidebar-overlay{
     display:block;
     position:fixed;
@@ -89,7 +92,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 }
 
 @media (max-width: 480px) {
-  .datetime-box{display:none;} /* bahut chhoti screen (phone) pe clock hide, jagah bachao */
+  .datetime-box{display:none;}
 }
 .nav-section{padding:6px 14px 4px;font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;}
 .nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;color:#94a3b8;font-size:14px;transition:all 0.15s;border-left:3px solid transparent;margin:1px 0;}
@@ -119,7 +122,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 
 /* Form elements */
 .input-row{display:flex;gap:10px;margin-bottom:4px;}
-input[type="text"],input[type="number"],input[type="date"],input[type="password"]{flex:1;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;color:#1e293b;}
+input[type="text"],input[type="number"],input[type="date"],input[type="password"]{flex:1;min-width:0;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;transition:border 0.2s;color:#1e293b;}
 input:focus{border-color:#6366f1;}
 button{padding:10px 18px;background:#6366f1;color:white;border:none;border-radius:10px;font-size:14px;cursor:pointer;transition:all 0.2s;white-space:nowrap;font-weight:500;}
 button:hover{background:#4f46e5;}
@@ -151,7 +154,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .edit-btn{padding:3px 8px;background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 .del-btn{padding:3px 8px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 
-/* Khaata entries */
+/* Khaata entries (old — kept for other lists) */
 .entry-table{width:100%;}
 .entry-row{display:grid;grid-template-columns:0.8fr 1.5fr 0.6fr 1fr;padding:8px 4px;border-bottom:1px solid #f1f5f9;font-size:13px;align-items:center;gap:8px;}
 .entry-row:last-child{border-bottom:none;}
@@ -251,7 +254,37 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .stat-card.green .stat-value{color:#16a34a;}
 .stat-card.red .stat-value{color:#dc2626;}
 .stat-card.blue .stat-value{color:#2563eb;}
-@media(prefers-color-scheme:dark){.stat-card{background:#fff;}}
+
+/* ============ Autocomplete dropdown ============ */
+.autocomplete-wrap{position:relative;display:inline-block;width:100%;}
+.autocomplete-dropdown{position:absolute;top:100%;left:0;min-width:100%;width:max-content;max-width:340px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:200;max-height:280px;overflow-y:auto;display:none;margin-top:4px;}
+.autocomplete-dropdown.show{display:block;}
+.ac-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:13px;transition:background 0.1s;}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:hover,.ac-item.active{background:#f8faff;}
+.ac-item .ac-name{font-weight:600;color:#1e293b;}
+.ac-item .ac-meta{display:flex;gap:10px;align-items:center;flex-shrink:0;}
+.ac-item .ac-price{color:#16a34a;font-weight:700;font-size:12px;}
+.ac-item .ac-stock{font-size:10px;padding:2px 8px;border-radius:12px;background:#e2e8f0;color:#475569;font-weight:600;}
+.ac-item .ac-stock.out{background:#fee2e2;color:#dc2626;}
+.ac-row{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.ac-loading,.ac-empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px;}
+
+/* ============ Khaata page ============ */
+.khaata-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px;}
+.khaata-table th{background:#f8fafc;padding:10px 8px;text-align:left;font-weight:700;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0;}
+.khaata-table td{padding:10px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.khaata-table tr:hover td{background:#f8fafc;}
+
+.khaata-summary{margin-top:20px;padding-top:16px;border-top:2px solid #e2e8f0;}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:14px;}
+.summary-row span:first-child{color:#64748b;font-weight:500;}
+.summary-row span:last-child{color:#1e293b;font-weight:600;}
+.summary-row.grand{padding:14px 16px;margin-top:8px;background:linear-gradient(135deg,#fef9ee,#fef3c7);border-radius:10px;}
+.summary-row.grand span:first-child{color:#92400e;font-weight:700;font-size:15px;}
+.summary-row.grand span:last-child{color:#d97706;font-weight:800;font-size:20px;}
+.summary-row.grand.positive span:last-child{color:#dc2626;}
+.summary-row.grand.zero span:last-child{color:#16a34a;}
 </style>
 </head>
 <body>
@@ -333,7 +366,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
       <div class="nav-divider"></div>
       <div class="nav-section">Customers</div>
-      <div class="nav-item" onclick="showPage('khaata');getKhaata()" id="nav-khaata">
+      <div class="nav-item" onclick="showPage('khaata')" id="nav-khaata">
         <span class="nav-icon">📒</span><span>Customer Khaata</span>
       </div>
       <div class="nav-item" onclick="showPage('customers');getAllCustomers()" id="nav-customers">
@@ -341,7 +374,8 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       </div>
       <div class="nav-item" onclick="showPage('whatsapp');loadBulkReminders()" id="nav-whatsapp">
         <span class="nav-icon">📱</span><span>WhatsApp Reminders</span>
-      </div>      <div class="nav-item" onclick="showPage('trash');loadTrash()" id="nav-trash">
+      </div>
+      <div class="nav-item" onclick="showPage('trash');loadTrash()" id="nav-trash">
         <span class="nav-icon">🗑️</span><span>Trash</span>
       </div>
 
@@ -370,7 +404,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       </div>
     </div>
 
-    <!-- Mobile-only overlay — sidebar khuli ho to tap kar ke band karo -->
+    <!-- Mobile-only overlay -->
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
     <!-- Main Content -->
@@ -388,18 +422,26 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           <div class="card-title"><span class="icon">🤖</span> AI Entry</div>
           <div class="input-row">
             <input type="text" id="entry-input" placeholder="Sale: 'bilal ne 2 brite liya'  ya  Payment: 'bilal ne 500 diye'" onkeydown="if(event.key==='Enter')parseEntry()">
-            <button type="button" id="mic-btn" onclick="toggleVoiceEntry()" title="Bol kar entry karo" style="flex:unset;width:46px;font-size:18px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;">🎤</button>
+            <button type="button" id="mic-btn" onclick="toggleVoiceEntry()" title="Urdu ya Roman Urdu mein bolo" style="flex:unset;width:46px;font-size:18px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer;">🎤</button>
             <button onclick="parseEntry()" id="parse-btn">Parse karo</button>
           </div>
           <div style="margin-top:8px;font-size:12px;color:#64748b;">
-            💡 <b>Payment record karna hai?</b> Likho <i>"customer_name ne X diye"</i> (jaise "asif traders ne 1000 diye")
+            🎤 <b>Voice:</b> Urdu ya Roman Urdu mein bolo — dono kaam karte hain
+            &nbsp;•&nbsp;
+            💡 <b>Payment record karna hai?</b> Likho <i>"customer_name ne X diye"</i>
             &nbsp;•&nbsp;
             <a href="#" onclick="openQuickPayment();return false;" style="color:#6366f1;font-weight:600;">Quick Payment karo</a>
           </div>
 
           <div class="result-box" id="parse-result">
             <div class="parsed-row"><span class="lbl">Customer</span><span class="val"><input type="text" id="r-customer" oninput="syncSingleEntryFromInputs()" style="width:220px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;"></span></div>
-            <div class="parsed-row"><span class="lbl">Item</span><span class="val"><input type="text" id="r-item" oninput="syncSingleEntryFromInputs()" style="width:220px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;"></span></div>
+            <div class="parsed-row">
+              <span class="lbl">Item</span>
+              <span class="val autocomplete-wrap" style="width:220px;">
+                <input type="text" id="r-item" oninput="syncSingleEntryFromInputs()" placeholder="Item — type karo, suggestions aayengi" autocomplete="off" style="width:100%;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;">
+                <div id="r-item-suggestions" class="autocomplete-dropdown"></div>
+              </span>
+            </div>
             <div class="parsed-row"><span class="lbl">Quantity</span><span class="val"><input type="number" id="r-qty" min="0" step="0.01" oninput="syncSingleEntryFromInputs()" style="width:110px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;text-align:right;"></span></div>
             <div class="parsed-row"><span class="lbl">Price per item</span><span class="val"><input type="number" id="r-price" min="0" step="0.01" oninput="syncSingleEntryFromInputs()" style="width:130px;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;flex:unset;text-align:right;"></span></div>
             <div class="parsed-row"><span class="lbl">Total</span><span class="val" id="r-total">-</span></div>
@@ -496,25 +538,62 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- ===== PAGE: KHAATA ===== -->
+      <!-- ===== PAGE: KHAATA (New) ===== -->
       <div class="page" id="page-khaata">
         <div class="page-header">
           <div>
             <div class="page-title">📒 Customer Khaata</div>
-            <div class="page-subtitle">Kisi bhi customer ka hisaab dekho</div>
+            <div class="page-subtitle">Naam ya khaata # likho — suggestions aayengi</div>
           </div>
         </div>
+
         <div class="card">
-          <div class="input-row">
-            <input type="text" id="khaata-input" placeholder="Customer naam likho..." onkeydown="if(event.key==='Enter')getKhaata()">
-            <button onclick="getKhaata()">Dekho</button>
+          <div class="autocomplete-wrap">
+            <input type="text" id="khaata-input"
+                   placeholder="🔍 Naam ya khaata # ... (jaise 'bilal' ya '5')"
+                   autocomplete="off"
+                   style="width:100%;">
+            <div id="khaata-suggestions" class="autocomplete-dropdown"></div>
           </div>
-          <div class="result-box" id="khaata-result">
-            <div class="entry-row entry-header"><span>Taareekh</span><span>Item</span><span>Qty</span><span>Amount</span></div>
-            <div id="khaata-entries"></div>
-            <div class="total-bar" id="khaata-total-bar">
-              <span class="lbl">💰 Total Baaki</span>
-              <span class="val" id="khaata-total">Rs. 0</span>
+        </div>
+
+        <div class="card" id="khaata-detail-card" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:#1e293b;" id="khaata-customer-name">—</div>
+              <div style="font-size:13px;color:#64748b;margin-top:2px;" id="khaata-customer-meta">—</div>
+            </div>
+            <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px;padding:7px 14px;">✏️ Pehla Udhaar</button>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="khaata-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th style="text-align:right;">Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="khaata-table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="khaata-summary">
+            <div class="summary-row">
+              <span>Subtotal (entries)</span>
+              <span id="khaata-subtotal">Rs. 0</span>
+            </div>
+            <div class="summary-row">
+              <span>Pehla Udhaar</span>
+              <span id="khaata-opening">Rs. 0</span>
+            </div>
+            <div class="summary-row grand" id="khaata-grand-row">
+              <span>Grand Total</span>
+              <span id="khaata-grand-total">Rs. 0</span>
             </div>
           </div>
         </div>
@@ -772,6 +851,30 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   </div>
 </div>
 
+<!-- Opening Balance Modal (Pehla Udhaar) -->
+<div id="opening-balance-modal" class="modal">
+  <div class="modal-box" style="width:380px;">
+    <h3>💰 Pehla Udhaar</h3>
+    <p style="font-size:13px;color:#64748b;margin:4px 0 14px;">
+      Purani register se jo baaki hai — woh amount yahan daalo.
+      Grand total = entries + pehla udhaar.
+    </p>
+    <input type="hidden" id="ob-customer-id">
+    <div class="modal-field">
+      <label>Customer</label>
+      <input type="text" id="ob-customer-name" readonly style="background:#f8fafc;">
+    </div>
+    <div class="modal-field">
+      <label>Amount (Rs.)</label>
+      <input type="number" id="ob-amount" min="0" step="1" placeholder="0">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-success" onclick="saveOpeningBalance()">✓ Save</button>
+      <button class="btn-danger" onclick="closeModal('opening-balance-modal')">✗ Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- WhatsApp send banner -->
 <div class="wa-banner" id="wa-banner">
   <span id="wa-banner-text">Receipt tayyar hai</span>
@@ -887,8 +990,18 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 const API = window.location.origin;
 let parsedData = null;
 let allInventoryItems = [];
+let currentKhaata = null;
 
 // ---- Helpers ----
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 function showToast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type} show`;
@@ -899,9 +1012,10 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 function getToken() { return localStorage.getItem('dukaan_token'); }
 function getShopName() { return localStorage.getItem('shop_name'); }
 function toTitleCase(text) {
-  return String(text || '').toLowerCase().replace(/\w/g, c => c.toUpperCase());
+  return String(text || '').toLowerCase().replace(/\w/g, c => c.toUpperCase());
 }
 function saveToken(t, s) { localStorage.setItem('dukaan_token', t); localStorage.setItem('shop_name', s); }
+function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 
 async function apiFetch(url, options = {}) {
   const token = getToken();
@@ -1002,10 +1116,10 @@ function showPage(name) {
   document.getElementById(`page-${name}`).classList.add('active');
   const navEl = document.getElementById(`nav-${name}`);
   if (navEl) navEl.classList.add('active');
-  closeSidebar(); // mobile pe: page change hote hi sidebar apne aap band ho jaye
+  closeSidebar();
 }
 
-// ---- Mobile sidebar (hamburger drawer) ----
+// ---- Mobile sidebar ----
 function toggleSidebar() {
   document.getElementById('app-sidebar').classList.toggle('open');
   document.getElementById('sidebar-overlay').classList.toggle('show');
@@ -1081,48 +1195,25 @@ let voiceStream = null;
 
 async function toggleVoiceEntry() {
   const micBtn = document.getElementById('mic-btn');
-
-  // Agar already recording ho rahi hai — stop karo
-  if (voiceRecorder && voiceRecorder.state === 'recording') {
-    voiceRecorder.stop();
-    return;
-  }
-
-  // Naya recording shuru karo
-  try {
-    voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  } catch (e) {
-    showToast('Microphone permission nahi mili — browser settings check karo', 'error');
-    return;
-  }
-
+  if (voiceRecorder && voiceRecorder.state === 'recording') { voiceRecorder.stop(); return; }
+  try { voiceStream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch (e) { showToast('Microphone permission nahi mili — browser settings check karo', 'error'); return; }
   voiceChunks = [];
-  // Browser jo bhi format support karta hai wo use karo (webm zyada tar jagah, mp4 Safari pe)
   const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
   voiceRecorder = new MediaRecorder(voiceStream, { mimeType });
-
   voiceRecorder.ondataavailable = (e) => { if (e.data.size > 0) voiceChunks.push(e.data); };
-
   voiceRecorder.onstop = async () => {
     voiceStream.getTracks().forEach(track => track.stop());
     micBtn.classList.remove('recording');
     micBtn.textContent = '🎤';
-
     const audioBlob = new Blob(voiceChunks, { type: mimeType });
-    if (audioBlob.size < 500) {
-      showToast('Recording bahut chhoti thi — dobara try karo', 'error');
-      return;
-    }
+    if (audioBlob.size < 500) { showToast('Recording bahut chhoti thi — dobara try karo', 'error'); return; }
     await uploadVoiceEntry(audioBlob, mimeType);
   };
-
   voiceRecorder.start();
   micBtn.classList.add('recording');
   micBtn.textContent = '⏹️';
   showToast('Recording shuru — bolo, phir button dobara dabao', 'info');
-
-  // Safety: 30 second se zyada recording auto-stop (chhoti dukaan entries
-  // 5-15 second ki hoti hain; yeh sirf galti se mic khula reh jaye us se bachata hai)
   setTimeout(() => {
     if (voiceRecorder && voiceRecorder.state === 'recording') {
       voiceRecorder.stop();
@@ -1137,7 +1228,6 @@ async function uploadVoiceEntry(audioBlob, mimeType) {
   const ext = mimeType.includes('webm') ? 'webm' : 'mp4';
   const formData = new FormData();
   formData.append('audio', audioBlob, `voice.${ext}`);
-
   showToast('Awaaz samjhi jaa rahi hai...', 'info');
   try {
     const token = getToken();
@@ -1148,14 +1238,10 @@ async function uploadVoiceEntry(audioBlob, mimeType) {
     });
     const data = await res.json();
     if (data.error) { showToast(data.error, 'error'); micBtn.disabled = false; return; }
-
-    // Transcript text box mein dikhao — taake user verify/edit kar sake
     document.getElementById('entry-input').value = data.transcript || '';
     await renderParsedEntry(data);
-    showToast(`\uD83D\uDD0A Suna: "${data.transcript}"`, 'success');
-  } catch (e) {
-    showToast('Voice upload fail hui — dobara try karo', 'error');
-  }
+    showToast(`🔊 Suna: "${data.transcript}"`, 'success');
+  } catch (e) { showToast('Voice upload fail hui — dobara try karo', 'error'); }
   micBtn.disabled = false;
 }
 
@@ -1190,7 +1276,7 @@ function showVariants(variants) {
   vb.style.display = 'block';
   document.getElementById('variant-list').innerHTML = variants.map((v,i) => `
     <div class="variant-item" onclick="selectVariant(${i})" id="vi-${i}">
-      <span class="variant-name">${v.name}</span>
+      <span class="variant-name">${esc(v.name)}</span>
       <span class="variant-meta">
         <span style="font-size:13px;color:#64748b;">Rs. ${v.price}</span>
         <span class="badge ${v.stock>0?'badge-green':'badge-red'}">${v.stock>0?v.stock+' baaki':'Out of stock'}</span>
@@ -1268,8 +1354,6 @@ function cancelEntry() {
 // ---- Multi Item Entry ----
 let multiParsedData = null;
 
-function round2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
-
 function recalcMultiTotals() {
   if (!multiParsedData) return;
   multiParsedData.items.forEach(item => { item.total = round2((item.quantity || 0) * (item.price || 0)); });
@@ -1283,12 +1367,12 @@ function renderMultiTable() {
     const variantSelect = item.variants && item.variants.length > 1 ? `
       <select onchange="selectMultiVariant(${i}, this.value)" style="margin-top:5px;width:100%;padding:5px;border:1.5px solid #bfdbfe;border-radius:6px;font-size:12px;background:#eff6ff;color:#1d4ed8;">
         <option value="">Variant select karo</option>
-        ${item.variants.map((v,vi) => `<option value="${vi}" ${item.inventory_id===v.id?'selected':''}>${v.name} - Rs. ${v.price} - Stock ${v.stock}</option>`).join('')}
+        ${item.variants.map((v,vi) => `<option value="${vi}" ${item.inventory_id===v.id?'selected':''}>${esc(v.name)} - Rs. ${v.price} - Stock ${v.stock}</option>`).join('')}
       </select>` : '';
     return `
     <tr style="border-bottom:1px solid #f1f5f9;">
       <td style="padding:9px 8px;min-width:190px;">
-        <input type="text" value="${item.item || ''}" onchange="setMultiItemName(${i}, this.value)"
+        <input type="text" value="${esc(item.item || '')}" onchange="setMultiItemName(${i}, this.value)"
           style="width:100%;padding:5px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;flex:unset;">
         ${variantSelect}
         ${item.variants && item.variants.length > 1 ? '<span class="badge badge-blue" style="margin-top:5px;font-size:10px;">Variant optional</span>' : ''}
@@ -1391,7 +1475,6 @@ async function saveMultiEntry(withPrint) {
   const missingPrice = multiParsedData.items.find(i => !i.price || i.price <= 0);
   if (missingPrice) { showToast(`${missingPrice.item} ka price daalo!`,'error'); return; }
 
-  // ---- Step 1: Save to backend ----
   let data;
   try {
     const payloadItems = multiParsedData.items.map(i => ({
@@ -1412,23 +1495,17 @@ async function saveMultiEntry(withPrint) {
     data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
   } catch(e) {
-    // Sirf network/parsing error yahan aayega — save fail hua actually
     showToast('Server se connect nahi hua','error');
     return;
   }
 
-  // ---- Step 2: Save ho gaya — ab success toast + WhatsApp + optional print ----
   multiParsedData.customer = customer;
   showToast(`✅ ${data.items_saved} items save ho gaye! Total: Rs. ${data.grand_total}`);
   showWhatsAppPrompt(data.whatsapp, 'Bill receipt tayyar hai —', data.customer);
 
   if (withPrint) {
-    // Print alag try/catch mein — popup blocked ho toh bhi save success hi rahega
-    try {
-      printBill();
-    } catch(e) {
-      showToast('Print window nahi khula (popup blocker check karo). Save ho gaya hai.','error');
-    }
+    try { printBill(); }
+    catch(e) { showToast('Print window nahi khula (popup blocker check karo). Save ho gaya hai.','error'); }
   }
   cancelMultiEntry();
 }
@@ -1451,21 +1528,12 @@ function printBill() {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Receipt - ${customer}</title>
+      <title>Receipt - ${esc(customer)}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         @page { size: 80mm auto; margin: 3mm; }
-        body {
-          width: 72mm;
-          margin: 0 auto;
-          padding: 3mm 2mm;
-          font-family: 'Courier New', monospace;
-          font-size: 11px;
-          color: #111;
-          background: #fff;
-        }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
+        body { width: 72mm; margin: 0 auto; padding: 3mm 2mm; font-family: 'Courier New', monospace; font-size: 11px; color: #111; background: #fff; }
+        .center { text-align: center; } .bold { font-weight: bold; }
         .shop { font-size: 15px; line-height: 1.2; }
         .meta { font-size: 10px; line-height: 1.45; }
         .line { border-top: 1px dashed #111; margin: 6px 0; }
@@ -1480,33 +1548,27 @@ function printBill() {
         .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
         .no-print { margin-top: 10px; }
         .print-btn { padding: 8px 18px; background:#1e293b; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
-        @media print {
-          body { width: 72mm; padding: 0; }
-          .no-print { display: none; }
-        }
+        @media print { body { width: 72mm; padding: 0; } .no-print { display: none; } }
       </style>
     </head>
     <body>
-      <div class="center bold shop">${shopName}</div>
+      <div class="center bold shop">${esc(shopName)}</div>
       <div class="center meta">Karyana Shop Receipt</div>
       <div class="double-line"></div>
-      <div class="meta">Date: ${dateStr}</div>
-      <div class="meta">Time: ${timeStr}</div>
-      <div class="meta">Customer: <span class="bold">${customer}</span></div>
+      <div class="meta">Date: ${esc(dateStr)}</div>
+      <div class="meta">Time: ${esc(timeStr)}</div>
+      <div class="meta">Customer: <span class="bold">${esc(customer)}</span></div>
       <div class="line"></div>
       <table>
-        <thead>
-          <tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr>
-        </thead>
+        <thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead>
         <tbody>
           ${multiParsedData.items.map(item => `
             <tr>
-              <td class="item">${toTitleCase(item.item)}</td>
+              <td class="item">${esc(toTitleCase(item.item))}</td>
               <td class="qty">${item.quantity}</td>
               <td class="rate">${item.price}</td>
               <td class="amt">${item.total}</td>
-            </tr>
-          `).join('')}
+            </tr>`).join('')}
         </tbody>
         <tfoot>
           <tr><td colspan="4"><div class="line"></div></td></tr>
@@ -1517,7 +1579,7 @@ function printBill() {
       <div class="center meta">Shukriya! Dobara zaroor aana</div>
       <div class="center meta">Powered by Dukaan AI</div>
       <div class="center no-print"><button class="print-btn" onclick="window.print()">Print Receipt</button></div>
-      <scr'+'ipt>setTimeout(() => window.print(), 500);</scr'+'ipt>
+      <scr` + `ipt>setTimeout(() => window.print(), 500);</scr` + `ipt>
     </body>
     </html>
   `);
@@ -1530,30 +1592,97 @@ function cancelMultiEntry() {
   multiParsedData = null;
 }
 
-// ---- Khaata ----
+// ==================== Khaata page ====================
 async function getKhaata() {
-  const name = document.getElementById('khaata-input').value.trim();
-  if (!name) return;
+  const identifier = document.getElementById('khaata-input').value.trim();
+  if (!identifier) return;
   try {
-    const res = await apiFetch(`/khaata/${name}`);
+    const res = await apiFetch(`/khaata/${encodeURIComponent(identifier)}`);
     const data = await res.json();
-    if (data.error) { showToast(data.error,'error'); return; }
-    document.getElementById('khaata-entries').innerHTML = data.entries.map(e => `
-      <div class="entry-row">
-        <span style="color:#64748b;font-size:12px;">${e.date}</span>
-        <span style="font-weight:500;">${e.item==='PAYMENT'?'💰 Payment':e.item}</span>
-        <span>${e.item==='PAYMENT'?'—':'x'+e.quantity}</span>
-        <span class="action-btns">
-          <span style="color:${e.total<0?'#16a34a':'#1e293b'};font-weight:600;">Rs. ${Math.abs(e.total)} ${e.total<0?'✓':''}</span>
-          ${e.item!=='PAYMENT'?`<button class="edit-btn" onclick="editEntry(${e.id},'${e.item}',${e.quantity},${e.price},'${e.date}')">✏️</button>`:''}
-          <button class="del-btn" onclick="deleteEntry(${e.id})">🗑️</button>
-        </span>
-      </div>`).join('');
-    document.getElementById('khaata-total').textContent = `Rs. ${data.total_baaki}`;
-    const tb = document.getElementById('khaata-total-bar');
-    tb.className = `total-bar ${data.total_baaki<=0?'success':''}`;
-    document.getElementById('khaata-result').classList.add('show');
-  } catch(e) { showToast('Server error','error'); }
+    if (data.error) { showToast(data.error, 'error'); return; }
+    currentKhaata = data;
+    renderKhaataDetail(data);
+  } catch (e) {
+    showToast('Server error', 'error');
+  }
+}
+
+function renderKhaataDetail(data) {
+  document.getElementById('khaata-customer-name').textContent = data.customer || '—';
+  const parts = [`Khaata #${data.customer_id}`];
+  if (data.phone && data.phone !== 'unknown') parts.push(data.phone);
+  document.getElementById('khaata-customer-meta').textContent = parts.join(' · ');
+
+  const tbody = document.getElementById('khaata-table-body');
+  if (!data.entries || !data.entries.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px;">Koi entry nahi — Naya Entry karo</td></tr>';
+  } else {
+    tbody.innerHTML = data.entries.map(e => {
+      const isPayment = (e.item || '').toUpperCase() === 'PAYMENT';
+      const isCredit = e.total < 0;
+      const totalColor = isCredit ? '#16a34a' : '#1e293b';
+      const totalDisplay = isPayment
+        ? `Rs. ${Math.abs(e.total)} ✓`
+        : `Rs. ${e.total}`;
+      return `
+        <tr>
+          <td style="color:#64748b;font-size:12px;">${esc(e.date)}</td>
+          <td style="font-weight:500;">${isPayment ? '💰 Payment' : esc(toTitleCase(e.item))}</td>
+          <td>${isPayment ? '—' : 'x' + e.quantity}</td>
+          <td>${isPayment ? '—' : 'Rs. ' + e.price}</td>
+          <td style="text-align:right;font-weight:700;color:${totalColor};">${totalDisplay}</td>
+          <td class="action-btns" style="justify-content:flex-end;">
+            ${!isPayment ? `<button class="edit-btn"
+                onclick="editEntry(this.dataset.id,this.dataset.item,this.dataset.qty,this.dataset.price,this.dataset.date)"
+                data-id="${e.id}" data-item="${esc(e.item)}" data-qty="${e.quantity}" data-price="${e.price}" data-date="${esc(e.date)}">✏️</button>` : ''}
+            <button class="del-btn" onclick="deleteEntry(${e.id})">🗑️</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  document.getElementById('khaata-subtotal').textContent = 'Rs. ' + (data.entries_total || 0).toFixed(0);
+  document.getElementById('khaata-opening').textContent = 'Rs. ' + (data.opening_balance || 0).toFixed(0);
+  document.getElementById('khaata-grand-total').textContent = 'Rs. ' + (data.grand_total || 0).toFixed(0);
+
+  const grandRow = document.getElementById('khaata-grand-row');
+  grandRow.classList.remove('positive', 'zero');
+  if ((data.grand_total || 0) > 0) grandRow.classList.add('positive');
+  else grandRow.classList.add('zero');
+
+  document.getElementById('khaata-detail-card').style.display = 'block';
+}
+
+function openOpeningBalanceModal() {
+  if (!currentKhaata) return;
+  document.getElementById('ob-customer-id').value = currentKhaata.customer_id;
+  document.getElementById('ob-customer-name').value = currentKhaata.customer;
+  document.getElementById('ob-amount').value = currentKhaata.opening_balance || 0;
+  openModal('opening-balance-modal');
+  setTimeout(() => {
+    const el = document.getElementById('ob-amount');
+    el.focus();
+    el.select();
+  }, 100);
+}
+
+async function saveOpeningBalance() {
+  const customerId = parseInt(document.getElementById('ob-customer-id').value, 10);
+  const amount = parseFloat(document.getElementById('ob-amount').value) || 0;
+  if (!customerId) { showToast('Customer missing', 'error'); return; }
+  try {
+    const res = await apiFetch('/customer/opening-balance', {
+      method: 'PUT',
+      body: JSON.stringify({ customer_id: customerId, opening_balance: amount })
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    showToast('✅ Pehla udhaar set ho gaya');
+    closeModal('opening-balance-modal');
+    getKhaata();
+  } catch (e) {
+    showToast('Save nahi hua', 'error');
+  }
 }
 
 // ---- All Customers ----
@@ -1591,14 +1720,14 @@ function renderFilteredCustomers() {
   document.getElementById('cust-count').textContent = `${list.length} of ${allCustomersCache.length}`;
   document.getElementById('all-customers-list').innerHTML = list.map(c => `
     <div class="entry-row">
-      <span onclick="viewCustomer('${c.name}')" style="cursor:pointer;color:#6366f1;font-weight:600;">${c.name}</span>
-      <span style="color:#64748b;">${c.phone}</span>
+      <span onclick="viewCustomer(this.dataset.name)" data-name="${esc(c.name)}" style="cursor:pointer;color:#6366f1;font-weight:600;">${esc(c.name)}</span>
+      <span style="color:#64748b;">${esc(c.phone)}</span>
       <span style="color:#64748b;">${c.total_entries} entries</span>
       <span class="action-btns">
         <span style="font-weight:700;color:${c.total_baaki>0?'#dc2626':'#16a34a'};">Rs. ${c.total_baaki}</span>
-        <button class="wa-btn" onclick="sendReminder('${c.name.toLowerCase()}')" title="WhatsApp reminder">📱</button>
-        <button class="edit-btn" onclick="editCustomer('${c.name}','${c.phone}')">✏️</button>
-        <button class="del-btn" onclick="deleteCustomer('${c.name}')">🗑️</button>
+        <button class="wa-btn" onclick="sendReminder(this.dataset.name)" data-name="${esc(c.name.toLowerCase())}" title="WhatsApp reminder">📱</button>
+        <button class="edit-btn" onclick="editCustomer(this.dataset.name,this.dataset.phone)" data-name="${esc(c.name)}" data-phone="${esc(c.phone)}">✏️</button>
+        <button class="del-btn" onclick="deleteCustomer(this.dataset.name)" data-name="${esc(c.name)}">🗑️</button>
       </span>
     </div>`).join('') || '<div style="padding:20px;color:#64748b;text-align:center;">Koi customer nahi mila</div>';
   document.getElementById('grand-total').textContent = `Rs. ${list.reduce((s,c) => s + Number(c.total_baaki||0), 0)}`;
@@ -1612,7 +1741,7 @@ function viewCustomer(name) {
 async function deleteCustomer(name) {
   if (!confirm(`⚠️ ${name} aur uski saari entries delete ho jaayengi!`)) return;
   try {
-    const res = await apiFetch(`/customer/${name}`, {method:'DELETE'});
+    const res = await apiFetch(`/customer/${encodeURIComponent(name)}`, {method:'DELETE'});
     const data = await res.json();
     if (data.error) { showToast(data.error,'error'); return; }
     showToast(`🗑️ ${name} delete ho gaya!`);
@@ -1648,8 +1777,7 @@ async function deleteEntry(entryId) {
     const data=await res.json();
     if(data.error){showToast(data.error,'error');return;}
     showToast(`🗑️ Entry delete ho gayi!`);
-    const name=document.getElementById('khaata-input').value.trim();
-    if(name)getKhaata();
+    getKhaata();
   } catch(e){showToast('Delete nahi hua','error');}
 }
 
@@ -1675,8 +1803,7 @@ async function saveEntryEdit() {
     if(data.error){showToast(data.error,'error');return;}
     showToast('✅ Entry update ho gayi!');
     closeModal('entry-modal');
-    const name=document.getElementById('khaata-input').value.trim();
-    if(name)getKhaata();
+    getKhaata();
   } catch(e){showToast('Update nahi hua','error');}
 }
 
@@ -1690,7 +1817,7 @@ async function checkInventory() {
     const res = await apiFetch(`/inventory/${encodeURIComponent(item)}`);
     const data = await res.json();
     if (data.error) {
-      container.innerHTML = `<div style="text-align:center;color:#dc2626;padding:20px;">❌ ${data.error}</div>`;
+      container.innerHTML = `<div style="text-align:center;color:#dc2626;padding:20px;">❌ ${esc(data.error)}</div>`;
       return;
     }
     const variants = data.variants || [];
@@ -1703,7 +1830,7 @@ async function checkInventory() {
         : `<span class="badge badge-red">Out of stock</span>`;
       return `
         <div class="entry-row" style="cursor:default;">
-          <span style="font-weight:600;">${v.name}</span>
+          <span style="font-weight:600;">${esc(v.name)}</span>
           <span style="color:#16a34a;font-weight:700;">Rs. ${v.price}</span>
           <span>${stockBadge}</span>
         </div>`;
@@ -1739,13 +1866,13 @@ function renderInventoryTable(items) {
   if(!items.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Koi item nahi mila</td></tr>';return;}
   tbody.innerHTML=items.map(item=>`
     <tr>
-      <td style="font-weight:600;color:#1e293b;">${item.name}</td>
-      <td style="color:#64748b;">${item.category||'—'}</td>
+      <td style="font-weight:600;color:#1e293b;">${esc(item.name)}</td>
+      <td style="color:#64748b;">${esc(item.category)||'—'}</td>
       <td style="color:#16a34a;font-weight:600;">Rs. ${item.price}</td>
       <td style="color:#64748b;">Rs. ${item.purchase_rate||0}</td>
       <td><span class="badge ${item.stock<=0?'badge-red':item.low_stock?'badge-amber':'badge-green'}">${item.stock<=0?'❌ '+item.stock:item.low_stock?'⚠️ '+item.stock:'✅ '+item.stock}</span></td>
       <td style="color:#64748b;">${item.reorder_level}</td>
-      <td><div class="action-btns"><button class="edit-btn" onclick="editItem(${item.id})">✏️</button><button class="del-btn" onclick="deleteInventoryItem(${item.id},'${item.name.replace(/'/g,"\\'")}')">🗑️</button></div></td>
+      <td><div class="action-btns"><button class="edit-btn" onclick="editItem(${item.id})">✏️</button><button class="del-btn" onclick="deleteInventoryItem(this.dataset.id,this.dataset.name)" data-id="${item.id}" data-name="${esc(item.name)}">🗑️</button></div></td>
     </tr>`).join('');
 }
 
@@ -1855,12 +1982,12 @@ async function getPurchaseHistory() {
     if(data.error){showToast(data.error,'error');return;}
     document.getElementById('purchase-history-list').innerHTML=data.purchases.map(p=>`
       <div class="entry-row">
-        <span style="color:#64748b;font-size:12px;">${p.date}</span>
-        <span style="font-weight:500;">${p.item}<br><small style="color:#94a3b8;">${p.supplier}</small></span>
+        <span style="color:#64748b;font-size:12px;">${esc(p.date)}</span>
+        <span style="font-weight:500;">${esc(p.item)}<br><small style="color:#94a3b8;">${esc(p.supplier)}</small></span>
         <span style="color:#64748b;">x${p.quantity} @ Rs.${p.rate}</span>
         <span class="action-btns">
           <span style="font-weight:700;">Rs. ${p.total}</span>
-          <button class="edit-btn" onclick="editPurchase(${p.id},'${p.supplier}','${p.item}',${p.quantity},${p.rate},'${p.date}')">✏️</button>
+          <button class="edit-btn" onclick="editPurchase(this.dataset.id,this.dataset.supplier,this.dataset.item,this.dataset.qty,this.dataset.rate,this.dataset.date)" data-id="${p.id}" data-supplier="${esc(p.supplier)}" data-item="${esc(p.item)}" data-qty="${p.quantity}" data-rate="${p.rate}" data-date="${esc(p.date)}">✏️</button>
           <button class="del-btn" onclick="deletePurchase(${p.id})">🗑️</button>
         </span>
       </div>`).join('');
@@ -1908,14 +2035,12 @@ async function deletePurchase(id) {
 
 // ================= WhatsApp + Reports =================
 let waBannerTimer = null;
-
-let waPendingContext = null;  // {customer, message} — modal complete hone ke baad use hota hai
+let waPendingContext = null;
 
 function showWhatsAppPrompt(wa, label, customerName) {
   if (!wa || !wa.link) return;
   if (wa.auto_sent) { showToast('📱 WhatsApp message customer ko bhej diya gaya!'); return; }
   if (!wa.phone_valid && customerName) {
-    // Phone missing — dialog dikhao, banner nahi
     waPendingContext = {customer: customerName, message: wa.message, fallbackLink: wa.link};
     document.getElementById('wa-phone-modal-name').textContent = `${customerName.charAt(0).toUpperCase()+customerName.slice(1)} ka contact save nahi hai — abhi daal do?`;
     document.getElementById('wa-phone-modal-input').value = '';
@@ -1955,7 +2080,6 @@ async function saveWaPhoneAndSend() {
 }
 
 function skipWaPhone() {
-  // Bina save kiye — sirf plain wa.me link kholo, user khud contact chunega
   if (waPendingContext && waPendingContext.fallbackLink) {
     window.open(waPendingContext.fallbackLink, '_blank');
   }
@@ -1973,7 +2097,6 @@ async function sendReminder(name) {
     if (data.error) { showToast(data.error,'error'); return; }
     if (data.whatsapp.auto_sent) { showToast(`📱 ${name} ko reminder bhej diya!`); return; }
     if (!data.whatsapp.phone_valid) {
-      // Phone missing — dialog
       waPendingContext = {customer: name, message: data.whatsapp.message, fallbackLink: data.whatsapp.link};
       document.getElementById('wa-phone-modal-name').textContent = `${name.charAt(0).toUpperCase()+name.slice(1)} ka contact save nahi hai — abhi daal do?`;
       document.getElementById('wa-phone-modal-input').value = '';
@@ -1997,8 +2120,8 @@ async function loadBulkReminders() {
       data.auto_send_enabled ? '✅ Auto-send ON (Cloud API)' : 'ℹ️ Har button WhatsApp kholega — free mode';
     document.getElementById('wa-reminder-list').innerHTML = waReminders.map((r,i) => `
       <div class="entry-row" id="wa-row-${i}">
-        <span style="font-weight:600;">${r.customer}</span>
-        <span style="color:#64748b;">${r.phone_valid ? r.phone : '⚠️ ' + (r.phone || 'no phone')}</span>
+        <span style="font-weight:600;">${esc(r.customer)}</span>
+        <span style="color:#64748b;">${r.phone_valid ? esc(r.phone) : '⚠️ ' + esc(r.phone || 'no phone')}</span>
         <span style="font-weight:700;color:#dc2626;">Rs. ${r.baaki}</span>
         <span>${r.auto_sent
           ? '<span style="color:#16a34a;font-weight:600;">✅ Bhej diya</span>'
@@ -2011,15 +2134,12 @@ function openReminder(i) {
   const r = waReminders[i];
   if (!r) return;
   if (!r.phone_valid) {
-    // Phone missing — dialog, aur save hone ke baad list refresh
     waPendingContext = {
       customer: r.customer.toLowerCase(),
-      message: r.message || '',  // bulk endpoint message wapas karta hai? Nahi — sendReminder call karo
+      message: r.message || '',
       fallbackLink: r.link,
       _bulkIndex: i
     };
-    // Bulk endpoint message string wapas nahi karta, sirf link — proper reminder message chahiye
-    // Isliye sendReminder wala flow use karo jo backend se message + link dono deta hai
     sendReminder(r.customer.toLowerCase());
     return;
   }
@@ -2028,10 +2148,7 @@ function openReminder(i) {
   if (btn) { btn.disabled = true; btn.textContent = '✅ Khula'; }
 }
 
-let waQueueIndex = 0;
 function sendAllReminders() {
-  // wa.me ek waqt mein ek hi chat khol sakta hai — is liye queue:
-  // har click pe agla customer khulta hai
   const pending = waReminders.map((r,i)=>i).filter(i => {
     const btn = document.getElementById(`wa-btn-${i}`);
     return btn && !btn.disabled;
@@ -2058,13 +2175,13 @@ async function loadDashboard() {
     document.getElementById('stat-customers').textContent = data.customer_count;
     document.getElementById('top-baaki-list').innerHTML = data.top_baaki.map(c => `
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-        <span style="cursor:pointer;color:#6366f1;" onclick="viewCustomer('${c.name.toLowerCase()}')">${c.name}</span>
+        <span style="cursor:pointer;color:#6366f1;" onclick="viewCustomer(this.dataset.name)" data-name="${esc(c.name.toLowerCase())}">${esc(c.name)}</span>
         <span><b style="color:#dc2626;">Rs. ${c.baaki}</b>
-        <button class="wa-btn" style="margin-left:8px;" onclick="sendReminder('${c.name.toLowerCase()}')">📱</button></span>
+        <button class="wa-btn" style="margin-left:8px;" onclick="sendReminder(this.dataset.name)" data-name="${esc(c.name.toLowerCase())}">📱</button></span>
       </div>`).join('') || '<div style="color:#64748b;">Koi baaki nahi 🎉</div>';
     document.getElementById('low-stock-list').innerHTML = data.low_stock.map(i => `
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;">
-        <span>${i.item}</span><span style="color:${i.stock<=0?'#dc2626':'#d97706'};font-weight:700;">${i.stock} left</span>
+        <span>${esc(i.item)}</span><span style="color:${i.stock<=0?'#dc2626':'#d97706'};font-weight:700;">${i.stock} left</span>
       </div>`).join('') || '<div style="color:#64748b;">Sab stock theek hai ✅</div>';
   } catch(e) { showToast('Dashboard load nahi hua','error'); }
 }
@@ -2091,10 +2208,10 @@ async function loadTrash() {
     if (data.error) { showToast(data.error,'error'); return; }
     document.getElementById('trash-list').innerHTML = data.entries.map(e => `
       <div class="entry-row">
-        <span style="font-weight:600;">${e.customer}</span>
-        <span>${e.item} <small style="color:#94a3b8;">x${e.quantity}</small></span>
+        <span style="font-weight:600;">${esc(e.customer)}</span>
+        <span>${esc(e.item)} <small style="color:#94a3b8;">x${e.quantity}</small></span>
         <span style="font-weight:700;">Rs. ${e.total}</span>
-        <span style="color:#94a3b8;font-size:12px;">${new Date(e.deleted_at).toLocaleString('en-PK')}</span>
+        <span style="color:#94a3b8;font-size:12px;">${esc(new Date(e.deleted_at).toLocaleString('en-PK'))}</span>
         <span><button class="btn-primary" style="padding:4px 10px;font-size:13px;" onclick="restoreEntry(${e.id})">↩️ Restore</button></span>
       </div>`).join('') || '<div style="padding:20px;color:#64748b;text-align:center;">Trash khali hai ✨</div>';
   } catch(e) { showToast('Trash load nahi hua','error'); }
@@ -2123,13 +2240,12 @@ async function purgeOldTrash() {
 
 // ---- Quick Payment ----
 async function openQuickPayment() {
-  // Pre-populate customer datalist from cache
   const dl = document.getElementById('qp-customer-list');
   if (dl) {
     if (!allCustomersCache.length) {
       try { await getAllCustomers(); } catch(_){}
     }
-    dl.innerHTML = allCustomersCache.map(c => `<option value="${c.name.toLowerCase()}">`).join('');
+    dl.innerHTML = allCustomersCache.map(c => `<option value="${esc(c.name.toLowerCase())}">`).join('');
   }
   document.getElementById('qp-customer').value = '';
   document.getElementById('qp-amount').value = '';
@@ -2161,6 +2277,189 @@ async function saveQuickPayment() {
     showWhatsAppPrompt(data.whatsapp, 'Payment receipt tayyar hai —', customer);
   } catch(e) { showToast('Payment save nahi hui','error'); }
 }
+
+// ==================== Autocomplete ====================
+function attachAutocomplete(opts) {
+  const input = document.getElementById(opts.inputId);
+  const dropdown = document.getElementById(opts.dropdownId);
+  if (!input || !dropdown) return;
+
+  const endpoint = opts.endpoint || '/items/search';
+  const listKey = opts.listKey || 'items';
+  const limit = opts.limit || 8;
+  const renderItem = opts.renderItem || defaultItemRenderer;
+  const onSelect = opts.onSelect || (() => {});
+  const onEnter = opts.onEnter || null;
+
+  let debounceTimer = null;
+  let activeIndex = -1;
+  let items = [];
+  let requestId = 0;
+
+  function hide() {
+    dropdown.classList.remove('show');
+    dropdown.innerHTML = '';
+    activeIndex = -1;
+    items = [];
+  }
+
+  function render(list) {
+    items = list;
+    activeIndex = -1;
+    if (!list.length) {
+      dropdown.innerHTML = '<div class="ac-empty">Koi match nahi mila</div>';
+      dropdown.classList.add('show');
+      return;
+    }
+    dropdown.innerHTML = list.map((it, i) =>
+      `<div class="ac-item" data-idx="${i}">${renderItem(it)}</div>`
+    ).join('');
+    dropdown.classList.add('show');
+
+    dropdown.querySelectorAll('.ac-item').forEach(el => {
+      el.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const idx = parseInt(el.dataset.idx, 10);
+        onSelect(items[idx]);
+        hide();
+      });
+    });
+  }
+
+  async function fetchSuggestions(q) {
+    const myReq = ++requestId;
+    try {
+      const res = await apiFetch(`${endpoint}?q=${encodeURIComponent(q)}&limit=${limit}`);
+      const data = await res.json();
+      if (myReq !== requestId) return;
+      if (data.error) { hide(); return; }
+      render(data[listKey] || []);
+    } catch (e) {
+      if (myReq === requestId) hide();
+    }
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => fetchSuggestions(input.value.trim()), 200);
+  });
+
+  input.addEventListener('focus', () => {
+    if (!dropdown.classList.contains('show')) {
+      fetchSuggestions(input.value.trim());
+    }
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { hide(); return; }
+    if (e.key === 'Enter' && !dropdown.classList.contains('show') && onEnter) {
+      e.preventDefault(); onEnter(); return;
+    }
+    if (!dropdown.classList.contains('show')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+      paintActive();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, -1);
+      paintActive();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0) {
+        onSelect(items[activeIndex]);
+        hide();
+      } else if (onEnter) {
+        onEnter();
+        hide();
+      }
+    }
+  });
+
+  input.addEventListener('blur', () => setTimeout(hide, 150));
+
+  function paintActive() {
+    dropdown.querySelectorAll('.ac-item').forEach((el, i) => {
+      el.classList.toggle('active', i === activeIndex);
+    });
+    if (activeIndex >= 0) {
+      const el = dropdown.querySelector(`.ac-item[data-idx="${activeIndex}"]`);
+      if (el) el.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+function defaultItemRenderer(it) {
+  return `
+    <div class="ac-row">
+      <span class="ac-name">${esc(it.name)}</span>
+      <span class="ac-meta">
+        <span class="ac-price">Rs. ${it.price}</span>
+        <span class="ac-stock ${it.stock > 0 ? '' : 'out'}">${it.stock > 0 ? it.stock + ' left' : 'out'}</span>
+      </span>
+    </div>`;
+}
+
+function customerRenderer(it) {
+  const phone = it.phone && it.phone !== 'unknown' ? ` · ${esc(it.phone)}` : '';
+  const baakiLabel = it.baaki > 0 ? `Rs. ${it.baaki}` : 'Clear';
+  const baakiColor = it.baaki > 0 ? '#dc2626' : '#16a34a';
+  return `
+    <div class="ac-row">
+      <span>
+        <span class="ac-name">${esc(it.name)}</span>
+        <span style="font-size:11px;color:#94a3b8;margin-left:8px;">#${it.id}${phone}</span>
+      </span>
+      <span style="font-size:12px;font-weight:700;color:${baakiColor};">${baakiLabel}</span>
+    </div>`;
+}
+
+// Wire item autocomplete on Naya Entry page
+attachAutocomplete({
+  inputId: 'r-item',
+  dropdownId: 'r-item-suggestions',
+  onSelect: (item) => {
+    document.getElementById('r-item').value = item.name;
+    document.getElementById('r-price').value = item.price;
+
+    if (!parsedData) parsedData = {};
+    parsedData.item = item.name;
+    parsedData._selectedItemName = item.name;
+    parsedData.price = item.price;
+    parsedData.stock = item.stock;
+    parsedData.inventory_id = item.id;
+    parsedData.manual = false;
+
+    updateSingleTotal();
+    setSingleStock(item.stock, false);
+
+    const sw = document.getElementById('stock-warning');
+    if (item.stock === 0) {
+      sw.style.display = 'block';
+      document.getElementById('force-save-check').checked = false;
+    } else {
+      sw.style.display = 'none';
+    }
+
+    document.getElementById('manual-box').style.display = 'none';
+    document.getElementById('variant-box').style.display = 'none';
+  },
+});
+
+// Wire customer autocomplete on Khaata page
+attachAutocomplete({
+  inputId: 'khaata-input',
+  dropdownId: 'khaata-suggestions',
+  endpoint: '/customers/search',
+  listKey: 'customers',
+  limit: 10,
+  renderItem: customerRenderer,
+  onSelect: (customer) => {
+    document.getElementById('khaata-input').value = customer.name;
+    getKhaata();
+  },
+  onEnter: () => getKhaata(),
+});
 </script>
 </body>
 </html>

@@ -178,6 +178,10 @@ class CustomerEditRequest(BaseModel):
     @classmethod
     def _ph(cls, v): return _clean_phone(v)
 
+class OpeningBalanceRequest(BaseModel):
+    customer_id: int
+    opening_balance: float
+
 class EntryEditRequest(BaseModel):
     entry_id: int
     item_name: str
@@ -515,36 +519,68 @@ def delete_entry(entry_id: int, authorization: Optional[str] = Header(None)):
     return {"success": True}
 
 # ---- Khaata ----
-@app.get("/khaata/{customer_name}")
-def get_khaata(customer_name: str, authorization: Optional[str] = Header(None)):
+@app.get("/khaata/{identifier}")
+def get_khaata(identifier: str, authorization: Optional[str] = Header(None)):
+    """
+    identifier = customer name OR customer_id (khaata number).
+    Tries ID first, then falls back to name.
+    """
     shop_id = get_shop_id(authorization)
     if not shop_id:
         return {"error": "Login zaroori hai"}
+
     with get_connection() as conn:
-        customer = conn.execute(
-            text("SELECT * FROM customers WHERE LOWER(name) = :name AND shop_id = :shop_id"),
-            {"name": customer_name.lower(), "shop_id": shop_id}
-        ).fetchone()
+        customer = None
+
+        # Try by customer_id first
+        try:
+            cid = int(identifier)
+            customer = conn.execute(
+                text("""SELECT customer_id, name, phone, COALESCE(opening_balance, 0)
+                        FROM customers WHERE customer_id = :cid AND shop_id = :sid"""),
+                {"cid": cid, "sid": shop_id}
+            ).fetchone()
+        except ValueError:
+            pass
+
+        # Fallback to name
         if not customer:
-            return {"error": f"{customer_name} nahi mila"}
+            customer = conn.execute(
+                text("""SELECT customer_id, name, phone, COALESCE(opening_balance, 0)
+                        FROM customers WHERE LOWER(name) = :name AND shop_id = :sid"""),
+                {"name": identifier.lower().strip(), "sid": shop_id}
+            ).fetchone()
+
+        if not customer:
+            return {"error": f"'{identifier}' nahi mila"}
+
         rows = conn.execute(
             text("""
                 SELECT id, date, item_name, quantity, price_per_item, total
-                FROM khaata WHERE customer_id = :cid AND deleted_at IS NULL ORDER BY date ASC
+                FROM khaata WHERE customer_id = :cid AND deleted_at IS NULL
+                ORDER BY date ASC, id ASC
             """),
             {"cid": customer[0]}
         ).fetchall()
-        total = conn.execute(
-            text("SELECT SUM(total) FROM khaata WHERE customer_id = :cid AND deleted_at IS NULL"),
-            {"cid": customer[0]}
-        ).fetchone()[0] or 0
+
+        entries_total = sum(float(r[5] or 0) for r in rows)
+        opening = float(customer[3] or 0)
+        grand_total = round(entries_total + opening, 2)
+
     return {
-        "customer": customer_name,
+        "customer": customer[1].title(),
+        "customer_id": customer[0],
+        "phone": customer[2],
         "entries": [
             {"id": r[0], "date": str(r[1]), "item": r[2], "quantity": r[3], "price": r[4], "total": r[5]}
             for r in rows
         ],
-        "total_baaki": total
+        # backward compat (old frontend still works)
+        "total_baaki": grand_total,
+        # new fields
+        "entries_total": round(entries_total, 2),
+        "opening_balance": opening,
+        "grand_total": grand_total,
     }
 
 # ---- Customers ----
@@ -576,6 +612,27 @@ def edit_customer(req: CustomerEditRequest, authorization: Optional[str] = Heade
         return {"success": True}
     except Exception as e:
         return {"error": str(e)}
+
+@app.put("/customer/opening-balance")
+def set_opening_balance(req: OpeningBalanceRequest, authorization: Optional[str] = Header(None)):
+    """Set 'pehla udhaar' for a customer."""
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    with get_connection() as conn:
+        result = conn.execute(
+            text("""UPDATE customers SET opening_balance = :ob
+                    WHERE customer_id = :cid AND shop_id = :sid RETURNING customer_id"""),
+            {"ob": req.opening_balance, "cid": req.customer_id, "sid": shop_id}
+        ).fetchone()
+        conn.commit()
+
+    if not result:
+        return {"error": "Customer nahi mila"}
+
+    log.info(f"Opening balance set: customer={req.customer_id} Rs.{req.opening_balance} shop={shop_id}")
+    return {"success": True}    
 
 @app.delete("/customer/{customer_name}")
 def delete_customer(customer_name: str, authorization: Optional[str] = Header(None)):
@@ -628,6 +685,150 @@ def all_customers(authorization: Optional[str] = Header(None)):
         "grand_total": sum(r[2] for r in customers)
     }
 
+@app.get("/customers/search")
+def search_customers(
+    q: str = "",
+    limit: int = 10,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Autocomplete endpoint.
+    - q khali → top 10 by baaki (default view)
+    - q numeric → customer_id exact + name LIKE fallback
+    - q text → name LIKE
+    """
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    limit = max(1, min(int(limit), 50))
+    q = (q or "").strip().lower()
+
+    with get_connection() as conn:
+        if not q:
+            rows = conn.execute(
+                text("""
+                    SELECT c.customer_id, c.name, c.phone,
+                           COALESCE(SUM(k.total), 0) AS baaki
+                    FROM customers c
+                    LEFT JOIN khaata k ON k.customer_id = c.customer_id AND k.deleted_at IS NULL
+                    WHERE c.shop_id = :sid
+                    GROUP BY c.customer_id, c.name, c.phone
+                    ORDER BY baaki DESC
+                    LIMIT :lim
+                """),
+                {"sid": shop_id, "lim": limit}
+            ).fetchall()
+        else:
+            rows = []
+
+            # 1. Try exact customer_id
+            try:
+                cid = int(q)
+                id_row = conn.execute(
+                    text("""
+                        SELECT c.customer_id, c.name, c.phone,
+                               COALESCE(SUM(k.total), 0) AS baaki
+                        FROM customers c
+                        LEFT JOIN khaata k ON k.customer_id = c.customer_id AND k.deleted_at IS NULL
+                        WHERE c.shop_id = :sid AND c.customer_id = :cid
+                        GROUP BY c.customer_id, c.name, c.phone
+                    """),
+                    {"sid": shop_id, "cid": cid}
+                ).fetchall()
+                rows = list(id_row)
+            except ValueError:
+                pass
+
+            # 2. Name LIKE (dedupe against already found id)
+            remaining = limit - len(rows)
+            if remaining > 0:
+                seen_ids = {r[0] for r in rows}
+                name_rows = conn.execute(
+                    text("""
+                        SELECT c.customer_id, c.name, c.phone,
+                               COALESCE(SUM(k.total), 0) AS baaki
+                        FROM customers c
+                        LEFT JOIN khaata k ON k.customer_id = c.customer_id AND k.deleted_at IS NULL
+                        WHERE c.shop_id = :sid AND LOWER(c.name) LIKE :q
+                        GROUP BY c.customer_id, c.name, c.phone
+                        ORDER BY c.name
+                        LIMIT :lim
+                    """),
+                    {"sid": shop_id, "q": f"%{q}%", "lim": remaining + len(rows)}
+                ).fetchall()
+                for r in name_rows:
+                    if r[0] not in seen_ids and len(rows) < limit:
+                        rows.append(r)
+                        seen_ids.add(r[0])
+
+    return {
+        "customers": [
+            {"id": r[0], "name": r[1].title(), "phone": r[2], "baaki": r[3]}
+            for r in rows
+        ]
+    }
+
+@app.get("/items/search")
+def search_items(
+    q: str = "",
+    limit: int = 10,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Item autocomplete for entry pages.
+    Ranking: exact match → prefix match → contains match.
+    """
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    limit = max(1, min(int(limit), 50))
+    q = (q or "").strip().lower()
+
+    with get_connection() as conn:
+        if not q:
+            rows = conn.execute(
+                text("""
+                    SELECT id, item_name, sale_price, stock
+                    FROM inventory
+                    WHERE shop_id = :sid
+                    ORDER BY item_name
+                    LIMIT :lim
+                """),
+                {"sid": shop_id, "lim": limit}
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                text("""
+                    SELECT id, item_name, sale_price, stock
+                    FROM inventory
+                    WHERE shop_id = :sid AND LOWER(item_name) LIKE :contains
+                    ORDER BY
+                      CASE
+                        WHEN LOWER(item_name) = :exact THEN 0
+                        WHEN LOWER(item_name) LIKE :prefix THEN 1
+                        ELSE 2
+                      END,
+                      LENGTH(item_name),
+                      item_name
+                    LIMIT :lim
+                """),
+                {
+                    "sid": shop_id,
+                    "contains": f"%{q}%",
+                    "exact": q,
+                    "prefix": f"{q}%",
+                    "lim": limit,
+                }
+            ).fetchall()
+
+    return {
+        "items": [
+            {"id": r[0], "name": r[1], "price": r[2], "stock": int(r[3])}
+            for r in rows
+        ]
+    }
 # ---- Inventory ----
 @app.get("/inventory/all")
 def get_inventory(authorization: Optional[str] = Header(None)):

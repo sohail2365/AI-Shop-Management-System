@@ -127,6 +127,13 @@ def setup_core_tables():
         conn.execute(text(
             "ALTER TABLE purchases ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL"
         ))
+
+        # Opening balance — "pehla udhaar" (purani register se migrate)
+        # Khaata page pe grand total = opening_balance + sum(entries)
+        conn.execute(text(
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS opening_balance REAL DEFAULT 0"
+        ))
+
         # Indexes for faster search + filtering
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_khaata_customer_deleted "
