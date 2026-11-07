@@ -62,31 +62,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f1f5f9;min-height:100vh;color
 @media (max-width: 900px) {
   .hamburger-btn{display:block;}
   .topbar-shop{display:none;}
-  .sidebar{
-    position:fixed;
-    top:60px;
-    left:0;
-    width:260px;
-    max-width:80vw;
-    height:calc(100vh - 60px);
-    z-index:1000;
-    transform:translateX(-100%);
-    transition:transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow:2px 0 12px rgba(0,0,0,0.3);
-    will-change:transform;
-    pointer-events:none;
-  }
+  .sidebar{position:fixed;top:60px;left:0;width:260px;max-width:80vw;height:calc(100vh - 60px);z-index:1000;transform:translateX(-100%);transition:transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);box-shadow:2px 0 12px rgba(0,0,0,0.3);will-change:transform;pointer-events:none;}
   .sidebar.open{transform:translateX(0);pointer-events:auto;}
-  .sidebar-overlay{
-    display:block;
-    position:fixed;
-    top:60px; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,0.45);
-    z-index:999;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity 0.25s ease;
-  }
+  .sidebar-overlay{display:block;position:fixed;top:60px; left:0; right:0; bottom:0;background:rgba(0,0,0,0.45);z-index:999;opacity:0;pointer-events:none;transition:opacity 0.25s ease;}
   .sidebar-overlay.show{opacity:1;pointer-events:auto;}
   .main-content{padding:12px;width:100%;}
 }
@@ -154,8 +132,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .edit-btn{padding:3px 8px;background:#e0f2fe;color:#0369a1;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 .del-btn{padding:3px 8px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;cursor:pointer;font-size:11px;}
 
-/* Khaata entries (old lists) */
-.entry-table{width:100%;}
+/* Lists (Customers, etc.) */
 .entry-row{display:grid;grid-template-columns:0.8fr 1.5fr 0.6fr 1fr;padding:8px 4px;border-bottom:1px solid #f1f5f9;font-size:13px;align-items:center;gap:8px;}
 .entry-row:last-child{border-bottom:none;}
 .entry-header{font-weight:700;color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;}
@@ -176,16 +153,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
 /* Stock warning */
 .stock-warning{background:#fef9ee;padding:12px 14px;border-radius:10px;border:1px solid #fde68a;margin:10px 0;display:none;font-size:13px;color:#92400e;}
-
-/* Variant box */
-.variant-box{background:#eff6ff;padding:14px;border-radius:10px;border:1px solid #bfdbfe;margin:12px 0;display:none;}
-.variant-box p{font-size:13px;color:#1d4ed8;font-weight:600;margin-bottom:10px;}
-.variant-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
-.variant-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:white;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;transition:all 0.15s;}
-.variant-item:hover{border-color:#6366f1;background:#f8faff;}
-.variant-item.selected{border-color:#6366f1;background:#eef2ff;}
-.variant-name{font-size:13px;font-weight:600;color:#1e293b;}
-.variant-meta{display:flex;gap:8px;align-items:center;}
 
 /* Confirm buttons */
 .confirm-btns{display:flex;gap:10px;margin-top:14px;}
@@ -257,7 +224,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
 /* Autocomplete dropdown */
 .autocomplete-wrap{position:relative;display:inline-block;width:100%;}
-.autocomplete-dropdown{position:absolute;top:100%;left:0;width:max-content;min-width:280px;max-width:350px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.15);z-index:1000;max-height:280px;overflow-y:auto;display:none;margin-top:4px;}
+.autocomplete-dropdown{position:absolute;top:100%;left:0;width:100%;min-width:280px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:9999;max-height:280px;overflow-y:auto;display:none;margin-top:4px;}
 .autocomplete-dropdown.show{display:block;}
 .ac-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:13px;transition:background 0.1s;}
 .ac-item:last-child{border-bottom:none;}
@@ -277,12 +244,13 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .khaata-table tr:hover td{background:#f8fafc;}
 
 /* Column widths */
-.col-date { width: 12%; }
-.col-item { width: 30%; }
-.col-qty { width: 10%; }
-.col-price { width: 14%; }
-.col-total { width: 16%; text-align: right; }
-.col-action { width: 18%; text-align: center; }
+.col-date { width: 10%; }
+.col-item { width: 25%; }
+.col-qty { width: 8%; }
+.col-price { width: 12%; }
+.col-total { width: 12%; text-align: right; }
+.col-cash { width: 18%; text-align: right; }
+.col-action { width: 15%; text-align: center; }
 
 /* Inputs inside table */
 .khaata-table input[type="text"], 
@@ -297,9 +265,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   background: #f8fafc;
 }
 .khaata-table input:focus { border-color: #6366f1; background: #fff; }
-
-/* Fixed Dropdown */
-.autocomplete-dropdown{position:absolute;top:100%;left:0;width:100%;min-width:250px;background:white;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:9999;max-height:250px;overflow-y:auto;display:none;margin-top:2px;}
 
 .khaata-summary{margin-top:20px;padding-top:16px;border-top:2px solid #e2e8f0;}
 .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:14px;}
@@ -386,7 +351,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         <span class="nav-icon">📒</span><span>Khaata & Entry</span>
       </div>
       <div class="nav-item" onclick="showPage('multi-entry')" id="nav-multi-entry">
-        <span class="nav-icon">🧾</span><span>Multiple Items</span>
+        <span class="nav-icon">🧾</span><span>Multiple Items AI</span>
       </div>
 
       <div class="nav-divider"></div>
@@ -457,12 +422,12 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
               <span style="font-size:13px; color:#64748b;" id="unified-cust-meta">—</span>
             </div>
             <div style="display:flex; gap:8px;">
-              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:8px 14px;">🖨️ Print</button>
-              <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Pehla Udhaar</button>
+              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:8px 14px;">🖨️ Print Receipt</button>
+              <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Purana Udhaar Set Karein</button>
             </div>
           </div>
 
-          <div>
+          <div style="overflow-x:auto;">
             <table class="khaata-table" id="unified-table">
               <thead>
                 <tr>
@@ -471,6 +436,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
                   <th class="col-qty">Qty</th>
                   <th class="col-price">Price</th>
                   <th class="col-total">Total</th>
+                  <th class="col-cash">Cash Received</th>
                   <th class="col-action">Action</th>
                 </tr>
               </thead>
@@ -485,19 +451,23 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           <!-- Summary -->
           <div class="khaata-summary">
             <div class="summary-row">
-              <span>Purana Hisaab</span>
+              <span>Purana Hisaab (Kul Baaki)</span>
               <span id="unified-past-total">Rs. 0</span>
             </div>
             <div class="summary-row">
-              <span>Nayi Entries Ka Total</span>
+              <span>Aaj ki Sale (Total Bill)</span>
               <span id="unified-subtotal">Rs. 0</span>
             </div>
             <div class="summary-row">
-              <span>Pehla Udhaar</span>
-              <span id="unified-opening">Rs. 0</span>
+              <span>Cash Receive Hua</span>
+              <span id="unified-total-cash" style="color: #16a34a;">Rs. 0</span>
             </div>
-            <div class="summary-row grand" id="unified-grand-row">
-              <span>Grand Total</span>
+            <div class="summary-row" style="border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px;">
+              <span>Naya Udhaar (Baaki)</span>
+              <span id="unified-new-udhaar" style="color: #dc2626; font-weight: 700;">Rs. 0</span>
+            </div>
+            <div class="summary-row grand" id="unified-grand-row" style="margin-top: 10px;">
+              <span>Grand Total (Kul Udhaar)</span>
               <span id="unified-grand-total">Rs. 0</span>
             </div>
           </div>
@@ -823,10 +793,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
 <div id="opening-balance-modal" class="modal">
   <div class="modal-box" style="width:380px;">
-    <h3>💰 Pehla Udhaar</h3>
+    <h3>💰 Purana Hisaab / Udhaar</h3>
     <p style="font-size:13px;color:#64748b;margin:4px 0 14px;">
       Purani register se jo baaki hai — woh amount yahan daalo.
-      Grand total = entries + pehla udhaar.
+      Grand total = entries + purana udhaar.
     </p>
     <input type="hidden" id="ob-customer-id">
     <div class="modal-field">
@@ -1166,7 +1136,6 @@ function customerRenderer(it) {
 
 // ==================== UNIFIED ENTRY & KHAATA PAGE ====================
 let unifiedCustomer = null;
-let unifiedPastEntries = [];
 let unifiedNewEntries = [];
 
 attachAutocomplete({
@@ -1193,7 +1162,6 @@ async function loadUnifiedCustomer(identifier) {
     if (data.error) { showToast(data.error, 'error'); return; }
     
     unifiedCustomer = data;
-    unifiedPastEntries = data.entries || [];
     unifiedNewEntries = []; 
     
     document.getElementById('unified-cust-name').textContent = data.customer;
@@ -1208,11 +1176,8 @@ function renderUnifiedTable() {
   const tbody = document.getElementById('unified-table-body');
   let html = '';
 
-  // 1. Humne Purana Hisaab (unifiedPastEntries) ka loop hata diya hai taake wo table mein na dikhe.
-
-  // 2. Sirf Nayi Entries show hongi
   if (unifiedNewEntries.length > 0) {
-    html += `<tr><td colspan="6" style="background:#eff6ff; font-size:11px; font-weight:700; color:#1d4ed8; text-transform:uppercase; padding:6px 8px; border-bottom:2px solid #bfdbfe;">Nayi Entries (Save karein)</td></tr>`;
+    html += `<tr><td colspan="7" style="background:#eff6ff; font-size:11px; font-weight:700; color:#1d4ed8; text-transform:uppercase; padding:6px 8px; border-bottom:2px solid #bfdbfe;">Nayi Entries (Save karein)</td></tr>`;
     
     unifiedNewEntries.forEach((e, i) => {
       html += `
@@ -1228,32 +1193,31 @@ function renderUnifiedTable() {
             <input type="number" value="${e.quantity}" oninput="updateNewEntry(${i}, 'quantity', this.value)" style="text-align:center;">
           </td>
           <td class="col-price">
-            <!-- Yahan ID add ki hai: new-price-${i} -->
             <input type="number" id="new-price-${i}" value="${e.price}" oninput="updateNewEntry(${i}, 'price', this.value)" style="text-align:right;">
           </td>
           <td class="col-total" style="font-weight:700;color:#1e293b;" id="new-total-${i}">Rs. ${e.total}</td>
+          <td class="col-cash">
+            <input type="number" id="new-cash-${i}" value="${e.cash || ''}" oninput="updateNewEntry(${i}, 'cash', this.value)" style="text-align:right; border-color:#16a34a;" placeholder="0">
+          </td>
           <td class="col-action"><button class="del-btn" onclick="removeNewEntryRow(${i})">x</button></td>
         </tr>`;
     });
   } else {
-    html = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Koi nayi entry nahi hai. Naya item add karein.</td></tr>';
+    html = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Koi nayi entry nahi hai. Naya item add karein.</td></tr>';
   }
 
   tbody.innerHTML = html;
   
-  // 3. Autocomplete wire up karein taake select karte hi price update ho
   unifiedNewEntries.forEach((_, i) => {
     attachAutocomplete({
       inputId: `new-item-${i}`,
       dropdownId: `new-item-suggest-${i}`,
       onSelect: (item) => {
-        // Data update karein
         unifiedNewEntries[i].item = item.name;
         unifiedNewEntries[i].price = item.price;
         if (!unifiedNewEntries[i].inventory_id) unifiedNewEntries[i].inventory_id = item.id;
         unifiedNewEntries[i].total = round2(unifiedNewEntries[i].quantity * unifiedNewEntries[i].price);
 
-        // UI (DOM) update karein taake price box mein price aa jaye
         document.getElementById(`new-item-${i}`).value = item.name;
         document.getElementById(`new-price-${i}`).value = item.price;
         document.getElementById(`new-total-${i}`).textContent = `Rs. ${unifiedNewEntries[i].total}`;
@@ -1267,7 +1231,7 @@ function renderUnifiedTable() {
 }
 
 function updateNewEntry(index, field, value) {
-  if (field === 'quantity' || field === 'price') value = parseFloat(value) || 0;
+  if (field === 'quantity' || field === 'price' || field === 'cash') value = parseFloat(value) || 0;
   unifiedNewEntries[index][field] = value;
   
   if (field === 'item') unifiedNewEntries[index].inventory_id = null;
@@ -1278,16 +1242,23 @@ function updateNewEntry(index, field, value) {
 }
 
 function calculateUnifiedTotals() {
-  let newTotal = 0;
-  unifiedNewEntries.forEach(e => newTotal += (e.total || 0));
+  let totalSale = 0;
+  let totalCash = 0;
   
-  const opening = parseFloat(unifiedCustomer?.opening_balance || 0);
-  let pastBalance = parseFloat(unifiedCustomer?.entries_total || 0); 
-  let grandTotal = pastBalance + opening + newTotal;
+  unifiedNewEntries.forEach(e => {
+    totalSale += (e.total || 0);
+    totalCash += (e.cash || 0);
+  });
+  
+  const newUdhaar = totalSale - totalCash;
+  
+  const pastBalance = parseFloat(unifiedCustomer?.entries_total || 0) + parseFloat(unifiedCustomer?.opening_balance || 0); 
+  const grandTotal = pastBalance + newUdhaar;
 
+  document.getElementById('unified-subtotal').textContent = `Rs. ${totalSale}`;
+  document.getElementById('unified-total-cash').textContent = `Rs. ${totalCash}`;
+  document.getElementById('unified-new-udhaar').textContent = `Rs. ${newUdhaar}`;
   document.getElementById('unified-past-total').textContent = `Rs. ${pastBalance}`;
-  document.getElementById('unified-subtotal').textContent = `Rs. ${newTotal}`;
-  document.getElementById('unified-opening').textContent = `Rs. ${opening}`;
   document.getElementById('unified-grand-total').textContent = `Rs. ${grandTotal}`;
   
   const gRow = document.getElementById('unified-grand-row');
@@ -1298,7 +1269,7 @@ function calculateUnifiedTotals() {
 
 function addNewEntryRow() {
   if (!unifiedCustomer) return;
-  unifiedNewEntries.push({ item: '', quantity: 1, price: 0, total: 0, inventory_id: null });
+  unifiedNewEntries.push({ item: '', quantity: 1, price: 0, cash: 0, total: 0, inventory_id: null });
   renderUnifiedTable();
   setTimeout(() => {
     const inputs = document.querySelectorAll('[id^="new-item-"]');
@@ -1332,6 +1303,7 @@ async function saveUnifiedEntries() {
   }
 
   try {
+    // 1. Pehle saare items ko udhaar (sale) mein save karein
     const payload = {
       customer: unifiedCustomer.customer.toLowerCase(),
       items: unifiedNewEntries.map(e => ({
@@ -1342,15 +1314,24 @@ async function saveUnifiedEntries() {
 
     const res = await apiFetch('/entry/multi/save', { method: 'POST', body: JSON.stringify(payload) });
     const data = await res.json();
-    
-    if (data.error) { 
-      showToast(data.error, 'error'); 
-      btn.disabled = false; 
-      btn.textContent = '✓ Nayi Entries Save Karein'; 
-      return; 
+    if (data.error) { throw new Error(data.error); }
+
+    // 2. Agar cash receive hua hai toh usko Payment ke tor par minus karein
+    const totalCash = unifiedNewEntries.reduce((s, e) => s + (e.cash || 0), 0);
+    if (totalCash > 0) {
+      await apiFetch('/entry/save', {
+        method: 'POST',
+        body: JSON.stringify({
+          text: '',
+          customer: unifiedCustomer.customer.toLowerCase(),
+          item: 'PAYMENT',
+          quantity: 1,
+          price: totalCash
+        })
+      });
     }
 
-    showToast(`✅ ${data.items_saved} items save ho gaye!`);
+    showToast(`✅ Entries save ho gayin! ${totalCash > 0 ? 'Cash Rs. '+totalCash+' bhi jama ho gaya.' : ''}`);
     showWhatsAppPrompt(data.whatsapp, 'Receipt tayyar hai —', data.customer);
     
     // Nayi entries clear karein aur table fresh load karein
@@ -1358,12 +1339,13 @@ async function saveUnifiedEntries() {
     await loadUnifiedCustomer(unifiedCustomer.customer_id); 
     
   } catch (e) { 
-    showToast('Save nahi hua', 'error'); 
+    showToast(e.message || 'Save nahi hua', 'error'); 
   }
   
   btn.disabled = false; 
   btn.textContent = '✓ Nayi Entries Save Karein';
 }
+
 function printUnifiedKhaata() {
   if (!unifiedCustomer) { showToast('Pehle customer select karein!', 'error'); return; }
   
@@ -1371,18 +1353,23 @@ function printUnifiedKhaata() {
   const now = new Date();
   const dateStr = now.toLocaleDateString('en-PK');
   
-  const pastTotal = parseFloat(unifiedCustomer.entries_total || 0);
-  const opening = parseFloat(unifiedCustomer.opening_balance || 0);
-  let newTotal = 0;
-  unifiedNewEntries.forEach(e => newTotal += (e.total || 0));
-  const grandTotal = pastTotal + opening + newTotal;
+  let totalSale = 0;
+  let totalCash = 0;
+  unifiedNewEntries.forEach(e => {
+    totalSale += (e.total || 0);
+    totalCash += (e.cash || 0);
+  });
+  const newUdhaar = totalSale - totalCash;
+
+  const pastTotal = parseFloat(unifiedCustomer.entries_total || 0) + parseFloat(unifiedCustomer.opening_balance || 0);
+  const grandTotal = pastTotal + newUdhaar;
 
   const printWindow = window.open('', '_blank', 'width=360,height=640');
   if (!printWindow) { showToast('Print window blocked', 'error'); return; }
 
   let entriesHtml = '';
   if (unifiedNewEntries.length > 0) {
-    entriesHtml = `<div style="margin-top:10px; font-weight:bold;">Nayi Entries (Aaj):</div>`;
+    entriesHtml = `<div style="margin-top:10px; font-weight:bold;">Aaj ki Entries:</div>`;
     entriesHtml += unifiedNewEntries.map(item => `
       <tr>
         <td class="item">${esc(toTitleCase(item.item))}</td>
@@ -1394,7 +1381,7 @@ function printUnifiedKhaata() {
   }
 
   printWindow.document.write(`
-    <!DOCTYPE html><html><head><title>Khaata - ${esc(unifiedCustomer.customer)}</title><style>
+    <!DOCTYPE html><html><head><title>Receipt - ${esc(unifiedCustomer.customer)}</title><style>
         * { margin:0; padding:0; box-sizing:border-box; } @page { size: 80mm auto; margin: 3mm; }
         body { width: 72mm; margin: 0 auto; padding: 3mm 2mm; font-family: 'Courier New', monospace; font-size: 11px; color: #111; background: #fff; }
         .center { text-align: center; } .bold { font-weight: bold; } .shop { font-size: 15px; line-height: 1.2; } .meta { font-size: 10px; line-height: 1.45; }
@@ -1409,7 +1396,7 @@ function printUnifiedKhaata() {
         @media print { body { width: 72mm; padding: 0; } .no-print { display: none; } }
       </style></head><body>
       <div class="center bold shop">${esc(shopName)}</div>
-      <div class="center meta">Khaata Statement</div><div class="double-line"></div>
+      <div class="center meta">Khaata Receipt</div><div class="double-line"></div>
       
       <div class="meta">Date: ${esc(dateStr)}</div>
       <div class="meta">Customer: <span class="bold">${esc(unifiedCustomer.customer)}</span></div>
@@ -1423,9 +1410,10 @@ function printUnifiedKhaata() {
       ` : ''}
 
       <div class="summary">
+        ${totalSale > 0 ? `<div class="summary-row"><span>Aaj ki Sale:</span><span>Rs. ${totalSale}</span></div>` : ''}
+        ${totalCash > 0 ? `<div class="summary-row"><span>Cash Received:</span><span>Rs. ${totalCash}</span></div>` : ''}
+        ${newUdhaar !== 0 ? `<div class="summary-row"><span>Naya Udhaar:</span><span>Rs. ${newUdhaar}</span></div>` : ''}
         <div class="summary-row"><span>Purana Hisaab:</span><span>Rs. ${pastTotal}</span></div>
-        <div class="summary-row"><span>Pehla Udhaar:</span><span>Rs. ${opening}</span></div>
-        ${newTotal > 0 ? `<div class="summary-row"><span>Nayi Entries:</span><span>Rs. ${newTotal}</span></div>` : ''}
         <div class="summary-row grand"><span>GRAND TOTAL:</span><span>Rs. ${grandTotal}</span></div>
       </div>
 
@@ -1435,6 +1423,16 @@ function printUnifiedKhaata() {
     </body></html>`);
   printWindow.document.close();
 }
+
+function openOpeningBalanceModal() {
+  if (!unifiedCustomer) return;
+  document.getElementById('ob-customer-id').value = unifiedCustomer.customer_id;
+  document.getElementById('ob-customer-name').value = unifiedCustomer.customer;
+  document.getElementById('ob-amount').value = unifiedCustomer.opening_balance || 0;
+  openModal('opening-balance-modal');
+  setTimeout(() => { const el = document.getElementById('ob-amount'); el.focus(); el.select(); }, 100);
+}
+
 async function saveOpeningBalance() {
   const customerId = parseInt(document.getElementById('ob-customer-id').value, 10);
   const amount = parseFloat(document.getElementById('ob-amount').value) || 0;
@@ -1445,7 +1443,7 @@ async function saveOpeningBalance() {
     });
     const data = await res.json();
     if (data.error) { showToast(data.error, 'error'); return; }
-    showToast('✅ Pehla udhaar set ho gaya');
+    showToast('✅ Purana hisaab set ho gaya');
     closeModal('opening-balance-modal');
     if (unifiedCustomer) loadUnifiedCustomer(customerId); 
   } catch (e) { showToast('Save nahi hua', 'error'); }
