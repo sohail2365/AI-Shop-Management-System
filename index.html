@@ -456,7 +456,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
               <h3 style="font-size:20px; font-weight:700; color:#1e293b; margin:0;" id="unified-cust-name">—</h3>
               <span style="font-size:13px; color:#64748b;" id="unified-cust-meta">—</span>
             </div>
-            <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Pehla Udhaar</button>
+            <div style="display:flex; gap:8px;">
+              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:8px 14px;">🖨️ Print</button>
+              <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Pehla Udhaar</button>
+            </div>
           </div>
 
           <div>
@@ -1205,27 +1208,9 @@ function renderUnifiedTable() {
   const tbody = document.getElementById('unified-table-body');
   let html = '';
 
-  // Past Entries
-  if (unifiedPastEntries.length > 0) {
-    html += `<tr><td colspan="6" style="background:#f8fafc; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; padding:6px 8px; border-bottom:2px solid #e2e8f0;">Purana Hisaab</td></tr>`;
-    unifiedPastEntries.forEach(e => {
-      const isPay = (e.item || '').toUpperCase() === 'PAYMENT';
-      html += `
-        <tr style="background:#f8fafc;">
-          <td class="col-date" style="color:#64748b;font-size:12px;">${esc(e.date)}</td>
-          <td class="col-item" style="font-weight:500;">${isPay ? '💰 Payment' : esc(toTitleCase(e.item))}</td>
-          <td class="col-qty">${isPay ? '—' : 'x'+e.quantity}</td>
-          <td class="col-price">${isPay ? '—' : 'Rs. '+e.price}</td>
-          <td class="col-total" style="font-weight:700;color:${isPay ? '#16a34a' : '#1e293b'};">Rs. ${Math.abs(e.total)}</td>
-          <td class="col-action">
-            ${!isPay ? `<button class="edit-btn" onclick="editEntry(this.dataset.id,this.dataset.item,this.dataset.qty,this.dataset.price,this.dataset.date)" data-id="${e.id}" data-item="${esc(e.item)}" data-qty="${e.quantity}" data-price="${e.price}" data-date="${esc(e.date)}">✏️</button>` : ''}
-            <button class="del-btn" onclick="deleteEntry(${e.id})">🗑️</button>
-          </td>
-        </tr>`;
-    });
-  }
+  // 1. Humne Purana Hisaab (unifiedPastEntries) ka loop hata diya hai taake wo table mein na dikhe.
 
-  // New Entries
+  // 2. Sirf Nayi Entries show hongi
   if (unifiedNewEntries.length > 0) {
     html += `<tr><td colspan="6" style="background:#eff6ff; font-size:11px; font-weight:700; color:#1d4ed8; text-transform:uppercase; padding:6px 8px; border-bottom:2px solid #bfdbfe;">Nayi Entries (Save karein)</td></tr>`;
     
@@ -1243,28 +1228,37 @@ function renderUnifiedTable() {
             <input type="number" value="${e.quantity}" oninput="updateNewEntry(${i}, 'quantity', this.value)" style="text-align:center;">
           </td>
           <td class="col-price">
-            <input type="number" value="${e.price}" oninput="updateNewEntry(${i}, 'price', this.value)" style="text-align:right;">
+            <!-- Yahan ID add ki hai: new-price-${i} -->
+            <input type="number" id="new-price-${i}" value="${e.price}" oninput="updateNewEntry(${i}, 'price', this.value)" style="text-align:right;">
           </td>
           <td class="col-total" style="font-weight:700;color:#1e293b;" id="new-total-${i}">Rs. ${e.total}</td>
           <td class="col-action"><button class="del-btn" onclick="removeNewEntryRow(${i})">x</button></td>
         </tr>`;
     });
-  } else if (unifiedPastEntries.length === 0) {
-    html = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Koi entry nahi. Naya item add karein.</td></tr>';
+  } else {
+    html = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Koi nayi entry nahi hai. Naya item add karein.</td></tr>';
   }
 
   tbody.innerHTML = html;
   
-  // Attach autocomplete to new rows
+  // 3. Autocomplete wire up karein taake select karte hi price update ho
   unifiedNewEntries.forEach((_, i) => {
     attachAutocomplete({
       inputId: `new-item-${i}`,
       dropdownId: `new-item-suggest-${i}`,
       onSelect: (item) => {
-        document.getElementById(`new-item-${i}`).value = item.name;
-        updateNewEntry(i, 'item', item.name);
-        updateNewEntry(i, 'price', item.price);
+        // Data update karein
+        unifiedNewEntries[i].item = item.name;
+        unifiedNewEntries[i].price = item.price;
         if (!unifiedNewEntries[i].inventory_id) unifiedNewEntries[i].inventory_id = item.id;
+        unifiedNewEntries[i].total = round2(unifiedNewEntries[i].quantity * unifiedNewEntries[i].price);
+
+        // UI (DOM) update karein taake price box mein price aa jaye
+        document.getElementById(`new-item-${i}`).value = item.name;
+        document.getElementById(`new-price-${i}`).value = item.price;
+        document.getElementById(`new-total-${i}`).textContent = `Rs. ${unifiedNewEntries[i].total}`;
+        
+        calculateUnifiedTotals();
       }
     });
   });
@@ -1369,6 +1363,77 @@ async function saveUnifiedEntries() {
   
   btn.disabled = false; 
   btn.textContent = '✓ Nayi Entries Save Karein';
+}
+function printUnifiedKhaata() {
+  if (!unifiedCustomer) { showToast('Pehle customer select karein!', 'error'); return; }
+  
+  const shopName = toTitleCase(getShopName() || 'Dukaan AI');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-PK');
+  
+  const pastTotal = parseFloat(unifiedCustomer.entries_total || 0);
+  const opening = parseFloat(unifiedCustomer.opening_balance || 0);
+  let newTotal = 0;
+  unifiedNewEntries.forEach(e => newTotal += (e.total || 0));
+  const grandTotal = pastTotal + opening + newTotal;
+
+  const printWindow = window.open('', '_blank', 'width=360,height=640');
+  if (!printWindow) { showToast('Print window blocked', 'error'); return; }
+
+  let entriesHtml = '';
+  if (unifiedNewEntries.length > 0) {
+    entriesHtml = `<div style="margin-top:10px; font-weight:bold;">Nayi Entries (Aaj):</div>`;
+    entriesHtml += unifiedNewEntries.map(item => `
+      <tr>
+        <td class="item">${esc(toTitleCase(item.item))}</td>
+        <td class="qty">${item.quantity}</td>
+        <td class="rate">${item.price}</td>
+        <td class="amt">${item.total}</td>
+      </tr>
+    `).join('');
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html><html><head><title>Khaata - ${esc(unifiedCustomer.customer)}</title><style>
+        * { margin:0; padding:0; box-sizing:border-box; } @page { size: 80mm auto; margin: 3mm; }
+        body { width: 72mm; margin: 0 auto; padding: 3mm 2mm; font-family: 'Courier New', monospace; font-size: 11px; color: #111; background: #fff; }
+        .center { text-align: center; } .bold { font-weight: bold; } .shop { font-size: 15px; line-height: 1.2; } .meta { font-size: 10px; line-height: 1.45; }
+        .line { border-top: 1px dashed #111; margin: 6px 0; } .double-line { border-top: 2px solid #111; margin: 7px 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; } td, th { padding: 2px 0; vertical-align: top; }
+        th { font-size: 10px; text-align: left; } .item { width: 42%; word-break: break-word; } .qty { width: 14%; text-align: right; }
+        .rate { width: 20%; text-align: right; } .amt { width: 24%; text-align: right; }
+        .summary { margin-top: 10px; border-top: 1px dashed #111; padding-top: 5px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .grand { font-weight: bold; font-size: 13px; margin-top: 5px; border-top: 1px solid #111; padding-top: 5px; }
+        .no-print { margin-top: 10px; } .print-btn { padding: 8px 18px; background:#1e293b; color:white; border:none; border-radius:6px; cursor:pointer; font-size:13px; }
+        @media print { body { width: 72mm; padding: 0; } .no-print { display: none; } }
+      </style></head><body>
+      <div class="center bold shop">${esc(shopName)}</div>
+      <div class="center meta">Khaata Statement</div><div class="double-line"></div>
+      
+      <div class="meta">Date: ${esc(dateStr)}</div>
+      <div class="meta">Customer: <span class="bold">${esc(unifiedCustomer.customer)}</span></div>
+      <div class="meta">Khaata #: ${unifiedCustomer.customer_id}</div>
+      <div class="line"></div>
+
+      ${unifiedNewEntries.length > 0 ? `
+      <table><thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead><tbody>
+          ${entriesHtml}
+      </tbody></table>
+      ` : ''}
+
+      <div class="summary">
+        <div class="summary-row"><span>Purana Hisaab:</span><span>Rs. ${pastTotal}</span></div>
+        <div class="summary-row"><span>Pehla Udhaar:</span><span>Rs. ${opening}</span></div>
+        ${newTotal > 0 ? `<div class="summary-row"><span>Nayi Entries:</span><span>Rs. ${newTotal}</span></div>` : ''}
+        <div class="summary-row grand"><span>GRAND TOTAL:</span><span>Rs. ${grandTotal}</span></div>
+      </div>
+
+      <div class="double-line"></div><div class="center meta">Shukriya! Powered by Dukaan AI</div>
+      <div class="center no-print"><button class="print-btn" onclick="window.print()">Print</button></div>
+      <scr` + `ipt>setTimeout(() => window.print(), 500);</scr` + `ipt>
+    </body></html>`);
+  printWindow.document.close();
 }
 async function saveOpeningBalance() {
   const customerId = parseInt(document.getElementById('ob-customer-id').value, 10);
