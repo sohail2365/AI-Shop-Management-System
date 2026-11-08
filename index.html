@@ -412,6 +412,9 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       <div class="nav-item" onclick="showPage('reports');loadDashboard()" id="nav-reports">
         <span class="nav-icon">📊</span><span>Dashboard</span>
       </div>
+      <div class="nav-item" onclick="showPage('journal');loadJournal()" id="nav-journal">
+        <span class="nav-icon">📑</span><span>Journal & Kharcha</span>
+      </div>
     </div>
 
     <!-- Mobile-only overlay -->
@@ -760,7 +763,38 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
       </div>
-
+      <!-- Journal Page -->
+      <div class="page" id="page-journal">
+        <div class="page-header">
+          <div>
+            <div class="page-title">📑 Journal & Kharcha</div>
+            <div class="page-subtitle">Tamam Sales, Purchases, aur Expenses ka record</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn-outline" onclick="loadJournal()">🔄 Refresh</button>
+            <button class="btn-danger" onclick="openModal('expense-modal')" style="background:#dc2626;">+ Naya Kharcha Likhein</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-responsive">
+            <table class="khaata-table" style="font-size:13px;">
+              <thead>
+                <tr>
+                  <th style="width: 15%;">Date</th>
+                  <th style="width: 15%;">Type</th>
+                  <th style="width: 20%;">Party / Supplier</th>
+                  <th style="width: 30%;">Details</th>
+                  <th style="width: 10%; text-align:right; color:#16a34a;">In (Rs.)</th>
+                  <th style="width: 10%; text-align:right; color:#dc2626;">Out (Rs.)</th>
+                </tr>
+              </thead>
+              <tbody id="journal-tbody">
+                <tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Load ho raha hai...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       <!-- Trash / Deleted Entries -->
       <div class="page" id="page-trash">
         <div class="page-header">
@@ -928,7 +962,28 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     </div>
   </div>
 </div>
-
+<!-- Expense Modal -->
+<div id="expense-modal" class="modal">
+  <div class="modal-box" style="width:380px;">
+    <h3>💸 Naya Kharcha (Expense)</h3>
+    <div class="modal-field">
+      <label>Kharcha Kya Hai? *</label>
+      <input type="text" id="exp-name" placeholder="jaise: Dukaan ki bijli ka bill">
+    </div>
+    <div class="modal-field">
+      <label>Amount (Rs.) *</label>
+      <input type="number" id="exp-amount" min="1" step="1" placeholder="0">
+    </div>
+    <div class="modal-field">
+      <label>Notes (Optional)</label>
+      <input type="text" id="exp-notes" placeholder="Koi tafseel likhni ho toh...">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-danger" onclick="saveExpense()">✓ Kharcha Save Karein</button>
+      <button class="btn-outline" onclick="closeModal('expense-modal')">✗ Cancel</button>
+    </div>
+  </div>
+</div>
 <!-- Calculator -->
 <div class="calc-panel" id="calc-panel">
   <div class="calc-screen">
@@ -2198,6 +2253,91 @@ async function saveQuickPayment() {
     showToast(`💰 Payment Rs. ${amount} save ho gayi ${customer.split(' ').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ')} ke naam pe!`);
     showWhatsAppPrompt(data.whatsapp, 'Payment receipt tayyar hai —', customer);
   } catch(e) { showToast('Payment save nahi hui','error'); }
+}
+// ==================== JOURNAL & EXPENSES ====================
+async function loadJournal() {
+  const tbody = document.getElementById('journal-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Data load ho raha hai...</td></tr>';
+  
+  try {
+    const res = await apiFetch('/journal');
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    
+    if (!data.journal || data.journal.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Abhi koi transaction nahi hai.</td></tr>';
+      return;
+    }
+
+    let totalIn = 0;
+    let totalOut = 0;
+
+    tbody.innerHTML = data.journal.map(j => {
+      totalIn += j.amount_in;
+      totalOut += j.amount_out;
+
+      let badgeColor = '#64748b';
+      let badgeBg = '#f1f5f9';
+      if (j.type === 'Sale') { badgeColor = '#0369a1'; badgeBg = '#e0f2fe'; }
+      if (j.type === 'Payment In') { badgeColor = '#15803d'; badgeBg = '#dcfce7'; }
+      if (j.type === 'Purchase') { badgeColor = '#b45309'; badgeBg = '#fef3c7'; }
+      if (j.type === 'Expense') { badgeColor = '#b91c1c'; badgeBg = '#fee2e2'; }
+
+      return `
+        <tr>
+          <td style="color:#64748b; font-size:12px;">${esc(j.date)}</td>
+          <td><span style="background:${badgeBg}; color:${badgeColor}; padding:4px 8px; border-radius:4px; font-weight:600; font-size:11px;">${j.type}</span></td>
+          <td style="font-weight:600;">${esc(j.party)}</td>
+          <td style="color:#475569;">${esc(j.details)}</td>
+          <td style="text-align:right; font-weight:700; color:#16a34a;">${j.amount_in > 0 ? 'Rs. '+j.amount_in : '-'}</td>
+          <td style="text-align:right; font-weight:700; color:#dc2626;">${j.amount_out > 0 ? 'Rs. '+j.amount_out : '-'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Footer totals
+    tbody.innerHTML += `
+      <tr style="background:#f8fafc; font-weight:bold;">
+        <td colspan="4" style="text-align:right; padding:12px;">Total (Last 500 Records):</td>
+        <td style="text-align:right; color:#16a34a; padding:12px;">Rs. ${totalIn}</td>
+        <td style="text-align:right; color:#dc2626; padding:12px;">Rs. ${totalOut}</td>
+      </tr>
+    `;
+
+  } catch (e) {
+    showToast('Journal load nahi hua', 'error');
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#dc2626;">Error loading data</td></tr>';
+  }
+}
+
+async function saveExpense() {
+  const name = document.getElementById('exp-name').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  const notes = document.getElementById('exp-notes').value.trim();
+
+  if (!name) { showToast('Kharchay ka naam likhein', 'error'); return; }
+  if (!amount || amount <= 0) { showToast('Valid amount daalein', 'error'); return; }
+
+  try {
+    const res = await apiFetch('/expense/add', {
+      method: 'POST',
+      body: JSON.stringify({ expense_name: name, amount: amount, notes: notes })
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+
+    showToast('✅ Kharcha save ho gaya!');
+    closeModal('expense-modal');
+    
+    // Reset fields
+    document.getElementById('exp-name').value = '';
+    document.getElementById('exp-amount').value = '';
+    document.getElementById('exp-notes').value = '';
+    
+    loadJournal(); // Refresh table
+  } catch (e) {
+    showToast('Save nahi hua', 'error');
+  }
 }
 </script>
 </body>

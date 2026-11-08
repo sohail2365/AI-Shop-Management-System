@@ -118,6 +118,16 @@ def setup_core_tables():
                 created_at DATE DEFAULT CURRENT_DATE
             )
         """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS expenses (
+                id SERIAL PRIMARY KEY,
+                shop_id INTEGER NOT NULL REFERENCES shops(shop_id),
+                expense_name TEXT NOT NULL,
+                amount REAL NOT NULL,
+                date DATE DEFAULT CURRENT_DATE,
+                notes TEXT DEFAULT ''
+            )
+        """))
 
         # ---- Non-destructive migrations (safe on existing DBs) ----
         # Soft delete: khaata + purchases par deleted_at column

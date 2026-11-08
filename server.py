@@ -208,6 +208,11 @@ class InventoryItemRequest(BaseModel):
     category: str = ""
     reorder_level: int = 5
 
+class ExpenseRequest(BaseModel):
+    expense_name: str
+    amount: float
+    notes: str = ""    
+
 class InventoryEditRequest(BaseModel):
     item_id: int
     item_name: str
@@ -1577,3 +1582,78 @@ async def whatsapp_webhook_receive(request: Request):
         log.error(f"Webhook parse failed: {e}")
 
     return {"status": "ok"}    
+
+@app.post("/expense/add")
+def add_expense(req: ExpenseRequest, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+    if req.amount <= 0:
+        return {"error": "Amount 0 se zyada hona chahiye"}
+
+    with get_connection() as conn:
+        conn.execute(
+            text("INSERT INTO expenses (shop_id, expense_name, amount, notes) VALUES (:sid, :name, :amt, :notes)"),
+            {"sid": shop_id, "name": req.expense_name, "amt": req.amount, "notes": req.notes}
+        )
+        conn.commit()
+    return {"success": True, "message": "Kharcha save ho gaya"}
+
+@app.get("/journal")
+def get_journal(authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+        
+    with get_connection() as conn:
+        # UNION ALL se hum Sales, Purchases aur Expenses ko ek sath la rahe hain
+        query = text("""
+            SELECT date, type, party, details, amount_in, amount_out FROM (
+                -- 1. Sales (Udhaar)
+                SELECT k.date, 'Sale' as type, c.name as party, 
+                       k.item_name || ' x' || k.quantity as details, 
+                       k.total as amount_in, 0 as amount_out
+                FROM khaata k JOIN customers c ON c.customer_id = k.customer_id
+                WHERE c.shop_id = :sid AND k.item_name != 'PAYMENT' AND k.deleted_at IS NULL
+                
+                UNION ALL
+                
+                -- 2. Payments (Cash Received from Customer)
+                SELECT k.date, 'Payment In' as type, c.name as party, 
+                       'Payment Received' as details, 
+                       ABS(k.total) as amount_in, 0 as amount_out
+                FROM khaata k JOIN customers c ON c.customer_id = k.customer_id
+                WHERE c.shop_id = :sid AND k.item_name = 'PAYMENT' AND k.deleted_at IS NULL
+                
+                UNION ALL
+                
+                -- 3. Purchases (Stock Khareeda)
+                SELECT p.date, 'Purchase' as type, p.supplier_name as party, 
+                       p.item_name || ' x' || p.quantity as details, 
+                       0 as amount_in, p.total_cost as amount_out
+                FROM purchases p
+                WHERE p.shop_id = :sid
+                
+                UNION ALL
+                
+                -- 4. Expenses (Kharchay)
+                SELECT e.date, 'Expense' as type, 'Cash' as party, 
+                       e.expense_name as details, 
+                       0 as amount_in, e.amount as amount_out
+                FROM expenses e
+                WHERE e.shop_id = :sid
+            ) AS j
+            ORDER BY date DESC, type ASC
+            LIMIT 500
+        """)
+        
+        rows = conn.execute(query, {"sid": shop_id}).fetchall()
+        
+    return {
+        "journal": [
+            {
+                "date": str(r[0]), "type": r[1], "party": r[2].title(), 
+                "details": r[3], "amount_in": r[4], "amount_out": r[5]
+            } for r in rows
+        ]
+    }    
