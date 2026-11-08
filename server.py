@@ -1657,3 +1657,96 @@ def get_journal(authorization: Optional[str] = Header(None)):
             } for r in rows
         ]
     }    
+@app.get("/reports/daily-closing")
+def get_daily_closing(date: str = "", authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+    
+    target_date = date if date else "CURRENT_DATE"
+    d_param = {"sid": shop_id}
+    if date:
+        d_param["target_date"] = date
+        date_cond = "k.date = :target_date"
+        p_date_cond = "p.date = :target_date"
+        e_date_cond = "e.date = :target_date"
+    else:
+        date_cond = "k.date = CURRENT_DATE"
+        p_date_cond = "p.date = CURRENT_DATE"
+        e_date_cond = "e.date = CURRENT_DATE"
+
+    with get_connection() as conn:
+        # 1. Sales (Profit nikalne ke liye inventory se purchase_rate liya hai)
+        sales_query = f"""
+            SELECT k.item_name, k.quantity, k.price_per_item, k.total, 
+                   COALESCE(i.purchase_rate, 0) as cost_rate
+            FROM khaata k
+            JOIN customers c ON c.customer_id = k.customer_id
+            LEFT JOIN inventory i ON i.id = k.inventory_id
+            WHERE c.shop_id = :sid AND {date_cond} 
+              AND k.item_name != 'PAYMENT' AND k.deleted_at IS NULL
+        """
+        sales_rows = conn.execute(text(sales_query), d_param).fetchall()
+
+        # 2. Payments (Cash In)
+        payments_query = f"""
+            SELECT c.name, ABS(k.total) as amount
+            FROM khaata k
+            JOIN customers c ON c.customer_id = k.customer_id
+            WHERE c.shop_id = :sid AND {date_cond} 
+              AND k.item_name = 'PAYMENT' AND k.deleted_at IS NULL
+        """
+        payments_rows = conn.execute(text(payments_query), d_param).fetchall()
+
+        # 3. Purchases
+        purchase_query = f"""
+            SELECT item_name, quantity, purchase_rate, total_cost 
+            FROM purchases p
+            WHERE shop_id = :sid AND {p_date_cond}
+        """
+        purchase_rows = conn.execute(text(purchase_query), d_param).fetchall()
+
+        # 4. Expenses
+        expense_query = f"""
+            SELECT expense_name, amount 
+            FROM expenses e
+            WHERE shop_id = :sid AND {e_date_cond}
+        """
+        expense_rows = conn.execute(text(expense_query), d_param).fetchall()
+
+    # Sales Process
+    total_sales = 0
+    total_profit = 0
+    sales_items = []
+    for r in sales_rows:
+        item, qty, price, total, cost_rate = r
+        total_sales += total
+        profit = (price - cost_rate) * qty
+        total_profit += profit
+        sales_items.append({"item": item, "qty": qty, "total": total, "profit": round(profit, 2)})
+
+    # Payments Process
+    total_payments = sum(r[1] for r in payments_rows)
+
+    # Purchases Process
+    total_purchases = sum(r[3] for r in purchase_rows)
+    purchase_items = [{"item": r[0], "qty": r[1], "total": r[3]} for r in purchase_rows]
+
+    # Expenses Process
+    total_expenses = sum(r[1] for r in expense_rows)
+    expense_items = [{"name": r[0], "amount": r[1]} for r in expense_rows]
+
+    daily_cash_flow = total_payments - total_purchases - total_expenses
+
+    return {
+        "date": date if date else "Aaj",
+        "sales": sales_items,
+        "total_sales": total_sales,
+        "total_profit": round(total_profit, 2),
+        "total_payments": total_payments,
+        "purchases": purchase_items,
+        "total_purchases": total_purchases,
+        "expenses": expense_items,
+        "total_expenses": total_expenses,
+        "daily_cash_flow": daily_cash_flow
+    }
