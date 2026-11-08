@@ -448,6 +448,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
                 <input type="checkbox" id="cash-customer-chk" onchange="toggleCashCustomer()" style="width:16px; height:16px;">
                 Cash Customer (Walk-in)
               </label>
+              <button class="btn-outline" onclick="openQuickPayment()" style="font-size:13px; padding:10px 14px; color:#16a34a; border-color:#16a34a;">💰 Quick Payment</button>
               <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:10px 14px;">🖨️ Print Receipt</button>
             </div>
           </div>
@@ -763,6 +764,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
       </div>
+
       <!-- Journal Page (Daily Closing) -->
       <div class="page" id="page-journal">
         <div class="page-header">
@@ -773,7 +775,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="date" id="journal-date" onchange="loadJournal()" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
             <button class="btn-outline" onclick="loadJournal()">🔄 Refresh</button>
-            <button class="btn-danger" onclick="openModal('expense-modal')" style="background:#dc2626;">+ Kharcha Likhein</button>
           </div>
         </div>
 
@@ -840,6 +841,18 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
                     <tr><th>Kharcha</th><th style="text-align:right;">Amount</th></tr>
                   </thead>
                   <tbody id="journal-expenses-tbody"></tbody>
+                  <!-- Naya Inline Kharcha Add Karne Ka Row -->
+                  <tfoot>
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:4px;">
+                        <input type="text" id="inline-exp-name" placeholder="Naya kharcha likhein..." style="width:100%; border:1px solid #cbd5e1; padding:6px; border-radius:4px; font-size:12px;">
+                      </td>
+                      <td style="padding:4px; display:flex; gap:4px; justify-content:flex-end;">
+                        <input type="number" id="inline-exp-amount" placeholder="Rs. 0" style="width:70px; border:1px solid #cbd5e1; padding:6px; border-radius:4px; font-size:12px; text-align:right;">
+                        <button onclick="saveInlineExpense()" class="btn-success" style="padding:6px 10px; border-radius:4px; font-size:12px;">✓</button>
+                      </td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
@@ -855,6 +868,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
       </div>
+
       <!-- Trash / Deleted Entries -->
       <div class="page" id="page-trash">
         <div class="page-header">
@@ -1019,28 +1033,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     <div class="modal-btns">
       <button class="btn-success" onclick="savePurchaseEdit()">✓ Save</button>
       <button class="btn-danger" onclick="closeModal('purchase-modal')">✗ Cancel</button>
-    </div>
-  </div>
-</div>
-<!-- Expense Modal -->
-<div id="expense-modal" class="modal">
-  <div class="modal-box" style="width:380px;">
-    <h3>💸 Naya Kharcha (Expense)</h3>
-    <div class="modal-field">
-      <label>Kharcha Kya Hai? *</label>
-      <input type="text" id="exp-name" placeholder="jaise: Dukaan ki bijli ka bill">
-    </div>
-    <div class="modal-field">
-      <label>Amount (Rs.) *</label>
-      <input type="number" id="exp-amount" min="1" step="1" placeholder="0">
-    </div>
-    <div class="modal-field">
-      <label>Notes (Optional)</label>
-      <input type="text" id="exp-notes" placeholder="Koi tafseel likhni ho toh...">
-    </div>
-    <div class="modal-btns">
-      <button class="btn-danger" onclick="saveExpense()">✓ Kharcha Save Karein</button>
-      <button class="btn-outline" onclick="closeModal('expense-modal')">✗ Cancel</button>
     </div>
   </div>
 </div>
@@ -1434,9 +1426,8 @@ function removeNewEntryRow(index) {
 
 function cancelUnifiedEntries() {
   document.getElementById('unified-customer-search').value = '';
-  document.getElementById('unified-table-card').style.display = 'none';
   document.getElementById('cash-customer-chk').checked = false;
-  toggleCashCustomer(); // Reset UI
+  toggleCashCustomer();
   unifiedCustomer = null;
   unifiedNewEntries = [];
 }
@@ -1450,7 +1441,8 @@ function toggleCashCustomer() {
     document.getElementById('unified-cust-meta').textContent = "Direct Cash Sale (Khaata mein save nahi hoga)";
     document.getElementById('btn-set-opening').style.display = 'none';
     unifiedCustomer = { customer: "Walk-in Customer", customer_id: null, entries_total: 0, opening_balance: 0 };
-    document.getElementById('unified-table-card').style.display = 'block';
+    unifiedNewEntries = []; 
+    renderUnifiedTable();
   } else {
     document.getElementById('unified-customer-search').value = "";
     document.getElementById('unified-customer-search').disabled = false;
@@ -2314,6 +2306,7 @@ async function saveQuickPayment() {
     showWhatsAppPrompt(data.whatsapp, 'Payment receipt tayyar hai —', customer);
   } catch(e) { showToast('Payment save nahi hui','error'); }
 }
+
 // ==================== JOURNAL & EXPENSES ====================
 async function loadJournal() {
   const dateInput = document.getElementById('journal-date').value;
@@ -2396,6 +2389,34 @@ async function loadJournal() {
 
   } catch (e) {
     showToast('Report load nahi hui', 'error');
+  }
+}
+
+async function saveInlineExpense() {
+  const nameEl = document.getElementById('inline-exp-name');
+  const amountEl = document.getElementById('inline-exp-amount');
+  
+  const name = nameEl.value.trim();
+  const amount = parseFloat(amountEl.value);
+
+  if (!name) { showToast('Kharchay ka naam likhein!', 'error'); nameEl.focus(); return; }
+  if (!amount || amount <= 0) { showToast('Valid amount daalein!', 'error'); amountEl.focus(); return; }
+
+  try {
+    const res = await apiFetch('/expense/add', {
+      method: 'POST',
+      body: JSON.stringify({ expense_name: name, amount: amount, notes: "" })
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+
+    showToast('✅ Kharcha add ho gaya!');
+    nameEl.value = '';
+    amountEl.value = '';
+    
+    loadJournal(); // Table refresh karein
+  } catch (e) {
+    showToast('Save nahi hua', 'error');
   }
 }
 </script>
