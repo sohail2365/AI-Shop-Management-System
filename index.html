@@ -224,8 +224,9 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
 /* Autocomplete dropdown */
 .autocomplete-wrap{position:relative;display:inline-block;width:100%;}
-.autocomplete-dropdown{position:absolute;top:100%;left:0;width:100%;min-width:280px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:9999;max-height:280px;overflow-y:auto;display:none;margin-top:4px;}
+.autocomplete-dropdown{position:absolute;top:100%;left:0;width:100%;min-width:300px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.15);z-index:99999;max-height:250px;overflow-y:auto;display:none;margin-top:0px;}
 .autocomplete-dropdown.show{display:block;}
+.table-responsive {overflow: visible !important;}
 .ac-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:13px;transition:background 0.1s;}
 .ac-item:last-child{border-bottom:none;}
 .ac-item:hover,.ac-item.active{background:#f8faff;}
@@ -433,13 +434,31 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
 
-        <!-- Search Card -->
-        <div class="card" style="padding:14px; margin-bottom:12px; border: 2px solid #6366f1;">
-          <div class="autocomplete-wrap">
-            <input type="text" id="unified-customer-search" placeholder="🔍 Customer ka Naam ya Khaata # likhein..." autocomplete="off" style="width:100%; font-size:16px; padding:12px; background:#f8faff;">
-            <div id="unified-suggestions" class="autocomplete-dropdown"></div>
+        <!-- Table Card -->
+        <div class="card" id="unified-table-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+            <div style="flex:1; min-width:300px;">
+              <div class="autocomplete-wrap">
+                <input type="text" id="unified-customer-search" placeholder="🔍 Customer ka Naam ya Khaata # likhein (Walk-in ke liye khali chhorein)..." autocomplete="off" style="width:100%; font-size:16px; padding:10px; border: 2px solid #6366f1; border-radius: 8px;">
+                <div id="unified-suggestions" class="autocomplete-dropdown"></div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <label style="display:flex; align-items:center; gap:6px; font-size:14px; font-weight:600; color:#475569; background:#f1f5f9; padding:10px 14px; border-radius:8px; cursor:pointer;">
+                <input type="checkbox" id="cash-customer-chk" onchange="toggleCashCustomer()" style="width:16px; height:16px;">
+                Cash Customer (Walk-in)
+              </label>
+              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:10px 14px;">🖨️ Print</button>
+            </div>
           </div>
-        </div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;" id="khaata-header-info">
+            <div>
+              <h3 style="font-size:20px; font-weight:700; color:#1e293b; margin:0;" id="unified-cust-name">—</h3>
+              <span style="font-size:13px; color:#64748b;" id="unified-cust-meta">—</span>
+            </div>
+            <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;" id="btn-set-opening">✏️ Purana Udhaar Set Karein</button>
+          </div>
 
         <!-- Table Card -->
         <div class="card" id="unified-table-card" style="display:none;">
@@ -454,7 +473,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
             </div>
           </div>
 
-          <div style="overflow-x:auto;">
+          <div class="table-responsive">
             <table class="khaata-table" id="unified-table">
               <thead>
                 <tr>
@@ -642,7 +661,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
             <input type="text" id="inv-search-input" placeholder="Item dhundho..." oninput="filterInventory()" style="flex:1;">
             <button class="btn-outline" onclick="loadInventory()">🔄 Refresh</button>
           </div>
-          <div style="overflow-x:auto;">
+          <div class="table-responsive">
             <table class="inv-table">
               <thead><tr><th>Item</th><th>Category</th><th>Sale Price</th><th>Purchase Rate</th><th>Stock</th><th>Reorder</th><th>Actions</th></tr></thead>
               <tbody id="inv-tbody"></tbody>
@@ -1241,15 +1260,16 @@ function renderUnifiedTable() {
       inputId: `new-item-${i}`,
       dropdownId: `new-item-suggest-${i}`,
       onSelect: (item) => {
+        // Direct DOM update instead of full re-render
+        document.getElementById(`new-item-${i}`).value = item.name;
+        document.getElementById(`new-price-${i}`).value = item.price;
+        
         unifiedNewEntries[i].item = item.name;
         unifiedNewEntries[i].price = item.price;
         if (!unifiedNewEntries[i].inventory_id) unifiedNewEntries[i].inventory_id = item.id;
         unifiedNewEntries[i].total = round2(unifiedNewEntries[i].quantity * unifiedNewEntries[i].price);
 
-        document.getElementById(`new-item-${i}`).value = item.name;
-        document.getElementById(`new-price-${i}`).value = item.price;
         document.getElementById(`new-total-${i}`).textContent = `Rs. ${unifiedNewEntries[i].total}`;
-        
         calculateUnifiedTotals();
       }
     });
@@ -1318,7 +1338,14 @@ function cancelUnifiedEntries() {
 }
 
 async function saveUnifiedEntries() {
+  const isCashCustomer = document.getElementById('cash-customer-chk').checked;
+  
+  if (!isCashCustomer && !unifiedCustomer) {
+    showToast('Pehle customer search karke select karein ya Cash Customer tick karein!', 'error');
+    return;
+  }
   if (!unifiedNewEntries.length) { showToast('Koi nayi entry nahi hai!', 'error'); return; }
+
   const btn = document.getElementById('unified-save-btn');
   btn.disabled = true; btn.textContent = 'Save ho raha hai...';
 
@@ -1329,6 +1356,55 @@ async function saveUnifiedEntries() {
       return;
     }
   }
+
+  try {
+    if (isCashCustomer) {
+      // Walk-in customer ke liye sirf print ya receipt show karein, database mein save na karein
+      const totalSale = unifiedNewEntries.reduce((s, e) => s + e.total, 0);
+      showToast(`✅ Cash Sale Receipt Ready! Total: Rs. ${totalSale}`);
+      printUnifiedKhaata();
+      
+      // Reset
+      unifiedNewEntries = [];
+      renderUnifiedTable();
+    } else {
+      // Normal Customer Save
+      const payload = {
+        customer: unifiedCustomer.customer.toLowerCase(),
+        items: unifiedNewEntries.map(e => ({
+          item: e.item, quantity: e.quantity, price: e.price,
+          inventory_id: e.inventory_id || null, found: !!e.inventory_id
+        }))
+      };
+
+      const res = await apiFetch('/entry/multi/save', { method: 'POST', body: JSON.stringify(payload) });
+      const data = await res.json();
+      if (data.error) { throw new Error(data.error); }
+
+      const totalCash = unifiedNewEntries.reduce((s, e) => s + (e.cash || 0), 0);
+      if (totalCash > 0) {
+        await apiFetch('/entry/save', {
+          method: 'POST',
+          body: JSON.stringify({
+            text: '', customer: unifiedCustomer.customer.toLowerCase(), item: 'PAYMENT', quantity: 1, price: totalCash
+          })
+        });
+      }
+
+      showToast(`✅ Entries save ho gayin! ${totalCash > 0 ? 'Cash Rs. '+totalCash+' bhi jama ho gaya.' : ''}`);
+      showWhatsAppPrompt(data.whatsapp, 'Receipt tayyar hai —', data.customer);
+      
+      unifiedNewEntries = [];
+      await loadUnifiedCustomer(unifiedCustomer.customer_id); 
+    }
+  } catch (e) { 
+    showToast(e.message || 'Save nahi hua', 'error'); 
+  }
+  
+  btn.disabled = false; 
+  btn.textContent = '✓ Nayi Entries Save Karein';
+}
+
 
   try {
     // 1. Pehle saare items ko udhaar (sale) mein save karein
@@ -2160,6 +2236,28 @@ async function saveQuickPayment() {
     showToast(`💰 Payment Rs. ${amount} save ho gayi ${customer.split(' ').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ')} ke naam pe!`);
     showWhatsAppPrompt(data.whatsapp, 'Payment receipt tayyar hai —', customer);
   } catch(e) { showToast('Payment save nahi hui','error'); }
+
+  function toggleCashCustomer() {
+  const isCash = document.getElementById('cash-customer-chk').checked;
+  if (isCash) {
+    document.getElementById('unified-customer-search').value = "Walk-in Customer";
+    document.getElementById('unified-customer-search').disabled = true;
+    document.getElementById('unified-cust-name').textContent = "Walk-in Customer";
+    document.getElementById('unified-cust-meta').textContent = "Direct Cash Sale (Khaata mein save nahi hoga)";
+    document.getElementById('btn-set-opening').style.display = 'none';
+    unifiedCustomer = { customer: "Walk-in Customer", customer_id: null, entries_total: 0, opening_balance: 0 };
+    document.getElementById('unified-table-card').style.display = 'block';
+  } else {
+    document.getElementById('unified-customer-search').value = "";
+    document.getElementById('unified-customer-search').disabled = false;
+    document.getElementById('unified-cust-name').textContent = "—";
+    document.getElementById('unified-cust-meta').textContent = "—";
+    document.getElementById('btn-set-opening').style.display = 'block';
+    unifiedCustomer = null;
+    unifiedNewEntries = [];
+    renderUnifiedTable();
+  }
+}
 }
 </script>
 </body>
