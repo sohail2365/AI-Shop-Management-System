@@ -151,9 +151,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .manual-grid label{font-size:12px;color:#64748b;display:block;margin-bottom:4px;}
 .manual-grid input{width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;flex:unset;}
 
-/* Stock warning */
-.stock-warning{background:#fef9ee;padding:12px 14px;border-radius:10px;border:1px solid #fde68a;margin:10px 0;display:none;font-size:13px;color:#92400e;}
-
 /* Confirm buttons */
 .confirm-btns{display:flex;gap:10px;margin-top:14px;}
 
@@ -199,8 +196,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .toast.success{background:#16a34a;}
 .toast.error{background:#dc2626;}
 .toast.info{background:#2563eb;}
-#mic-btn.recording{background:#dc2626 !important;color:#fff;border-color:#dc2626 !important;animation:mic-pulse 1.2s infinite;}
-@keyframes mic-pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5);}70%{box-shadow:0 0 0 10px rgba(220,38,38,0);}100%{box-shadow:0 0 0 0 rgba(220,38,38,0);}}
 
 /* Page header */
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -434,8 +429,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
 
-        <!-- Table Card -->
+        <!-- Table Card (Merged) -->
         <div class="card" id="unified-table-card">
+          
+          <!-- Search & Top Actions -->
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
             <div style="flex:1; min-width:300px;">
               <div class="autocomplete-wrap">
@@ -448,10 +445,11 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
                 <input type="checkbox" id="cash-customer-chk" onchange="toggleCashCustomer()" style="width:16px; height:16px;">
                 Cash Customer (Walk-in)
               </label>
-              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:10px 14px;">🖨️ Print</button>
+              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:10px 14px;">🖨️ Print Receipt</button>
             </div>
           </div>
           
+          <!-- Customer Info -->
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;" id="khaata-header-info">
             <div>
               <h3 style="font-size:20px; font-weight:700; color:#1e293b; margin:0;" id="unified-cust-name">—</h3>
@@ -460,19 +458,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
             <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;" id="btn-set-opening">✏️ Purana Udhaar Set Karein</button>
           </div>
 
-        <!-- Table Card -->
-        <div class="card" id="unified-table-card" style="display:none;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
-            <div>
-              <h3 style="font-size:20px; font-weight:700; color:#1e293b; margin:0;" id="unified-cust-name">—</h3>
-              <span style="font-size:13px; color:#64748b;" id="unified-cust-meta">—</span>
-            </div>
-            <div style="display:flex; gap:8px;">
-              <button class="btn-outline" onclick="printUnifiedKhaata()" style="font-size:13px; padding:8px 14px;">🖨️ Print Receipt</button>
-              <button class="btn-outline" onclick="openOpeningBalanceModal()" style="font-size:13px; padding:8px 14px;">✏️ Purana Udhaar Set Karein</button>
-            </div>
-          </div>
-
+          <!-- Table -->
           <div class="table-responsive">
             <table class="khaata-table" id="unified-table">
               <thead>
@@ -1223,7 +1209,6 @@ function renderUnifiedTable() {
   let html = '';
 
   if (unifiedNewEntries.length > 0) {
-    // Nayi Entries ka header row
     html += `<tr><td colspan="7" style="background:#eff6ff; font-size:12px; font-weight:700; color:#1d4ed8; text-transform:uppercase; padding:10px; border: 1px solid #475569;">Nayi Entries (Save karein)</td></tr>`;
     
     unifiedNewEntries.forEach((e, i) => {
@@ -1260,7 +1245,6 @@ function renderUnifiedTable() {
       inputId: `new-item-${i}`,
       dropdownId: `new-item-suggest-${i}`,
       onSelect: (item) => {
-        // Direct DOM update instead of full re-render
         document.getElementById(`new-item-${i}`).value = item.name;
         document.getElementById(`new-price-${i}`).value = item.price;
         
@@ -1316,7 +1300,10 @@ function calculateUnifiedTotals() {
 }
 
 function addNewEntryRow() {
-  if (!unifiedCustomer) return;
+  if (!unifiedCustomer && !document.getElementById('cash-customer-chk').checked) {
+    showToast('Pehle customer select karein ya Cash Customer tick karein!', 'error');
+    return;
+  }
   unifiedNewEntries.push({ item: '', quantity: 1, price: 0, cash: 0, total: 0, inventory_id: null });
   renderUnifiedTable();
   setTimeout(() => {
@@ -1333,8 +1320,32 @@ function removeNewEntryRow(index) {
 function cancelUnifiedEntries() {
   document.getElementById('unified-customer-search').value = '';
   document.getElementById('unified-table-card').style.display = 'none';
+  document.getElementById('cash-customer-chk').checked = false;
+  toggleCashCustomer(); // Reset UI
   unifiedCustomer = null;
   unifiedNewEntries = [];
+}
+
+function toggleCashCustomer() {
+  const isCash = document.getElementById('cash-customer-chk').checked;
+  if (isCash) {
+    document.getElementById('unified-customer-search').value = "Walk-in Customer";
+    document.getElementById('unified-customer-search').disabled = true;
+    document.getElementById('unified-cust-name').textContent = "Walk-in Customer";
+    document.getElementById('unified-cust-meta').textContent = "Direct Cash Sale (Khaata mein save nahi hoga)";
+    document.getElementById('btn-set-opening').style.display = 'none';
+    unifiedCustomer = { customer: "Walk-in Customer", customer_id: null, entries_total: 0, opening_balance: 0 };
+    document.getElementById('unified-table-card').style.display = 'block';
+  } else {
+    document.getElementById('unified-customer-search').value = "";
+    document.getElementById('unified-customer-search').disabled = false;
+    document.getElementById('unified-cust-name').textContent = "—";
+    document.getElementById('unified-cust-meta').textContent = "—";
+    document.getElementById('btn-set-opening').style.display = 'block';
+    unifiedCustomer = null;
+    unifiedNewEntries = [];
+    renderUnifiedTable();
+  }
 }
 
 async function saveUnifiedEntries() {
@@ -1359,16 +1370,12 @@ async function saveUnifiedEntries() {
 
   try {
     if (isCashCustomer) {
-      // Walk-in customer ke liye sirf print ya receipt show karein, database mein save na karein
       const totalSale = unifiedNewEntries.reduce((s, e) => s + e.total, 0);
       showToast(`✅ Cash Sale Receipt Ready! Total: Rs. ${totalSale}`);
       printUnifiedKhaata();
-      
-      // Reset
       unifiedNewEntries = [];
       renderUnifiedTable();
     } else {
-      // Normal Customer Save
       const payload = {
         customer: unifiedCustomer.customer.toLowerCase(),
         items: unifiedNewEntries.map(e => ({
@@ -1405,53 +1412,8 @@ async function saveUnifiedEntries() {
   btn.textContent = '✓ Nayi Entries Save Karein';
 }
 
-
-  try {
-    // 1. Pehle saare items ko udhaar (sale) mein save karein
-    const payload = {
-      customer: unifiedCustomer.customer.toLowerCase(),
-      items: unifiedNewEntries.map(e => ({
-        item: e.item, quantity: e.quantity, price: e.price,
-        inventory_id: e.inventory_id || null, found: !!e.inventory_id
-      }))
-    };
-
-    const res = await apiFetch('/entry/multi/save', { method: 'POST', body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (data.error) { throw new Error(data.error); }
-
-    // 2. Agar cash receive hua hai toh usko Payment ke tor par minus karein
-    const totalCash = unifiedNewEntries.reduce((s, e) => s + (e.cash || 0), 0);
-    if (totalCash > 0) {
-      await apiFetch('/entry/save', {
-        method: 'POST',
-        body: JSON.stringify({
-          text: '',
-          customer: unifiedCustomer.customer.toLowerCase(),
-          item: 'PAYMENT',
-          quantity: 1,
-          price: totalCash
-        })
-      });
-    }
-
-    showToast(`✅ Entries save ho gayin! ${totalCash > 0 ? 'Cash Rs. '+totalCash+' bhi jama ho gaya.' : ''}`);
-    showWhatsAppPrompt(data.whatsapp, 'Receipt tayyar hai —', data.customer);
-    
-    // Nayi entries clear karein aur table fresh load karein
-    unifiedNewEntries = [];
-    await loadUnifiedCustomer(unifiedCustomer.customer_id); 
-    
-  } catch (e) { 
-    showToast(e.message || 'Save nahi hua', 'error'); 
-  }
-  
-  btn.disabled = false; 
-  btn.textContent = '✓ Nayi Entries Save Karein';
-}
-
 function printUnifiedKhaata() {
-  if (!unifiedCustomer) { showToast('Pehle customer select karein!', 'error'); return; }
+  if (!unifiedCustomer && !document.getElementById('cash-customer-chk').checked) { showToast('Pehle customer select karein!', 'error'); return; }
   
   const shopName = toTitleCase(getShopName() || 'Dukaan AI');
   const now = new Date();
@@ -1504,7 +1466,7 @@ function printUnifiedKhaata() {
       
       <div class="meta">Date: ${esc(dateStr)}</div>
       <div class="meta">Customer: <span class="bold">${esc(unifiedCustomer.customer)}</span></div>
-      <div class="meta">Khaata #: ${unifiedCustomer.customer_id}</div>
+      ${unifiedCustomer.customer_id ? `<div class="meta">Khaata #: ${unifiedCustomer.customer_id}</div>` : ''}
       <div class="line"></div>
 
       ${unifiedNewEntries.length > 0 ? `
@@ -1517,7 +1479,7 @@ function printUnifiedKhaata() {
         ${totalSale > 0 ? `<div class="summary-row"><span>Aaj ki Sale:</span><span>Rs. ${totalSale}</span></div>` : ''}
         ${totalCash > 0 ? `<div class="summary-row"><span>Cash Received:</span><span>Rs. ${totalCash}</span></div>` : ''}
         ${newUdhaar !== 0 ? `<div class="summary-row"><span>Naya Udhaar:</span><span>Rs. ${newUdhaar}</span></div>` : ''}
-        <div class="summary-row"><span>Purana Hisaab:</span><span>Rs. ${pastTotal}</span></div>
+        ${pastTotal > 0 ? `<div class="summary-row"><span>Purana Hisaab:</span><span>Rs. ${pastTotal}</span></div>` : ''}
         <div class="summary-row grand"><span>GRAND TOTAL:</span><span>Rs. ${grandTotal}</span></div>
       </div>
 
@@ -1529,7 +1491,7 @@ function printUnifiedKhaata() {
 }
 
 function openOpeningBalanceModal() {
-  if (!unifiedCustomer) return;
+  if (!unifiedCustomer || !unifiedCustomer.customer_id) return;
   document.getElementById('ob-customer-id').value = unifiedCustomer.customer_id;
   document.getElementById('ob-customer-name').value = unifiedCustomer.customer;
   document.getElementById('ob-amount').value = unifiedCustomer.opening_balance || 0;
@@ -2236,28 +2198,6 @@ async function saveQuickPayment() {
     showToast(`💰 Payment Rs. ${amount} save ho gayi ${customer.split(' ').map(w => w.charAt(0).toUpperCase()+w.slice(1)).join(' ')} ke naam pe!`);
     showWhatsAppPrompt(data.whatsapp, 'Payment receipt tayyar hai —', customer);
   } catch(e) { showToast('Payment save nahi hui','error'); }
-
-  function toggleCashCustomer() {
-  const isCash = document.getElementById('cash-customer-chk').checked;
-  if (isCash) {
-    document.getElementById('unified-customer-search').value = "Walk-in Customer";
-    document.getElementById('unified-customer-search').disabled = true;
-    document.getElementById('unified-cust-name').textContent = "Walk-in Customer";
-    document.getElementById('unified-cust-meta').textContent = "Direct Cash Sale (Khaata mein save nahi hoga)";
-    document.getElementById('btn-set-opening').style.display = 'none';
-    unifiedCustomer = { customer: "Walk-in Customer", customer_id: null, entries_total: 0, opening_balance: 0 };
-    document.getElementById('unified-table-card').style.display = 'block';
-  } else {
-    document.getElementById('unified-customer-search').value = "";
-    document.getElementById('unified-customer-search').disabled = false;
-    document.getElementById('unified-cust-name').textContent = "—";
-    document.getElementById('unified-cust-meta').textContent = "—";
-    document.getElementById('btn-set-opening').style.display = 'block';
-    unifiedCustomer = null;
-    unifiedNewEntries = [];
-    renderUnifiedTable();
-  }
-}
 }
 </script>
 </body>
