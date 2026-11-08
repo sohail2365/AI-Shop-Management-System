@@ -298,6 +298,21 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .summary-row.grand span:last-child{color:#d97706;font-weight:800;font-size:20px;}
 .summary-row.grand.positive span:last-child{color:#dc2626;}
 .summary-row.grand.zero span:last-child{color:#16a34a;}
+
+/* ===== NEW POS MODERN UI ===== */
+.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); transition: all 0.3s ease; }
+.glass-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+.stat-card-modern { border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.stat-card-modern:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+.bg-gradient-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.bg-gradient-green { background: linear-gradient(135deg, #10b981, #059669); }
+.bg-gradient-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.bg-gradient-purple { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+.stat-card-modern .lbl { font-size: 13px; font-weight: 600; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+.stat-card-modern .val { font-size: 28px; font-weight: 800; margin-top: 5px; }
+.quick-entry-row { display: flex; gap: 8px; background: #f8fafc; padding: 10px; border-radius: 10px; border: 1px dashed #cbd5e1; margin-bottom: 12px; align-items: center; }
+.quick-entry-row input, .quick-entry-row select { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; }
+.quick-entry-row input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px #e0e7ff; }
 </style>
 </head>
 <body>
@@ -413,7 +428,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         <span class="nav-icon">📊</span><span>Dashboard</span>
       </div>
       <div class="nav-item" onclick="showPage('journal');loadJournal()" id="nav-journal">
-        <span class="nav-icon">📊</span><span>Daily Closing</span>
+        <span class="nav-icon">🚀</span><span>Live POS & Closing</span>
       </div>
     </div>
 
@@ -765,12 +780,12 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
       </div>
 
-      <!-- Journal Page (Daily Closing) -->
+      <!-- Journal Page (Daily Closing / POS) -->
       <div class="page" id="page-journal">
         <div class="page-header">
           <div>
-            <div class="page-title">📊 Daily Closing Report</div>
-            <div class="page-subtitle">Aaj ki Sale, Khareedari, Kharchay aur Profit ka hisaab</div>
+            <div class="page-title">🚀 Live Dashboard & Closing</div>
+            <div class="page-subtitle">Direct sale karein, kharchay likhein aur aaj ka hisaab dekhein</div>
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
             <input type="date" id="journal-date" onchange="loadJournal()" style="padding:8px; border:1px solid #cbd5e1; border-radius:6px;">
@@ -778,38 +793,59 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
 
-        <!-- Top Summary Cards -->
-        <div class="stats-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 20px;">
-          <div class="stat-card" style="border-left: 4px solid #3b82f6;">
-            <div class="stat-lbl">Total Sale (Bill)</div>
-            <div class="stat-num" id="daily-total-sale">Rs. 0</div>
+        <!-- Top Summary Cards (Modern Gradient) -->
+        <div class="stats-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+          <div class="stat-card-modern bg-gradient-blue">
+            <div class="lbl">Total Sale (Bill)</div>
+            <div class="val" id="daily-total-sale">Rs. 0</div>
           </div>
-          <div class="stat-card" style="border-left: 4px solid #10b981;">
-            <div class="stat-lbl">Cash Received (In)</div>
-            <div class="stat-num green" id="daily-total-cash">Rs. 0</div>
+          <div class="stat-card-modern bg-gradient-green">
+            <div class="lbl">Cash Received (In)</div>
+            <div class="val" id="daily-total-cash">Rs. 0</div>
           </div>
-          <div class="stat-card" style="border-left: 4px solid #ef4444;">
-            <div class="stat-lbl">Total Out (Purchase+Exp)</div>
-            <div class="stat-num red" id="daily-total-out">Rs. 0</div>
+          <div class="stat-card-modern bg-gradient-red">
+            <div class="lbl">Total Out (Purchase+Exp)</div>
+            <div class="val" id="daily-total-out">Rs. 0</div>
           </div>
-          <div class="stat-card" style="border-left: 4px solid #8b5cf6;">
-            <div class="stat-lbl">Estimated Profit</div>
-            <div class="stat-num" style="color:#8b5cf6;" id="daily-profit">Rs. 0</div>
+          <div class="stat-card-modern bg-gradient-purple">
+            <div class="lbl">Estimated Profit</div>
+            <div class="val" id="daily-profit">Rs. 0</div>
           </div>
         </div>
 
         <!-- Two Column Layout -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;">
           
-          <!-- Left: Sales -->
-          <div class="card" style="margin:0;">
-            <h3 style="font-size:16px; color:#0369a1; margin-bottom:12px; border-bottom:2px solid #e0f2fe; padding-bottom:8px;">🛒 Aaj Ki Sale</h3>
-            <div class="table-responsive">
-              <table class="khaata-table" style="font-size:12px;">
-                <thead>
-                  <tr>
+          <!-- Left: Live Sales & Quick Entry -->
+          <div class="card glass-card" style="margin:0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e0f2fe; padding-bottom:10px; margin-bottom:12px;">
+              <h3 style="font-size:18px; color:#0369a1; margin:0;">🛒 Aaj Ki Sale</h3>
+              <span class="badge badge-blue">Live Entry</span>
+            </div>
+            
+            <!-- Quick Sale Entry Form -->
+            <div class="quick-entry-row">
+              <input type="text" id="qs-customer" placeholder="Customer (Khali=Walk-in)" list="quick-cust-list" style="flex:1.2;">
+              <datalist id="quick-cust-list"></datalist>
+              
+              <div class="autocomplete-wrap" style="flex:2;">
+                <input type="text" id="qs-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
+                <div id="qs-item-suggest" class="autocomplete-dropdown"></div>
+              </div>
+              
+              <input type="number" id="qs-qty" placeholder="Qty" value="1" min="1" style="width:70px; text-align:center;">
+              <input type="number" id="qs-price" placeholder="Rate" style="width:90px; text-align:right;">
+              <input type="number" id="qs-cash" placeholder="Cash" style="width:90px; text-align:right; color:#16a34a; font-weight:600;">
+              <button onclick="submitQuickSale()" class="btn-success" style="padding:8px 15px; border-radius:6px; font-weight:bold;">+ Add</button>
+            </div>
+
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+              <table class="khaata-table" style="font-size:13px; border:1px solid #e2e8f0;">
+                <thead style="position: sticky; top: 0; z-index: 10;">
+                  <tr style="background:#f1f5f9;">
                     <th>Item</th>
                     <th style="text-align:center;">Qty</th>
+                    <th style="text-align:right;">Rate</th>
                     <th style="text-align:right;">Total</th>
                     <th style="text-align:right;">Profit</th>
                   </tr>
@@ -820,36 +856,34 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
 
           <!-- Right: Purchases & Expenses -->
-          <div style="display:flex; flex-direction:column; gap:16px;">
-            <div class="card" style="margin:0;">
+          <div style="display:flex; flex-direction:column; gap:20px;">
+            <!-- Purchases -->
+            <div class="card glass-card" style="margin:0;">
               <h3 style="font-size:16px; color:#b45309; margin-bottom:12px; border-bottom:2px solid #fef3c7; padding-bottom:8px;">📦 Aaj Ki Khareedari</h3>
-              <div class="table-responsive">
-                <table class="khaata-table" style="font-size:12px;">
-                  <thead>
-                    <tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr>
-                  </thead>
+              <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                <table class="khaata-table" style="font-size:13px;">
+                  <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
                   <tbody id="journal-purchases-tbody"></tbody>
                 </table>
               </div>
             </div>
 
-            <div class="card" style="margin:0;">
+            <!-- Expenses -->
+            <div class="card glass-card" style="margin:0;">
               <h3 style="font-size:16px; color:#dc2626; margin-bottom:12px; border-bottom:2px solid #fee2e2; padding-bottom:8px;">💸 Aaj Ke Kharchay</h3>
-              <div class="table-responsive">
-                <table class="khaata-table" style="font-size:12px;">
-                  <thead>
-                    <tr><th>Kharcha</th><th style="text-align:right;">Amount</th></tr>
-                  </thead>
+              <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                <table class="khaata-table" style="font-size:13px;">
+                  <thead><tr><th>Kharcha</th><th style="text-align:right;">Amount</th></tr></thead>
                   <tbody id="journal-expenses-tbody"></tbody>
-                  <!-- Naya Inline Kharcha Add Karne Ka Row -->
-                  <tfoot>
+                  <!-- Inline Expense Input -->
+                  <tfoot style="position: sticky; bottom: 0; background: #fff;">
                     <tr style="background:#f8fafc;">
-                      <td style="padding:4px;">
-                        <input type="text" id="inline-exp-name" placeholder="Naya kharcha likhein..." style="width:100%; border:1px solid #cbd5e1; padding:6px; border-radius:4px; font-size:12px;">
+                      <td style="padding:6px;">
+                        <input type="text" id="inline-exp-name" placeholder="Naya kharcha..." style="width:100%; border:1px solid #cbd5e1; padding:6px; border-radius:4px; font-size:12px;">
                       </td>
-                      <td style="padding:4px; display:flex; gap:4px; justify-content:flex-end;">
-                        <input type="number" id="inline-exp-amount" placeholder="Rs. 0" style="width:70px; border:1px solid #cbd5e1; padding:6px; border-radius:4px; font-size:12px; text-align:right;">
-                        <button onclick="saveInlineExpense()" class="btn-success" style="padding:6px 10px; border-radius:4px; font-size:12px;">✓</button>
+                      <td style="padding:6px; display:flex; gap:4px; justify-content:flex-end;">
+                        <input type="number" id="inline-exp-amount" placeholder="Rs." style="width:70px; border:1px solid #cbd5e1; padding:6px; border-radius:4px; font-size:12px; text-align:right;">
+                        <button onclick="saveInlineExpense()" class="btn-success" style="padding:6px 12px; border-radius:4px; font-size:12px; font-weight:bold;">+</button>
                       </td>
                     </tr>
                   </tfoot>
@@ -861,10 +895,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
         </div>
 
         <!-- Cash Flow Summary -->
-        <div class="card" style="margin-top:16px; background:#f8fafc;">
+        <div class="card glass-card" style="margin-top:20px; background:linear-gradient(135deg, #f8fafc, #f1f5f9); border-left: 6px solid #3b82f6;">
           <div style="display:flex; justify-content:space-between; align-items:center; padding:10px;">
-            <span style="font-size:16px; font-weight:700; color:#1e293b;">Galla (Net Cash Flow):</span>
-            <span style="font-size:18px; font-weight:800;" id="daily-cash-flow">Rs. 0</span>
+            <span style="font-size:18px; font-weight:800; color:#1e293b;">💵 Galla (Net Cash Flow):</span>
+            <span style="font-size:24px; font-weight:900;" id="daily-cash-flow">Rs. 0</span>
           </div>
         </div>
       </div>
@@ -1036,6 +1070,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     </div>
   </div>
 </div>
+
 <!-- Calculator -->
 <div class="calc-panel" id="calc-panel">
   <div class="calc-screen">
