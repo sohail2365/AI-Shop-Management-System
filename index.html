@@ -237,34 +237,61 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 .ac-row{display:flex;justify-content:space-between;align-items:center;gap:12px;}
 .ac-loading,.ac-empty{padding:12px;text-align:center;color:#94a3b8;font-size:12px;}
 
-/* Khaata table - Excel Style Grid */
-.khaata-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px; table-layout: fixed; border: 1px solid #cbd5e1;}
-.khaata-table th{background:#f1f5f9;padding:10px 8px;text-align:left;font-weight:700;color:#1e293b;font-size:12px;text-transform:uppercase;border: 1px solid #cbd5e1;}
-.khaata-table td{padding:6px;border: 1px solid #cbd5e1;vertical-align:middle; background: #fff;}
-.khaata-table tr:hover td{background:#f8fafc;}
+/* Khaata table - Physical Register Style */
+.khaata-table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  font-size: 14px; 
+  margin-top: 14px; 
+  table-layout: fixed; 
+  border: 2px solid #475569;
+  background: #fff;
+}
+.khaata-table th { 
+  background: #f1f5f9; 
+  padding: 12px 10px; 
+  text-align: left; 
+  font-weight: 700; 
+  color: #1e293b; 
+  font-size: 12px; 
+  text-transform: uppercase; 
+  border: 1px solid #475569; 
+  letter-spacing: 0.5px;
+}
+.khaata-table td { 
+  padding: 0;
+  border: 1px solid #475569; 
+  vertical-align: middle; 
+  background: #fff;
+  position: relative;
+}
 
 /* Column widths */
 .col-date { width: 10%; }
-.col-item { width: 25%; }
-.col-qty { width: 8%; }
+.col-item { width: 26%; }
+.col-qty { width: 10%; }
 .col-price { width: 12%; }
 .col-total { width: 12%; text-align: right; }
-.col-cash { width: 18%; text-align: right; }
+.col-cash { width: 15%; text-align: right; }
 .col-action { width: 15%; text-align: center; }
 
-/* Inputs inside table */
+/* Inputs inside table - seamless */
 .khaata-table input[type="text"], 
 .khaata-table input[type="number"] {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  font-size: 13px;
+  padding: 12px 10px;
+  border: none;
+  border-radius: 0;
+  font-size: 14px;
   box-sizing: border-box;
   outline: none;
-  background: #f8fafc;
+  background: transparent;
+  color: #1e293b;
 }
-.khaata-table input:focus { border-color: #6366f1; background: #fff; }
+.khaata-table input:focus { 
+  background: #eff6ff; 
+  box-shadow: inset 0 0 0 2px #6366f1; 
+}
 
 .khaata-summary{margin-top:20px;padding-top:16px;border-top:2px solid #e2e8f0;}
 .summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:14px;}
@@ -1177,12 +1204,13 @@ function renderUnifiedTable() {
   let html = '';
 
   if (unifiedNewEntries.length > 0) {
-    html += `<tr><td colspan="7" style="background:#eff6ff; font-size:11px; font-weight:700; color:#1d4ed8; text-transform:uppercase; padding:6px 8px; border-bottom:2px solid #bfdbfe;">Nayi Entries (Save karein)</td></tr>`;
+    // Nayi Entries ka header row
+    html += `<tr><td colspan="7" style="background:#eff6ff; font-size:12px; font-weight:700; color:#1d4ed8; text-transform:uppercase; padding:10px; border: 1px solid #475569;">Nayi Entries (Save karein)</td></tr>`;
     
     unifiedNewEntries.forEach((e, i) => {
       html += `
         <tr>
-          <td class="col-date" style="color:#64748b;font-size:12px;">Aaj</td>
+          <td class="col-date" style="color:#64748b;font-size:13px; padding-left:10px;">Aaj</td>
           <td class="col-item">
             <div class="autocomplete-wrap" style="width:100%;">
               <input type="text" id="new-item-${i}" value="${esc(e.item)}" oninput="updateNewEntry(${i}, 'item', this.value)" placeholder="Item name">
@@ -1195,15 +1223,15 @@ function renderUnifiedTable() {
           <td class="col-price">
             <input type="number" id="new-price-${i}" value="${e.price}" oninput="updateNewEntry(${i}, 'price', this.value)" style="text-align:right;">
           </td>
-          <td class="col-total" style="font-weight:700;color:#1e293b;" id="new-total-${i}">Rs. ${e.total}</td>
+          <td class="col-total" style="font-weight:700;color:#1e293b; padding-right:10px;" id="new-total-${i}">Rs. ${e.total}</td>
           <td class="col-cash">
-            <input type="number" id="new-cash-${i}" value="${e.cash || ''}" oninput="updateNewEntry(${i}, 'cash', this.value)" style="text-align:right; border-color:#16a34a;" placeholder="0">
+            <input type="number" id="new-cash-${i}" value="${e.cash || ''}" oninput="updateNewEntry(${i}, 'cash', this.value)" style="text-align:right; color: #16a34a; font-weight:600;" placeholder="0">
           </td>
-          <td class="col-action"><button class="del-btn" onclick="removeNewEntryRow(${i})">x</button></td>
+          <td class="col-action"><button class="del-btn" style="margin: 5px;" onclick="removeNewEntryRow(${i})">x</button></td>
         </tr>`;
     });
   } else {
-    html = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Koi nayi entry nahi hai. Naya item add karein.</td></tr>';
+    html = '<tr><td colspan="7" style="text-align:center; padding:30px; color:#94a3b8; border: 1px solid #475569;">Koi nayi entry nahi hai. Naya item add karein.</td></tr>';
   }
 
   tbody.innerHTML = html;
