@@ -2307,13 +2307,13 @@ async function saveQuickPayment() {
   } catch(e) { showToast('Payment save nahi hui','error'); }
 }
 
-// ==================== JOURNAL & EXPENSES ====================
+// ==================== JOURNAL & POS ====================
 async function loadJournal() {
   const dateInput = document.getElementById('journal-date').value;
   let url = '/reports/daily-closing';
   if (dateInput) url += `?date=${dateInput}`;
 
-  document.getElementById('journal-sales-tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+  document.getElementById('journal-sales-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Loading...</td></tr>';
   document.getElementById('journal-purchases-tbody').innerHTML = '<tr><td colspan="3" style="text-align:center;">Loading...</td></tr>';
   document.getElementById('journal-expenses-tbody').innerHTML = '<tr><td colspan="2" style="text-align:center;">Loading...</td></tr>';
 
@@ -2334,18 +2334,19 @@ async function loadJournal() {
 
     // Sales Table
     let salesHtml = '';
-    if (data.sales.length === 0) salesHtml = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">Koi sale nahi hui.</td></tr>';
+    if (data.sales.length === 0) salesHtml = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">Koi sale nahi hui.</td></tr>';
     else {
       data.sales.forEach(s => {
         salesHtml += `<tr>
-          <td>${esc(toTitleCase(s.item))}</td>
+          <td style="font-weight:600;">${esc(toTitleCase(s.item))}</td>
           <td style="text-align:center;">${s.qty}</td>
-          <td style="text-align:right; font-weight:600;">Rs. ${s.total}</td>
+          <td style="text-align:right;">Rs. ${s.price || s.total/s.qty}</td>
+          <td style="text-align:right; font-weight:700;">Rs. ${s.total}</td>
           <td style="text-align:right; color:#16a34a; font-weight:600;">Rs. ${s.profit}</td>
         </tr>`;
       });
       salesHtml += `<tr style="background:#f8fafc; font-weight:bold;">
-        <td colspan="2" style="text-align:right;">Total:</td>
+        <td colspan="3" style="text-align:right;">Total:</td>
         <td style="text-align:right;">Rs. ${data.total_sales}</td>
         <td style="text-align:right; color:#16a34a;">Rs. ${data.total_profit}</td>
       </tr>`;
@@ -2391,6 +2392,89 @@ async function loadJournal() {
     showToast('Report load nahi hui', 'error');
   }
 }
+
+// Quick Sale Entry Logic
+async function submitQuickSale() {
+  const custEl = document.getElementById('qs-customer');
+  const itemEl = document.getElementById('qs-item');
+  const qtyEl = document.getElementById('qs-qty');
+  const priceEl = document.getElementById('qs-price');
+  const cashEl = document.getElementById('qs-cash');
+
+  const customer = custEl.value.trim() || 'Walk-in Customer';
+  const item = itemEl.value.trim();
+  const qty = parseFloat(qtyEl.value);
+  const price = parseFloat(priceEl.value);
+  const cash = parseFloat(cashEl.value) || 0;
+
+  if (!item || !price || price <= 0 || !qty || qty <= 0) {
+    showToast('Item, Qty aur Price sahi se daalein!', 'error');
+    return;
+  }
+
+  try {
+    // 1. Save Sale
+    const payload = {
+      customer: customer,
+      items: [{
+        item: item,
+        quantity: qty,
+        price: price,
+        inventory_id: window._qs_inventory_id || null, // Set from autocomplete
+        found: !!window._qs_inventory_id
+      }]
+    };
+
+    const res = await apiFetch('/entry/multi/save', { method: 'POST', body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.error) { throw new Error(data.error); }
+
+    // 2. If Cash was given, log it as payment
+    if (cash > 0) {
+      await apiFetch('/entry/save', {
+        method: 'POST',
+        body: JSON.stringify({ text: '', customer: customer, item: 'PAYMENT', quantity: 1, price: cash })
+      });
+    }
+
+    showToast('✅ Sale Added Successfully!');
+    
+    // Reset Form
+    itemEl.value = ''; qtyEl.value = '1'; priceEl.value = ''; cashEl.value = '';
+    window._qs_inventory_id = null;
+    
+    // Refresh Dashboard
+    loadJournal();
+    
+    // Reload Customer Datalist
+    const dl = document.getElementById('quick-cust-list');
+    if(!allCustomersCache.length) await getAllCustomers();
+    dl.innerHTML = allCustomersCache.map(c => `<option value="${esc(c.name.toLowerCase())}">`).join('');
+
+  } catch (e) {
+    showToast(e.message || 'Sale save nahi hui', 'error');
+  }
+}
+
+// Setup Quick Sale Autocomplete
+attachAutocomplete({
+  inputId: 'qs-item',
+  dropdownId: 'qs-item-suggest',
+  onSelect: (item) => {
+    document.getElementById('qs-item').value = item.name;
+    document.getElementById('qs-price').value = item.price;
+    window._qs_inventory_id = item.id;
+  }
+});
+
+// Initialize Quick Sale Datalist on page load
+window.addEventListener('load', async () => {
+  try {
+    if(!allCustomersCache.length) await getAllCustomers();
+    const dl = document.getElementById('quick-cust-list');
+    dl.innerHTML = allCustomersCache.map(c => `<option value="${esc(c.name.toLowerCase())}">`).join('');
+  } catch(e) {}
+});
 
 async function saveInlineExpense() {
   const nameEl = document.getElementById('inline-exp-name');
