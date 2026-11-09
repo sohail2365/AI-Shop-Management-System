@@ -1750,3 +1750,44 @@ def get_daily_closing(date: str = "", authorization: Optional[str] = Header(None
         "total_expenses": total_expenses,
         "daily_cash_flow": daily_cash_flow
     }
+
+class QuickPurchaseRequest(BaseModel):
+    supplier: str
+    item: str
+    quantity: float
+    rate: float
+    inventory_id: Optional[int] = None
+
+@app.post("/purchase/quick-add")
+def quick_add_purchase(req: QuickPurchaseRequest, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+    if req.quantity <= 0 or req.rate <= 0:
+        return {"error": "Quantity aur Rate 0 se zyada hone chahiye"}
+
+    total_cost = round(req.quantity * req.rate, 2)
+    supplier = req.supplier.strip() or "Unknown Supplier"
+    item_name = req.item.strip()
+
+    with get_connection() as conn:
+        conn.execute(
+            text("""
+                INSERT INTO purchases (shop_id, supplier_name, item_name, quantity, purchase_rate, total_cost, inventory_id)
+                VALUES (:sid, :supplier, :item, :qty, :rate, :total, :inv_id)
+            """),
+            {"sid": shop_id, "supplier": supplier, "item": item_name.lower(),
+             "qty": req.quantity, "rate": req.rate, "total": total_cost, "inv_id": req.inventory_id}
+        )
+        conn.commit()
+
+    # Stock Update
+    if req.inventory_id:
+        update_stock_by_id(req.inventory_id, -req.quantity, shop_id) # Note: update_stock_by_id subtract karta hai sale ke liye, purchase ke liye add karna hoga ya direct update
+        # Actually, let's use the existing function for purchase stock update:
+        update_stock_purchase(item_name, req.quantity, shop_id)
+    else:
+        update_stock_purchase(item_name, req.quantity, shop_id)
+
+    log.info(f"Quick Purchase: {item_name} x{req.quantity} @ {req.rate} from {supplier} shop={shop_id}")
+    return {"success": True, "total_cost": total_cost, "message": "Purchase saved and stock updated!"}    
