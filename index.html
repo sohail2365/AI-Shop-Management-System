@@ -875,26 +875,41 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
           <!-- Right: Purchases & Expenses -->
           <div style="display:flex; flex-direction:column; gap:20px;">
-            <!-- Purchases with Quick Entry -->
+            <!-- Purchases with Bulk Entry (Cart System) -->
             <div class="card glass-card" style="margin:0;">
               <h3 style="font-size:16px; color:#b45309; margin-bottom:12px; border-bottom:2px solid #fef3c7; padding-bottom:8px;">📦 Aaj Ki Khareedari</h3>
               
-              <!-- Quick Purchase Entry Form -->
-              <div class="quick-purchase-row">
-                <input type="text" id="qp-supplier" placeholder="Traders/Supplier" list="supplier-list" style="flex:1.2;">
+              <!-- Supplier Input -->
+              <div style="margin-bottom:8px;">
+                <input type="text" id="qp-supplier" placeholder="Traders/Supplier ka naam..." list="supplier-list" style="width:100%; border:1px solid #fcd34d; padding:8px; border-radius:6px; font-weight:600; background:#fffbeb;">
                 <datalist id="supplier-list"></datalist>
-                
-                <div class="autocomplete-wrap" style="flex:1.5;">
+              </div>
+
+              <!-- Add Item Form -->
+              <div class="quick-purchase-row" style="background:#fff; border:1px solid #e2e8f0;">
+                <div class="autocomplete-wrap" style="flex:2;">
                   <input type="text" id="qp-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
                   <div id="qp-item-suggest" class="autocomplete-dropdown"></div>
                 </div>
-                
-                <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:50px; text-align:center;">
-                <input type="number" id="qp-rate" placeholder="Rate" style="width:70px; text-align:right;">
-                <button onclick="submitQuickPurchase()" class="btn-success" style="padding:6px 12px; border-radius:4px; font-size:14px; font-weight:bold; background:#d97706;">+</button>
+                <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;">
+                <input type="number" id="qp-rate" placeholder="Rate" style="width:80px; text-align:right;">
+                <button onclick="addQuickPurchaseItem()" class="btn-outline" style="padding:6px 12px; border-radius:4px; font-weight:bold; color:#d97706; border-color:#d97706;">+ Add</button>
               </div>
 
-              <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+              <!-- Cart Table (Temporary List) -->
+              <div id="quick-purchase-cart" style="margin-top:10px; max-height: 200px; overflow-y: auto; display:none;">
+                <table class="khaata-table" style="font-size:12px; border: 1px dashed #d97706;">
+                  <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th><th></th></tr></thead>
+                  <tbody id="qp-cart-body"></tbody>
+                </table>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                  <span style="font-size:14px; font-weight:700; color:#b45309;">Total: <span id="qp-cart-total">Rs. 0</span></span>
+                  <button onclick="saveBulkPurchase()" class="btn-success" style="background:#d97706; padding:8px 16px;">✓ Save Khareedari</button>
+                </div>
+              </div>
+
+              <!-- Saved Purchases Table -->
+              <div class="table-responsive" style="max-height: 200px; overflow-y: auto; margin-top:10px;">
                 <table class="khaata-table" style="font-size:13px;">
                   <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Total</th></tr></thead>
                   <tbody id="journal-purchases-tbody"></tbody>
@@ -2573,53 +2588,110 @@ async function saveInlineExpense() {
   }
 }
 // ==================== QUICK PURCHASE LOGIC ====================
-async function submitQuickPurchase() {
-  const supplierEl = document.getElementById('qp-supplier');
+// ==================== BULK PURCHASE (CART) LOGIC ====================
+let quickPurchaseCart = [];
+
+async function addQuickPurchaseItem() {
+  const supplier = document.getElementById('qp-supplier').value.trim();
   const itemEl = document.getElementById('qp-item');
   const qtyEl = document.getElementById('qp-qty');
   const rateEl = document.getElementById('qp-rate');
 
-  const supplier = supplierEl.value.trim() || 'Unknown Supplier';
   const item = itemEl.value.trim();
   const qty = parseFloat(qtyEl.value);
   const rate = parseFloat(rateEl.value);
 
-  if (!item || !qty || qty <= 0 || !rate || rate <= 0) {
-    showToast('Item, Qty aur Rate sahi se daalein!', 'error');
+  if (!supplier) { showToast('Pehle Supplier ka naam likhein!', 'error'); document.getElementById('qp-supplier').focus(); return; }
+  if (!item || !qty || qty <= 0 || !rate || rate <= 0) { showToast('Item, Qty aur Rate sahi se daalein!', 'error'); return; }
+
+  quickPurchaseCart.push({
+    item: item,
+    quantity: qty,
+    rate: rate,
+    inventory_id: window._qp_inventory_id || null,
+    total: round2(qty * rate)
+  });
+
+  // Reset item inputs
+  itemEl.value = ''; 
+  qtyEl.value = '1'; 
+  rateEl.value = '';
+  window._qp_inventory_id = null;
+  itemEl.focus();
+
+  renderQuickPurchaseCart();
+}
+
+function renderQuickPurchaseCart() {
+  const container = document.getElementById('quick-purchase-cart');
+  const tbody = document.getElementById('qp-cart-body');
+  const totalEl = document.getElementById('qp-cart-total');
+
+  if (quickPurchaseCart.length === 0) {
+    container.style.display = 'none';
     return;
   }
 
+  container.style.display = 'block';
+  let totalBill = 0;
+
+  tbody.innerHTML = quickPurchaseCart.map((item, i) => {
+    totalBill += item.total;
+    return `
+      <tr>
+        <td style="font-weight:600;">${esc(toTitleCase(item.item))}</td>
+        <td style="text-align:center;">${item.quantity}</td>
+        <td style="text-align:right;">Rs. ${item.rate}</td>
+        <td style="text-align:right; font-weight:700;">Rs. ${item.total}</td>
+        <td style="text-align:center;"><button class="del-btn" onclick="removeQuickPurchaseItem(${i})" style="padding:2px 6px;">x</button></td>
+      </tr>`;
+  }).join('');
+
+  totalEl.textContent = `Rs. ${totalBill}`;
+}
+
+function removeQuickPurchaseItem(index) {
+  quickPurchaseCart.splice(index, 1);
+  renderQuickPurchaseCart();
+}
+
+async function saveBulkPurchase() {
+  const supplier = document.getElementById('qp-supplier').value.trim();
+  if (!supplier) { showToast('Supplier ka naam khali hai!', 'error'); return; }
+  if (quickPurchaseCart.length === 0) { showToast('Cart khali hai!', 'error'); return; }
+
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = 'Save ho raha hai...';
+
   try {
-    const res = await apiFetch('/purchase/quick-add', {
+    const res = await apiFetch('/purchase/bulk-add', {
       method: 'POST',
       body: JSON.stringify({
         supplier: supplier,
-        item: item,
-        quantity: qty,
-        rate: rate,
-        inventory_id: window._qp_inventory_id || null
+        items: quickPurchaseCart
       })
     });
     const data = await res.json();
     
     if (data.error) { throw new Error(data.error); }
 
-    showToast(`✅ Purchase Added: ${qty} x ${item} (Rs. ${qty * rate})`);
+    showToast(`✅ ${data.items_saved} items save ho gaye! Total: Rs. ${data.total_cost}`);
     
-    // Reset form
-    itemEl.value = ''; 
-    qtyEl.value = '1'; 
-    rateEl.value = '';
-    window._qp_inventory_id = null;
+    // Clear Cart
+    quickPurchaseCart = [];
+    document.getElementById('qp-supplier').value = '';
+    renderQuickPurchaseCart();
     
     // Refresh data
     loadJournal();
-    loadInventory(); // Update stock in background
-    populateSupplierList(); // Refresh supplier suggestions
+    loadInventory();
+    populateSupplierList();
 
   } catch (e) {
-    showToast(e.message || 'Purchase save nahi hui', 'error');
+    showToast(e.message || 'Khareedari save nahi hui', 'error');
   }
+
+  btn.disabled = false; btn.textContent = '✓ Save Khareedari';
 }
 
 // Item Autocomplete for Purchase
@@ -2628,7 +2700,7 @@ attachAutocomplete({
   dropdownId: 'qp-item-suggest',
   onSelect: (item) => {
     document.getElementById('qp-item').value = item.name;
-    document.getElementById('qp-rate').value = item.purchase_rate || ''; // Auto-fill purchase rate if available
+    document.getElementById('qp-rate').value = item.purchase_rate || '';
     window._qp_inventory_id = item.id;
   }
 });
@@ -2645,8 +2717,6 @@ async function populateSupplierList() {
     }
   } catch (e) {}
 }
-
-// Load suppliers when dashboard opens
 window.addEventListener('load', populateSupplierList);
 </script>
 </body>

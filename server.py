@@ -1790,4 +1790,58 @@ def quick_add_purchase(req: QuickPurchaseRequest, authorization: Optional[str] =
         update_stock_purchase(item_name, req.quantity, shop_id)
 
     log.info(f"Quick Purchase: {item_name} x{req.quantity} @ {req.rate} from {supplier} shop={shop_id}")
-    return {"success": True, "total_cost": total_cost, "message": "Purchase saved and stock updated!"}    
+    return {"success": True, "total_cost": total_cost, "message": "Purchase saved and stock updated!"}  
+
+class BulkPurchaseItem(BaseModel):
+    item: str
+    quantity: float
+    rate: float
+    inventory_id: Optional[int] = None
+
+class BulkPurchaseRequest(BaseModel):
+    supplier: str
+    items: List[BulkPurchaseItem]
+
+@app.post("/purchase/bulk-add")
+def bulk_add_purchase(req: BulkPurchaseRequest, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+    if not req.items:
+        return {"error": "Koi item nahi mila"}
+
+    supplier = req.supplier.strip() or "Unknown Supplier"
+    total_bill = 0
+
+    with get_connection() as conn:
+        for item in req.items:
+            if item.quantity <= 0 or item.rate <= 0:
+                continue
+            
+            total_cost = round(item.quantity * item.rate, 2)
+            total_bill += total_cost
+            
+            # 1. Purchase table mein entry
+            conn.execute(
+                text("""
+                    INSERT INTO purchases (shop_id, supplier_name, item_name, quantity, purchase_rate, total_cost, inventory_id)
+                    VALUES (:sid, :supplier, :item, :qty, :rate, :total, :inv_id)
+                """),
+                {"sid": shop_id, "supplier": supplier, "item": item.item.lower(),
+                 "qty": item.quantity, "rate": item.rate, "total": total_cost, "inv_id": item.inventory_id}
+            )
+            
+            # 2. Stock update karein
+            if item.inventory_id:
+                conn.execute(
+                    text("UPDATE inventory SET stock = stock + :qty WHERE id = :id AND shop_id = :sid"),
+                    {"qty": item.quantity, "id": item.inventory_id, "sid": shop_id}
+                )
+            else:
+                # Agar item manually type kiya gaya hai (inventory mein nahi hai)
+                update_stock_purchase(item.item, item.quantity, shop_id)
+                
+        conn.commit()
+
+    log.info(f"Bulk Purchase: {supplier} - {len(req.items)} items, Total: Rs.{total_bill} shop={shop_id}")
+    return {"success": True, "total_cost": total_bill, "items_saved": len(req.items)}      
