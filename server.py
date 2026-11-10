@@ -1821,6 +1821,31 @@ def bulk_add_purchase(req: BulkPurchaseRequest, authorization: Optional[str] = H
             total_cost = round(item.quantity * item.rate, 2)
             total_bill += total_cost
             
+            inv_id = item.inventory_id
+            
+            # Agar inventory_id nahi mila (manually type kiya gaya item hai)
+            if not inv_id:
+                # Pehle check karein ke item naam se pehle se mojood hai ya nahi
+                inv_row = conn.execute(
+                    text("SELECT id FROM inventory WHERE shop_id = :sid AND LOWER(item_name) = :name"),
+                    {"sid": shop_id, "name": item.item.lower().strip()}
+                ).fetchone()
+                
+                if inv_row:
+                    inv_id = inv_row[0]
+                else:
+                    # Agar bilkul naya item hai, toh Inventory mein add karein
+                    # Filhal Sale Price = Purchase Rate rakh rahe hain, user baad mein change kar sakta hai
+                    new_inv = conn.execute(
+                        text("""
+                            INSERT INTO inventory (shop_id, item_name, sale_price, purchase_rate, stock, reorder_level)
+                            VALUES (:sid, :name, :sale_price, :purchase_rate, 0, 5)
+                            RETURNING id
+                        """),
+                        {"sid": shop_id, "name": item.item.strip(), "sale_price": item.rate, "purchase_rate": item.rate}
+                    ).fetchone()
+                    inv_id = new_inv[0]
+
             # 1. Purchase table mein entry
             conn.execute(
                 text("""
@@ -1828,18 +1853,15 @@ def bulk_add_purchase(req: BulkPurchaseRequest, authorization: Optional[str] = H
                     VALUES (:sid, :supplier, :item, :qty, :rate, :total, :inv_id)
                 """),
                 {"sid": shop_id, "supplier": supplier, "item": item.item.lower(),
-                 "qty": item.quantity, "rate": item.rate, "total": total_cost, "inv_id": item.inventory_id}
+                 "qty": item.quantity, "rate": item.rate, "total": total_cost, "inv_id": inv_id}
             )
             
-            # 2. Stock update karein
-            if item.inventory_id:
+            # 2. Stock update karein (ab hamare paas inventory ID zaroor hai)
+            if inv_id:
                 conn.execute(
                     text("UPDATE inventory SET stock = stock + :qty WHERE id = :id AND shop_id = :sid"),
-                    {"qty": item.quantity, "id": item.inventory_id, "sid": shop_id}
+                    {"qty": item.quantity, "id": inv_id, "sid": shop_id}
                 )
-            else:
-                # Agar item manually type kiya gaya hai (inventory mein nahi hai)
-                update_stock_purchase(item.item, item.quantity, shop_id)
                 
         conn.commit()
 
