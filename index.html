@@ -406,11 +406,24 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
   <div class="app-body">
 
-    <!-- Sidebar -->
+    <!-- Sidebar (Reports moved to TOP) -->
     <div class="sidebar" id="app-sidebar">
       <div style="height:8px;"></div>
+      
+      <div class="nav-section">Reports</div>
+      <div class="nav-item active" onclick="showPage('journal');loadJournal()" id="nav-journal">
+        <span class="nav-icon">🚀</span><span>Live POS & Closing</span>
+      </div>
+      <div class="nav-item" onclick="showPage('reports');loadDashboard()" id="nav-reports">
+        <span class="nav-icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="nav-item" onclick="showPage('supplier-ledger')" id="nav-supplier-ledger">
+        <span class="nav-icon">🧾</span><span>Supplier Ledger</span>
+      </div>
+
+      <div class="nav-divider"></div>
       <div class="nav-section">Main</div>
-      <div class="nav-item active" onclick="showPage('entry')" id="nav-entry">
+      <div class="nav-item" onclick="showPage('entry')" id="nav-entry">
         <span class="nav-icon">📒</span><span>Khaata & Entry</span>
       </div>
       <div class="nav-item" onclick="showPage('multi-entry')" id="nav-multi-entry">
@@ -446,18 +459,6 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       <div class="nav-item" onclick="showPage('purchase-history');getPurchaseHistory()" id="nav-purchase-history">
         <span class="nav-icon">📋</span><span>Purchase History</span>
       </div>
-
-      <div class="nav-divider"></div>
-      <div class="nav-section">Reports</div>
-      <div class="nav-item" onclick="showPage('reports');loadDashboard()" id="nav-reports">
-        <span class="nav-icon">📊</span><span>Dashboard</span>
-      </div>
-      <div class="nav-item" onclick="showPage('journal');loadJournal()" id="nav-journal">
-        <span class="nav-icon">🚀</span><span>Live POS & Closing</span>
-      </div>
-      <div class="nav-item" onclick="showPage('supplier-ledger')" id="nav-supplier-ledger">
-        <span class="nav-icon">🧾</span><span>Supplier Ledger</span>
-      </div>
     </div>
 
     <!-- Mobile-only overlay -->
@@ -467,7 +468,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
     <div class="main-content">
 
       <!-- ===== PAGE: ENTRY & KHAATA (Unified) ===== -->
-      <div class="page active" id="page-entry">
+      <div class="page" id="page-entry">
         <div class="page-header">
           <div>
             <div class="page-title">📒 Khaata & Naya Entry</div>

@@ -1,6 +1,6 @@
-# auth.py — PostgreSQL version
+# auth.py — PostgreSQL version (Bcrypt secured)
 import os
-import hashlib
+import bcrypt
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from sqlalchemy import text
@@ -14,11 +14,17 @@ ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 
 def hash_password(password: str) -> str:
-    salt = "dukaan-ai-salt-2024"
-    return hashlib.sha256(f"{salt}{password}{salt}".encode()).hexdigest()
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return hash_password(plain) == hashed
+    try:
+        return bcrypt.checkpw(plain.encode('utf-8'), hashed.encode('utf-8'))
+    except ValueError:
+        # Purane SHA-256 hashes ke liye backward compatibility
+        import hashlib
+        salt = "dukaan-ai-salt-2024"
+        legacy_hash = hashlib.sha256(f"{salt}{plain}{salt}".encode()).hexdigest()
+        return legacy_hash == hashed
 
 def create_token(shop_id: int, username: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=TOKEN_EXPIRE_HOURS)
@@ -70,6 +76,20 @@ def login_shop(username: str, password: str) -> dict:
 
     if not shop or not verify_password(password, shop[2]):
         return {"error": "Username ya password galat hai"}
+
+    # Auto-upgrade: agar purana SHA-256 hash hai, toh login pe bcrypt mein badal do
+    import hashlib
+    salt = "dukaan-ai-salt-2024"
+    legacy_hash = hashlib.sha256(f"{salt}{password}{salt}".encode()).hexdigest()
+    if shop[2] == legacy_hash:
+        new_hashed = hash_password(password)
+        with get_connection() as conn:
+            conn.execute(
+                text("UPDATE shops SET password = :p WHERE shop_id = :sid"),
+                {"p": new_hashed, "sid": shop[0]}
+            )
+            conn.commit()
+        log.info(f"Password hash upgraded to bcrypt: {username}")
 
     token = create_token(shop[0], username)
     log.info(f"Login: {shop[3]} ({username})")
