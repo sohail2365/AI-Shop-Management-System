@@ -848,7 +848,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           <div class="card glass-card" style="margin:0;">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e0f2fe; padding-bottom:10px; margin-bottom:12px;">
               <h3 style="font-size:18px; color:#0369a1; margin:0;">🛒 Aaj Ki Sale</h3>
-              <span class="badge badge-blue">Live Entry</span>
+              <div style="display:flex; gap:8px;">
+                <button onclick="openModal('return-modal')" class="btn-danger" style="font-size:12px; padding:6px 10px;">↩️ Return</button>
+                <span class="badge badge-blue" style="padding:6px 10px;">Live Entry</span>
+              </div>
             </div>
             
             <!-- Quick Sale Entry Form -->
@@ -1022,6 +1025,48 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 </div><!-- end app -->
 
 <!-- Modals -->
+<div id="return-modal" class="modal">
+  <div class="modal-box" style="width:420px;">
+    <h3>↩️ Customer Return</h3>
+    <div class="modal-field">
+      <label>Customer Naam</label>
+      <input type="text" id="ret-customer" list="qp-customer-list" placeholder="Customer ka naam">
+    </div>
+    <div class="modal-field">
+      <label>Item (Inventory se select karein)</label>
+      <div class="autocomplete-wrap">
+        <input type="text" id="ret-item" autocomplete="off" placeholder="Item Name">
+        <div id="ret-item-suggest" class="autocomplete-dropdown"></div>
+      </div>
+    </div>
+    <div class="modal-grid-2">
+      <div><label>Qty</label><input type="number" id="ret-qty" value="1" min="1"></div>
+      <div><label>Rate</label><input type="number" id="ret-rate"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-danger" onclick="saveCustomerReturn()">✓ Process Return</button>
+      <button class="btn-outline" onclick="closeModal('return-modal')">Cancel</button>
+    </div>
+  </div>
+</div> 
+<div id="supplier-pay-modal" class="modal">
+  <div class="modal-box" style="width:380px;">
+    <h3>💰 Supplier Payment</h3>
+    <input type="hidden" id="sp-supplier">
+    <div class="modal-field">
+      <label>Amount (Rs.)</label>
+      <input type="number" id="sp-amount" min="1" placeholder="5000">
+    </div>
+    <div class="modal-field">
+      <label>Notes (Optional)</label>
+      <input type="text" id="sp-notes" placeholder="Cash / Bank Transfer">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-success" onclick="saveSupplierPayment()">✓ Save</button>
+      <button class="btn-danger" onclick="closeModal('supplier-pay-modal')">✗ Cancel</button>
+    </div>
+  </div>
+</div> 
 <div id="quick-pay-modal" class="modal">
   <div class="modal-box" style="width:400px;">
     <h3>💰 Quick Payment</h3>
@@ -1206,6 +1251,7 @@ function showToast(msg, type='success') {
   t.textContent = msg; t.className = `toast ${type} show`;
   setTimeout(() => t.className = 'toast', 3000);
 }
+
 function openModal(id) { document.getElementById(id).classList.add('show'); }
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 function getToken() { return localStorage.getItem('dukaan_token'); }
@@ -2632,7 +2678,33 @@ async function saveInlineExpense() {
     showToast('Save nahi hua', 'error');
   }
 }
-// ==================== QUICK PURCHASE LOGIC ====================
+// ==================== SUPPLIER PAYMENTS ====================
+function openSupplierPaymentModal(supplier) {
+  document.getElementById('sp-supplier').value = supplier;
+  document.getElementById('sp-amount').value = '';
+  document.getElementById('sp-notes').value = '';
+  openModal('supplier-pay-modal');
+}
+
+async function saveSupplierPayment() {
+  const supplier = document.getElementById('sp-supplier').value;
+  const amount = parseFloat(document.getElementById('sp-amount').value);
+  const notes = document.getElementById('sp-notes').value.trim();
+
+  if (!amount || amount <= 0) { showToast('Valid amount daalein', 'error'); return; }
+
+  try {
+    const res = await apiFetch('/supplier/payment/add', {
+      method: 'POST',
+      body: JSON.stringify({ supplier: supplier, amount: amount, notes: notes })
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    closeModal('supplier-pay-modal');
+    showToast('✅ Payment save ho gayi');
+    loadSupplierLedger(); // Refresh
+  } catch (e) { showToast('Save nahi hua', 'error'); }
+}
 // ==================== BULK PURCHASE (CART) LOGIC ====================
 let quickPurchaseCart = [];
 
@@ -2777,72 +2849,89 @@ async function loadSupplierLedger() {
   try {
     const res = await apiFetch(`/supplier/ledger?supplier=${encodeURIComponent(supplier)}`);
     const data = await res.json();
-    if (data.error) { showToast(data.error, 'error'); return; }
+    
+    // Fetch Payments bhi kar lein
+    const payRes = await apiFetch(`/supplier/payments/all?supplier=${encodeURIComponent(supplier)}`);
+    const payData = await payRes.json();
 
-    const purchases = data.purchases;
-    if (purchases.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">Is supplier ke naam par koi khareedari nahi mili.</div>';
-      document.getElementById('ledger-month-total').textContent = 'Rs. 0';
-      document.getElementById('ledger-all-total').textContent = 'Rs. 0';
+    const purchases = data.purchases || [];
+    const payments = payData.payments || [];
+    
+    if (purchases.length === 0 && payments.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">Is supplier ka koi record nahi mila.</div>';
       return;
     }
 
-    // Grouping by Date
-    const grouped = {};
-    let allTimeTotal = 0;
-    let monthTotal = 0;
+    let totalPurchases = 0;
+    let totalPayments = 0;
     
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    purchases.forEach(p => totalPurchases += p.total);
+    payments.forEach(p => totalPayments += p.amount);
+    
+    const balance = totalPurchases - totalPayments;
 
-    purchases.forEach(p => {
-      if (!grouped[p.date]) {
-        grouped[p.date] = { items: [], dailyTotal: 0 };
-      }
-      grouped[p.date].items.push(p);
-      grouped[p.date].dailyTotal += p.total;
-      
-      allTimeTotal += p.total;
-      if (p.date.startsWith(currentMonth)) {
-        monthTotal += p.total;
-      }
-    });
+    document.getElementById('ledger-month-total').textContent = `Rs. ${totalPurchases.toFixed(2)}`;
+    document.getElementById('ledger-all-total').textContent = `Rs. ${balance.toFixed(2)}` + (balance > 0 ? ' (Baaki)' : ' (Clear)');
 
-    document.getElementById('ledger-month-total').textContent = `Rs. ${monthTotal.toFixed(2)}`;
-    document.getElementById('ledger-all-total').textContent = `Rs. ${allTimeTotal.toFixed(2)}`;
-
-    // Render Bills
-    let html = '';
-    Object.keys(grouped).forEach(date => {
-      const bill = grouped[date];
-      html += `
-        <div class="card glass-card" style="margin:0; border-left: 4px solid #3b82f6;">
-          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">
-            <h3 style="font-size:15px; color:#1e293b; margin:0;">📅 Bill Date: ${esc(date)}</h3>
-            <span style="font-weight:800; color:#3b82f6;">Total: Rs. ${bill.dailyTotal.toFixed(2)}</span>
-          </div>
-          <table class="khaata-table" style="font-size:13px; margin-top:0;">
-            <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th></tr></thead>
-            <tbody>
-              ${bill.items.map(i => `
-                <tr>
-                  <td>${esc(toTitleCase(i.item))}</td>
-                  <td style="text-align:center;">${i.qty}</td>
-                  <td style="text-align:right;">Rs. ${i.rate}</td>
-                  <td style="text-align:right; font-weight:600;">Rs. ${i.total}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+    let html = `
+      <div class="card" style="background:#f8fafc; border:1px solid #cbd5e1; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+          <span>Total Khareedari:</span><span style="font-weight:bold; color:#b45309;">Rs. ${totalPurchases.toFixed(2)}</span>
         </div>
-      `;
-    });
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+          <span>Total Paise Diye (Payments):</span><span style="font-weight:bold; color:#16a34a;">Rs. ${totalPayments.toFixed(2)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-top:1px dashed #cbd5e1; padding-top:5px; margin-top:5px;">
+          <span style="font-weight:bold;">Baqi (Dena Hai):</span><span style="font-weight:bold; color:#dc2626;">Rs. ${balance.toFixed(2)}</span>
+        </div>
+        <button onclick="openSupplierPaymentModal('${esc(supplier)}')" class="btn-success" style="width:100%; margin-top:10px;">💰 Supplier ko Payment karein</button>
+      </div>
+    `;
+
+    // Render Purchases
+    if(purchases.length > 0) {
+      const grouped = {};
+      purchases.forEach(p => {
+        if (!grouped[p.date]) grouped[p.date] = { items: [], total: 0 };
+        grouped[p.date].items.push(p);
+        grouped[p.date].total += p.total;
+      });
+      
+      Object.keys(grouped).forEach(date => {
+        const bill = grouped[date];
+        html += `
+          <div class="card glass-card" style="margin:0; border-left: 4px solid #3b82f6; padding:12px;">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px;">
+              <span>📅 ${esc(date)}</span><span>Rs. ${bill.total.toFixed(2)}</span>
+            </div>
+            <table class="khaata-table" style="font-size:12px; margin:0;">
+              <tbody>
+                ${bill.items.map(i => `<tr><td>${esc(toTitleCase(i.item))}</td><td style="text-align:center;">${i.qty}</td><td style="text-align:right;">Rs. ${i.total}</td></tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+    }
+
+    // Render Payments
+    if(payments.length > 0) {
+      html += `<h4 style="margin-top:10px;">💸 Payments History</h4>`;
+      payments.forEach(p => {
+        html += `
+          <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #e2e8f0; font-size:13px;">
+            <span>${esc(p.date)} - ${esc(p.notes || 'Payment')}</span>
+            <span style="color:#16a34a; font-weight:bold;">Rs. ${p.amount}</span>
+          </div>
+        `;
+      });
+    }
 
     container.innerHTML = html;
   } catch (e) {
     showToast('Ledger load nahi hui', 'error');
   }
 }
-
 // Populate Supplier Datalist when page loads
 async function populateSupplierDatalist() {
   try {
@@ -2858,6 +2947,43 @@ async function populateSupplierDatalist() {
 
 // Add to window load
 window.addEventListener('load', populateSupplierDatalist);
+
+// ==================== CUSTOMER RETURNS ====================
+attachAutocomplete({
+  inputId: 'ret-item',
+  dropdownId: 'ret-item-suggest',
+  onSelect: (item) => {
+    document.getElementById('ret-item').value = item.name;
+    document.getElementById('ret-rate').value = item.price;
+    window._ret_inventory_id = item.id;
+  }
+});
+
+async function saveCustomerReturn() {
+  const customer = document.getElementById('ret-customer').value.trim();
+  const item = document.getElementById('ret-item').value.trim();
+  const qty = parseFloat(document.getElementById('ret-qty').value);
+  const rate = parseFloat(document.getElementById('ret-rate').value);
+
+  if (!customer || !item || !qty || !rate) { showToast('Sab fields bharein', 'error'); return; }
+
+  try {
+    const res = await apiFetch('/entry/return', {
+      method: 'POST',
+      body: JSON.stringify({ customer, item, quantity: qty, price: rate, inventory_id: window._ret_inventory_id })
+    });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    
+    showToast(`✅ Return save ho gaya: Rs. ${data.total} credit diya gaya.`);
+    closeModal('return-modal');
+    document.getElementById('ret-item').value = '';
+    document.getElementById('ret-customer').value = '';
+    window._ret_inventory_id = null;
+    
+    loadJournal(); // Dashboard refresh
+  } catch (e) { showToast('Return save nahi hua', 'error'); }
+}
 </script>
 </body>
 </html>

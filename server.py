@@ -1898,3 +1898,101 @@ def supplier_ledger(supplier: str, authorization: Optional[str] = Header(None)):
             } for r in rows
         ]
     }       
+
+# ==================== PHASE 1: RETURNS & PAYMENTS ====================
+class ReturnRequest(BaseModel):
+    customer: str
+    item: str
+    quantity: float
+    price: float
+    inventory_id: Optional[int] = None
+
+@app.post("/entry/return")
+def process_return(req: ReturnRequest, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+
+    customer = get_customer(req.customer, shop_id)
+    if not customer:
+        return {"error": f"Customer '{req.customer}' nahi mila"}
+
+    total = round(req.quantity * req.price, 2)
+    
+    with get_connection() as conn:
+        # 1. Khaata mein minus entry (kyunke paisa wapas karna hai ya udhaar kam karna hai)
+        conn.execute(
+            text("""
+                INSERT INTO khaata (customer_id, item_name, quantity, price_per_item, total)
+                VALUES (:cid, 'RETURN', :qty, :price, :neg_total)
+            """),
+            {"cid": customer[0], "qty": req.quantity, "price": req.price, "neg_total": -total}
+        )
+        
+        # 2. Stock wapas add karein
+        if req.inventory_id:
+            conn.execute(
+                text("UPDATE inventory SET stock = stock + :qty WHERE id = :id AND shop_id = :sid"),
+                {"qty": req.quantity, "id": req.inventory_id, "sid": shop_id}
+            )
+        else:
+            update_stock_purchase(req.item, req.quantity, shop_id)
+            
+        conn.commit()
+
+    return {"success": True, "total": total}
+
+class SupplierPaymentRequest(BaseModel):
+    supplier: str
+    amount: float
+    notes: str = ""
+
+@app.post("/supplier/payment/add")
+def add_supplier_payment(req: SupplierPaymentRequest, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+    if req.amount <= 0:
+        return {"error": "Amount 0 se zyada hona chahiye"}
+
+    with get_connection() as conn:
+        conn.execute(
+            text("""
+                INSERT INTO supplier_payments (shop_id, supplier_name, amount, notes)
+                VALUES (:sid, :sup, :amt, :notes)
+            """),
+            {"sid": shop_id, "sup": req.supplier.lower(), "amt": req.amount, "notes": req.notes}
+        )
+        conn.commit()
+    return {"success": True, "message": "Payment save ho gayi"}
+
+@app.get("/customer/ledger/{customer_name}")
+def get_customer_ledger(customer_name: str, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+        
+    with get_connection() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT k.date, k.item_name, k.quantity, k.price_per_item, k.total
+                FROM khaata k
+                JOIN customers c ON c.customer_id = k.customer_id
+                WHERE c.shop_id = :sid AND LOWER(c.name) = LOWER(:name) AND k.deleted_at IS NULL
+                ORDER BY k.date DESC, k.id DESC
+            """),
+            {"sid": shop_id, "name": customer_name.strip()}
+        ).fetchall()
+        
+    return {"customer": customer_name, "entries": [{"date": str(r[0]), "item": r[1], "qty": r[2], "rate": r[3], "total": r[4]} for r in rows]} 
+
+@app.get("/supplier/payments/all")
+def get_supplier_payments(supplier: str, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id: return {"error": "Login"}
+    with get_connection() as conn:
+        rows = conn.execute(
+            text("SELECT date, amount, notes FROM supplier_payments WHERE shop_id = :sid AND LOWER(supplier_name) = LOWER(:sup) ORDER BY date DESC"),
+            {"sid": shop_id, "sup": supplier.strip()}
+        ).fetchall()
+    return {"payments": [{"date": str(r[0]), "amount": r[1], "notes": r[2]} for r in rows]}   
