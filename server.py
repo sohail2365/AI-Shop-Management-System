@@ -1866,4 +1866,35 @@ def bulk_add_purchase(req: BulkPurchaseRequest, authorization: Optional[str] = H
         conn.commit()
 
     log.info(f"Bulk Purchase: {supplier} - {len(req.items)} items, Total: Rs.{total_bill} shop={shop_id}")
-    return {"success": True, "total_cost": total_bill, "items_saved": len(req.items)}      
+    return {"success": True, "total_cost": total_bill, "items_saved": len(req.items)}   
+
+@app.get("/supplier/ledger")
+def supplier_ledger(supplier: str, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return {"error": "Login zaroori hai"}
+        
+    supplier = supplier.strip()
+    with get_connection() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT date, item_name, quantity, purchase_rate, total_cost
+                FROM purchases 
+                WHERE shop_id = :sid AND LOWER(supplier_name) = LOWER(:sup)
+                ORDER BY date DESC, id DESC
+            """),
+            {"sid": shop_id, "sup": supplier}
+        ).fetchall()
+        
+    return {
+        "supplier": supplier,
+        "purchases": [
+            {
+                "date": str(r[0]), 
+                "item": r[1], 
+                "qty": r[2], 
+                "rate": r[3], 
+                "total": r[4]
+            } for r in rows
+        ]
+    }       

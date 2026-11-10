@@ -331,6 +331,13 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
   outline: none;
 }
 .quick-purchase-row input:focus { border-color: #d97706; box-shadow: 0 0 0 2px #fef3c7; }
+/* Fix for POS Layout */
+#page-journal .card {
+  min-height: 0;
+}
+#page-journal .table-responsive {
+  max-height: 300px !important; 
+}
 </style>
 </head>
 <body>
@@ -447,6 +454,9 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       </div>
       <div class="nav-item" onclick="showPage('journal');loadJournal()" id="nav-journal">
         <span class="nav-icon">🚀</span><span>Live POS & Closing</span>
+      </div>
+      <div class="nav-item" onclick="showPage('supplier-ledger')" id="nav-supplier-ledger">
+        <span class="nav-icon">🧾</span><span>Supplier Ledger</span>
       </div>
     </div>
 
@@ -951,7 +961,42 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
       </div>
+      <!-- Supplier Ledger Page -->
+      <div class="page" id="page-supplier-ledger">
+        <div class="page-header">
+          <div>
+            <div class="page-title">🧾 Supplier Ledger / Bills</div>
+            <div class="page-subtitle">Kisi bhi supplier ka date-wise aur month-wise hisaab dekhein</div>
+          </div>
+        </div>
 
+        <div class="card" style="padding:14px; border: 2px solid #6366f1; margin-bottom:16px;">
+          <div class="autocomplete-wrap">
+            <input type="text" id="ledger-supplier-search" placeholder="🔍 Supplier/Traders ka naam likhein..." list="ledger-supplier-list" autocomplete="off" style="width:100%; font-size:16px; padding:12px;">
+            <datalist id="ledger-supplier-list"></datalist>
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn-primary" onclick="loadSupplierLedger()" style="width:100%;">Search Hisaab</button>
+          </div>
+        </div>
+
+        <div id="ledger-results" style="display:none;">
+          <!-- Summary Cards -->
+          <div class="stats-row" style="grid-template-columns: 1fr 1fr;">
+            <div class="stat-card-modern bg-gradient-blue">
+              <div class="lbl">Total Khareedari (Is Mahine)</div>
+              <div class="val" id="ledger-month-total">Rs. 0</div>
+            </div>
+            <div class="stat-card-modern bg-gradient-purple">
+              <div class="lbl">Total Khareedari (All Time)</div>
+              <div class="val" id="ledger-all-total">Rs. 0</div>
+            </div>
+          </div>
+
+          <!-- Date-wise Bills -->
+          <div id="ledger-bills-container" style="display:flex; flex-direction:column; gap:16px;"></div>
+        </div>
+      </div>
       <!-- Trash / Deleted Entries -->
       <div class="page" id="page-trash">
         <div class="page-header">
@@ -2718,6 +2763,101 @@ async function populateSupplierList() {
   } catch (e) {}
 }
 window.addEventListener('load', populateSupplierList);
+// ==================== SUPPLIER LEDGER ====================
+async function loadSupplierLedger() {
+  const supplier = document.getElementById('ledger-supplier-search').value.trim();
+  if (!supplier) { showToast('Supplier ka naam likhein!', 'error'); return; }
+
+  const container = document.getElementById('ledger-bills-container');
+  const resultsDiv = document.getElementById('ledger-results');
+  
+  container.innerHTML = '<div style="text-align:center; padding:20px;">Data load ho raha hai...</div>';
+  resultsDiv.style.display = 'block';
+
+  try {
+    const res = await apiFetch(`/supplier/ledger?supplier=${encodeURIComponent(supplier)}`);
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+
+    const purchases = data.purchases;
+    if (purchases.length === 0) {
+      container.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">Is supplier ke naam par koi khareedari nahi mili.</div>';
+      document.getElementById('ledger-month-total').textContent = 'Rs. 0';
+      document.getElementById('ledger-all-total').textContent = 'Rs. 0';
+      return;
+    }
+
+    // Grouping by Date
+    const grouped = {};
+    let allTimeTotal = 0;
+    let monthTotal = 0;
+    
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+    purchases.forEach(p => {
+      if (!grouped[p.date]) {
+        grouped[p.date] = { items: [], dailyTotal: 0 };
+      }
+      grouped[p.date].items.push(p);
+      grouped[p.date].dailyTotal += p.total;
+      
+      allTimeTotal += p.total;
+      if (p.date.startsWith(currentMonth)) {
+        monthTotal += p.total;
+      }
+    });
+
+    document.getElementById('ledger-month-total').textContent = `Rs. ${monthTotal.toFixed(2)}`;
+    document.getElementById('ledger-all-total').textContent = `Rs. ${allTimeTotal.toFixed(2)}`;
+
+    // Render Bills
+    let html = '';
+    Object.keys(grouped).forEach(date => {
+      const bill = grouped[date];
+      html += `
+        <div class="card glass-card" style="margin:0; border-left: 4px solid #3b82f6;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">
+            <h3 style="font-size:15px; color:#1e293b; margin:0;">📅 Bill Date: ${esc(date)}</h3>
+            <span style="font-weight:800; color:#3b82f6;">Total: Rs. ${bill.dailyTotal.toFixed(2)}</span>
+          </div>
+          <table class="khaata-table" style="font-size:13px; margin-top:0;">
+            <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th></tr></thead>
+            <tbody>
+              ${bill.items.map(i => `
+                <tr>
+                  <td>${esc(toTitleCase(i.item))}</td>
+                  <td style="text-align:center;">${i.qty}</td>
+                  <td style="text-align:right;">Rs. ${i.rate}</td>
+                  <td style="text-align:right; font-weight:600;">Rs. ${i.total}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  } catch (e) {
+    showToast('Ledger load nahi hui', 'error');
+  }
+}
+
+// Populate Supplier Datalist when page loads
+async function populateSupplierDatalist() {
+  try {
+    const res = await apiFetch('/purchases/all');
+    const data = await res.json();
+    if (!data.error && data.purchases) {
+      const suppliers = [...new Set(data.purchases.map(p => p.supplier))];
+      const dl = document.getElementById('ledger-supplier-list');
+      if (dl) dl.innerHTML = suppliers.map(s => `<option value="${esc(s)}">`).join('');
+    }
+  } catch (e) {}
+}
+
+// Add to window load
+window.addEventListener('load', populateSupplierDatalist);
 </script>
 </body>
 </html>
