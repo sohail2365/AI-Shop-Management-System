@@ -13,6 +13,13 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL missing — .env file check karo")
 
+# ---- Force psycopg3 driver (psycopg2-binary Vercel pe unreliable) ----
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+elif DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+# Already postgresql+psycopg:// → no change needed
+
 # ---- Validation: direct-connection hostname (db.xxx.supabase.co) detect karo ----
 if re.search(r"db\.[a-z0-9]+\.supabase\.co", DATABASE_URL):
     raise ValueError(
