@@ -1266,7 +1266,17 @@ async function apiFetch(url, options = {}) {
   const h = {'Content-Type':'application/json','ngrok-skip-browser-warning':'true'};
   if (token) h['Authorization'] = `Bearer ${token}`;
   options.headers = {...h, ...(options.headers||{})};
-  return fetch(API + url, options);
+  const res = await fetch(API + url, options);
+
+  // Session expired → auto logout
+  if (res.status === 401) {
+    localStorage.clear();
+    document.getElementById('main-app').classList.remove('show');
+    document.getElementById('login-page').classList.add('show');
+    showToast('Session khatam — dobara login karein', 'error');
+    throw new Error('Unauthorized');
+  }
+  return res;
 }
 
 // ==================== Auth & Navigation ====================
@@ -1673,12 +1683,24 @@ async function saveUnifiedEntries() {
 
       const totalCash = unifiedNewEntries.reduce((s, e) => s + (e.cash || 0), 0);
       if (totalCash > 0) {
-        await apiFetch('/entry/save', {
+        const payRes = await apiFetch('/entry/save', {
           method: 'POST',
           body: JSON.stringify({
-            text: '', customer: unifiedCustomer.customer.toLowerCase(), item: 'PAYMENT', quantity: 1, price: totalCash
+            text: '',
+            customer: unifiedCustomer.customer.toLowerCase(),
+            item: 'PAYMENT',
+            quantity: 1,
+            price: totalCash,
           })
         });
+        const payData = await payRes.json();
+        if (payData.error) {
+          showToast(
+            `⚠️ Sale save ho gayi lekin cash payment FAIL hui: ${payData.error}. ` +
+            `Quick Payment se alag se Rs. ${totalCash} record karein.`,
+            'error'
+          );
+        }
       }
 
       showToast(`✅ Entries save ho gayin! ${totalCash > 0 ? 'Cash Rs. '+totalCash+' bhi jama ho gaya.' : ''}`);
@@ -1850,14 +1872,16 @@ function renderFilteredCustomers() {
 }
 
 async function deleteCustomer(name) {
-  if (!confirm(`⚠️ ${name} aur uski saari entries delete ho jaayengi!`)) return;
+  if (!confirm(`⚠️ ${name} delete karein?\n\nSirf tab delete hoga jab baaki Rs. 0 ho.`)) return;
   try {
     const res = await apiFetch(`/customer/${encodeURIComponent(name)}`, {method:'DELETE'});
     const data = await res.json();
-    if (data.error) { showToast(data.error,'error'); return; }
+    if (data.error) { showToast(data.error, 'error'); return; }
     showToast(`🗑️ ${name} delete ho gaya!`);
     getAllCustomers();
-  } catch(e) { showToast('Delete nahi hua','error'); }
+  } catch(e) {
+    if (e.message !== 'Unauthorized') showToast('Delete nahi hua', 'error');
+  }
 }
 
 function editCustomer(name, phone) {
@@ -2607,10 +2631,20 @@ async function submitQuickSale() {
 
     // 2. If Cash was given, log it as payment
     if (cash > 0) {
-      await apiFetch('/entry/save', {
+      const payRes = await apiFetch('/entry/save', {
         method: 'POST',
-        body: JSON.stringify({ text: '', customer: customer, item: 'PAYMENT', quantity: 1, price: cash })
+        body: JSON.stringify({
+          text: '', customer: customer, item: 'PAYMENT', quantity: 1, price: cash,
+        })
       });
+      const payData = await payRes.json();
+      if (payData.error) {
+        showToast(
+          `⚠️ Sale save ho gayi lekin cash FAIL: ${payData.error}. ` +
+          `Quick Payment se Rs. ${cash} record karein.`,
+          'error'
+        );
+      }
     }
 
     showToast('✅ Sale Added Successfully!');
@@ -2871,8 +2905,14 @@ async function loadSupplierLedger() {
     
     const balance = totalPurchases - totalPayments;
 
-    document.getElementById('ledger-month-total').textContent = `Rs. ${totalPurchases.toFixed(2)}`;
-    document.getElementById('ledger-all-total').textContent = `Rs. ${balance.toFixed(2)}` + (balance > 0 ? ' (Baaki)' : ' (Clear)');
+    // Prefer backend's net_balance (already computed, includes payments)
+        const netBalance = typeof data.net_balance === 'number'
+          ? data.net_balance
+          : (totalPurchases - totalPayments);
+
+        document.getElementById('ledger-month-total').textContent = `Rs. ${totalPurchases.toFixed(2)}`;
+        document.getElementById('ledger-all-total').textContent =
+          `Rs. ${netBalance.toFixed(2)}` + (netBalance > 0 ? ' (Dena hai)' : ' (Clear)');
 
     let html = `
       <div class="card" style="background:#f8fafc; border:1px solid #cbd5e1; margin-bottom:16px;">

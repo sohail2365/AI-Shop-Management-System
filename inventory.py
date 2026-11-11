@@ -1,17 +1,75 @@
 # inventory.py — PostgreSQL version
+from typing import Optional
 from sqlalchemy import text
 from database import get_connection
 from logger import get_logger
 
 log = get_logger("dukaan.inventory")
 
+
+def _stock_val(v) -> float:
+    """Schema has stock REAL — never truncate to int (breaks fractional weights)."""
+    if v is None:
+        return 0.0
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+# =========================================================
+# ATOMIC STOCK HELPER — caller manages transaction
+# =========================================================
+
+def apply_stock_delta(conn, shop_id: int, item_name: str, delta: float,
+                      inventory_id: Optional[int] = None) -> bool:
+    """
+    Apply a stock delta within an existing transaction. Caller must commit.
+
+    delta > 0  → stock added (purchase, return)
+    delta < 0  → stock removed (sale)
+
+    If inventory_id given → updates that exact row.
+    Otherwise → exact case-insensitive name match (NO wildcard/fuzzy).
+
+    Returns True if an inventory row was updated.
+    Safe for concurrent calls — single UPDATE, no read-modify-write.
+    """
+    if not delta:
+        return True  # nothing to do, not an error
+
+    try:
+        if inventory_id is not None:
+            result = conn.execute(
+                text("""UPDATE inventory SET stock = stock + :d
+                        WHERE id = :id AND shop_id = :sid"""),
+                {"d": delta, "id": inventory_id, "sid": shop_id}
+            )
+            return result.rowcount > 0
+
+        name = (item_name or "").strip().lower()
+        if not name:
+            return False
+
+        result = conn.execute(
+            text("""UPDATE inventory SET stock = stock + :d
+                    WHERE shop_id = :sid AND LOWER(item_name) = :name"""),
+            {"d": delta, "sid": shop_id, "name": name}
+        )
+        return result.rowcount > 0
+    except Exception as e:
+        log.error(f"apply_stock_delta failed: {e}")
+        return False
+
+
+# =========================================================
+# READS
+# =========================================================
+
 def get_item_price(item_name: str, shop_id: int):
     try:
         with get_connection() as conn:
             item_lower = item_name.lower().strip()
-
-            # Priority: exact > starts-with > contains
-            # Then: in-stock preferred, longer name preferred
             row = conn.execute(
                 text("""
                     SELECT id, item_name, sale_price, stock
@@ -37,7 +95,9 @@ def get_item_price(item_name: str, shop_id: int):
             ).fetchone()
 
             if row:
-                return {"id": row[0], "name": row[1], "price": row[2], "stock": int(row[3])}
+                return {"id": row[0], "name": row[1],
+                        "price": float(row[2]) if row[2] is not None else 0.0,
+                        "stock": _stock_val(row[3])}
 
             # Word-level fallback
             words = [w for w in item_lower.split() if len(w) > 3]
@@ -55,12 +115,16 @@ def get_item_price(item_name: str, shop_id: int):
                     {"shop_id": shop_id, "val": f"%{word}%"}
                 ).fetchone()
                 if row:
-                    return {"id": row[0], "name": row[1], "price": row[2], "stock": int(row[3])}
+                    return {"id": row[0], "name": row[1],
+                            "price": float(row[2]) if row[2] is not None else 0.0,
+                            "stock": _stock_val(row[3])}
 
         return None
     except Exception as e:
         log.error(f"Inventory error: {e}")
         return None
+
+
 def get_variants(keyword: str, shop_id: int) -> list:
     try:
         with get_connection() as conn:
@@ -83,136 +147,110 @@ def get_variants(keyword: str, shop_id: int) -> list:
                 params
             ).fetchall()
 
-        return [{"id": r[0], "name": r[1], "price": r[2], "stock": int(r[3])} for r in rows]
+        return [{"id": r[0], "name": r[1],
+                 "price": float(r[2]) if r[2] is not None else 0.0,
+                 "stock": _stock_val(r[3])} for r in rows]
     except Exception as e:
         log.error(f"Variants error: {e}")
         return []
+
 
 def get_item_by_id(item_id: int, shop_id: int):
     try:
         with get_connection() as conn:
             row = conn.execute(
-                text("SELECT id, item_name, sale_price, stock FROM inventory WHERE id = :id AND shop_id = :shop_id"),
+                text("""SELECT id, item_name, sale_price, stock, purchase_rate
+                        FROM inventory WHERE id = :id AND shop_id = :shop_id"""),
                 {"id": item_id, "shop_id": shop_id}
             ).fetchone()
         if not row:
             return None
-        return {"id": row[0], "name": row[1], "price": row[2], "stock": int(row[3])}
+        return {"id": row[0], "name": row[1],
+                "price": float(row[2]) if row[2] is not None else 0.0,
+                "stock": _stock_val(row[3]),
+                "purchase_rate": float(row[4]) if row[4] is not None else 0.0}
     except Exception as e:
-        print(f"Inventory by id error: {e}")
+        log.error(f"Inventory by id error: {e}")
         return None
 
+
+# =========================================================
+# DEPRECATED — kept for backward compat
+# =========================================================
+
 def update_stock_by_id(item_id: int, quantity_sold: float, shop_id: int) -> bool:
-    try:
-        with get_connection() as conn:
-            row = conn.execute(
-                text("SELECT stock FROM inventory WHERE id = :id AND shop_id = :shop_id"),
-                {"id": item_id, "shop_id": shop_id}
-            ).fetchone()
-            if not row:
-                print(f"Item id nahi mila: {item_id}")
-                return False
-            new_stock = row[0] - quantity_sold
-            conn.execute(
-                text("UPDATE inventory SET stock = :stock WHERE id = :id AND shop_id = :shop_id"),
-                {"stock": new_stock, "id": item_id, "shop_id": shop_id}
-            )
-            conn.commit()
-        print(f"Stock updated by id: {item_id} -> {new_stock}")
-        return True
-    except Exception as e:
-        print(f"Stock by id update error: {e}")
-        return False
+    """DEPRECATED — use apply_stock_delta inside a transaction.
+
+    Kept for callers that still call it standalone. Now atomic (single UPDATE),
+    so no lost-update race like the old read-modify-write. But you lose
+    cross-table atomicity — prefer apply_stock_delta.
+    """
+    with get_connection() as conn:
+        ok = apply_stock_delta(conn, shop_id, "", -quantity_sold, inventory_id=item_id)
+        conn.commit()
+    return ok
+
 
 def update_stock(item_name: str, quantity_sold: float, shop_id: int) -> bool:
-    try:
-        print(f"update_stock: {item_name}, qty: {quantity_sold}")
-        with get_connection() as conn:
-            item_lower = item_name.lower().strip()
+    """DEPRECATED — use apply_stock_delta inside a transaction.
 
-            row = conn.execute(
-                text("SELECT id, stock FROM inventory WHERE shop_id = :shop_id AND LOWER(item_name) LIKE :val LIMIT 1"),
-                {"shop_id": shop_id, "val": f"%{item_lower}%"}
-            ).fetchone()
+    Strict EXACT (case-insensitive) name match only. Old `%LIKE%` fuzzy
+    matching was silently decrementing the wrong item when variants existed
+    (e.g. "brite" matching "brite 500gm" instead of "brite 1kg").
+    """
+    with get_connection() as conn:
+        ok = apply_stock_delta(conn, shop_id, item_name, -quantity_sold)
+        conn.commit()
+    return ok
 
-            if not row:
-                for word in item_lower.split():
-                    if len(word) <= 3:
-                        continue
-                    row = conn.execute(
-                        text("SELECT id, stock FROM inventory WHERE shop_id = :shop_id AND LOWER(item_name) LIKE :val LIMIT 1"),
-                        {"shop_id": shop_id, "val": f"%{word}%"}
-                    ).fetchone()
-                    if row:
-                        break
-
-            if not row:
-                log.debug("Item nahi mila")
-                return False
-
-            new_stock = row[1] - quantity_sold
-            conn.execute(
-                text("UPDATE inventory SET stock = :stock WHERE id = :id"),
-                {"stock": new_stock, "id": row[0]}
-            )
-            conn.commit()
-            print(f"Stock updated: {item_name} -> {new_stock}")
-            return True
-
-    except Exception as e:
-        print(f"Stock update error: {e}")
-        return False
 
 def update_stock_purchase(item_name: str, quantity_bought: float, shop_id: int) -> bool:
-    try:
-        with get_connection() as conn:
-            item_lower = item_name.lower().strip()
+    """DEPRECATED — use apply_stock_delta inside a transaction.
+    Strict EXACT (case-insensitive) name match only."""
+    with get_connection() as conn:
+        ok = apply_stock_delta(conn, shop_id, item_name, quantity_bought)
+        conn.commit()
+    return ok
 
-            row = conn.execute(
-                text("SELECT id, stock FROM inventory WHERE shop_id = :shop_id AND LOWER(item_name) LIKE :val LIMIT 1"),
-                {"shop_id": shop_id, "val": f"%{item_lower}%"}
-            ).fetchone()
 
-            if not row:
-                for word in item_lower.split():
-                    if len(word) <= 3:
-                        continue
-                    row = conn.execute(
-                        text("SELECT id, stock FROM inventory WHERE shop_id = :shop_id AND LOWER(item_name) LIKE :val LIMIT 1"),
-                        {"shop_id": shop_id, "val": f"%{word}%"}
-                    ).fetchone()
-                    if row:
-                        break
+# =========================================================
+# CRUD
+# =========================================================
 
-            if not row:
-                print(f"Purchase item nahi mila: {item_name}")
-                return False
-
-            new_stock = row[1] + quantity_bought
-            conn.execute(
-                text("UPDATE inventory SET stock = :stock WHERE id = :id"),
-                {"stock": new_stock, "id": row[0]}
-            )
-            conn.commit()
-            print(f"Purchase stock updated: {item_name} -> +{quantity_bought}")
-            return True
-
-    except Exception as e:
-        print(f"Purchase stock error: {e}")
-        return False
-
-# ---- Inventory CRUD ----
 def add_item(shop_id: int, item_name: str, sale_price: float,
              purchase_rate: float = 0, stock: float = 0,
              category: str = '', reorder_level: int = 5) -> dict:
+    # ---- Validation ----
+    name = (item_name or "").strip()
+    if not name:
+        return {"error": "Item name zaroori hai"}
+    if len(name) > 200:
+        return {"error": "Item name bahut lamba hai (max 200)"}
+    try:
+        sale_price = float(sale_price)
+        purchase_rate = float(purchase_rate or 0)
+        stock = float(stock or 0)
+        reorder_level = int(reorder_level or 5)
+    except (TypeError, ValueError):
+        return {"error": "Price/stock/reorder numeric hona chahiye"}
+    if sale_price <= 0:
+        return {"error": "Sale price 0 se zyada hona chahiye"}
+    if purchase_rate < 0:
+        return {"error": "Purchase rate negative nahi ho sakta"}
+    if stock < 0:
+        return {"error": "Initial stock negative nahi ho sakta"}
+    if reorder_level < 0:
+        return {"error": "Reorder level negative nahi ho sakta"}
+
     try:
         with get_connection() as conn:
             existing = conn.execute(
-                text("SELECT id FROM inventory WHERE shop_id = :shop_id AND LOWER(item_name) = :name"),
-                {"shop_id": shop_id, "name": item_name.lower().strip()}
+                text("""SELECT id FROM inventory
+                        WHERE shop_id = :shop_id AND LOWER(item_name) = :name"""),
+                {"shop_id": shop_id, "name": name.lower()}
             ).fetchone()
             if existing:
-                return {"error": f"'{item_name}' pehle se exist karta hai"}
+                return {"error": f"'{name}' pehle se exist karta hai"}
 
             conn.execute(
                 text("""
@@ -221,16 +259,18 @@ def add_item(shop_id: int, item_name: str, sale_price: float,
                     VALUES (:shop_id, :item_name, :category, :sale_price, :purchase_rate, :stock, :reorder_level)
                 """),
                 {
-                    "shop_id": shop_id, "item_name": item_name.strip(), "category": category,
+                    "shop_id": shop_id, "item_name": name, "category": (category or "").strip(),
                     "sale_price": sale_price, "purchase_rate": purchase_rate,
                     "stock": stock, "reorder_level": reorder_level
                 }
             )
             conn.commit()
-        print(f"Item added: {item_name}")
+        log.info(f"Item added: {name} (shop={shop_id})")
         return {"success": True}
     except Exception as e:
-        return {"error": str(e)}
+        log.error(f"add_item failed: {e}")
+        return {"error": "Item add nahi hua"}
+
 
 def get_all_items(shop_id: int) -> list:
     with get_connection() as conn:
@@ -244,39 +284,66 @@ def get_all_items(shop_id: int) -> list:
     return [
         {
             "id": r[0], "name": r[1], "category": r[2],
-            "price": r[3], "purchase_rate": r[4],
-            "stock": r[5], "reorder_level": r[6],
-            "low_stock": r[5] <= r[6]
+            "price": float(r[3]) if r[3] is not None else 0.0,
+            "purchase_rate": float(r[4]) if r[4] is not None else 0.0,
+            "stock": _stock_val(r[5]), "reorder_level": r[6],
+            "low_stock": _stock_val(r[5]) <= (r[6] or 0)
         }
         for r in rows
     ]
 
+
 def edit_item(item_id: int, shop_id: int, item_name: str, sale_price: float,
               purchase_rate: float, stock: float, category: str, reorder_level: int) -> dict:
+    name = (item_name or "").strip()
+    if not name:
+        return {"error": "Item name zaroori hai"}
+    try:
+        sale_price = float(sale_price)
+        purchase_rate = float(purchase_rate or 0)
+        stock = float(stock or 0)
+        reorder_level = int(reorder_level or 5)
+    except (TypeError, ValueError):
+        return {"error": "Price/stock/reorder numeric hona chahiye"}
+    if sale_price <= 0:
+        return {"error": "Sale price 0 se zyada hona chahiye"}
+
     try:
         with get_connection() as conn:
-            conn.execute(
+            result = conn.execute(
                 text("""
-                    UPDATE inventory SET item_name=:item_name, category=:category, sale_price=:sale_price,
-                    purchase_rate=:purchase_rate, stock=:stock, reorder_level=:reorder_level
+                    UPDATE inventory SET item_name=:item_name, category=:category,
+                        sale_price=:sale_price, purchase_rate=:purchase_rate,
+                        stock=:stock, reorder_level=:reorder_level
                     WHERE id=:id AND shop_id=:shop_id
                 """),
                 {
-                    "item_name": item_name.strip(), "category": category, "sale_price": sale_price,
-                    "purchase_rate": purchase_rate, "stock": stock, "reorder_level": reorder_level,
+                    "item_name": name, "category": (category or "").strip(),
+                    "sale_price": sale_price, "purchase_rate": purchase_rate,
+                    "stock": stock, "reorder_level": reorder_level,
                     "id": item_id, "shop_id": shop_id
                 }
             )
             conn.commit()
+            if result.rowcount == 0:
+                return {"error": "Item nahi mila"}
         return {"success": True}
     except Exception as e:
-        return {"error": str(e)}
+        log.error(f"edit_item failed: {e}")
+        return {"error": "Item update nahi hua"}
+
 
 def delete_item(item_id: int, shop_id: int) -> dict:
-    with get_connection() as conn:
-        conn.execute(
-            text("DELETE FROM inventory WHERE id=:id AND shop_id=:shop_id"),
-            {"id": item_id, "shop_id": shop_id}
-        )
-        conn.commit()
-    return {"success": True}
+    try:
+        with get_connection() as conn:
+            result = conn.execute(
+                text("DELETE FROM inventory WHERE id=:id AND shop_id=:shop_id"),
+                {"id": item_id, "shop_id": shop_id}
+            )
+            conn.commit()
+            if result.rowcount == 0:
+                return {"error": "Item nahi mila"}
+        return {"success": True}
+    except Exception as e:
+        log.error(f"delete_item failed: {e}")
+        return {"error": "Item delete nahi hua"}

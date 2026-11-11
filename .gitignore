@@ -1,43 +1,41 @@
+# Secrets
 .env
-*.db
-.venv/
+.env.*
+!.env.example
 credentials.json
-__pycache__/
-*.pyc
-migrate.py
+*.pem
+service-account*.json
+
+# DB
+dukaan.db
+*.sqlite
+*.sqlite3
+
+# Backups
+backups/
+
 # Python
 __pycache__/
 *.py[cod]
-*.so
-.Python
 venv/
+.venv/
 env/
 ENV/
-.venv/
 
-# Environment
-.env
-.env.local
-.env.*.local
+# Testing
+.pytest_cache/
+.mypy_cache/
+.coverage
 
-# IDE
+# IDE / OS
 .vscode/
 .idea/
 *.swp
-*.swo
-
-# OS
 .DS_Store
 Thumbs.db
 
-# Project specific
-*.db
-dukaan.db
-backups/
-screenshots/*.png
-test_min.py
-check_items.py
-clear_state.py
+# Logs
+*.log
 
-# Credentials
-credentials.json
+# Vercel
+.vercel/

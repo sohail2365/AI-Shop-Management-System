@@ -1,44 +1,64 @@
 # config.py
 import os
+import warnings
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# API Keys
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# ---- Environment mode ----
+ENV = os.getenv("ENV", "development").lower()
+IS_PRODUCTION = (
+    ENV == "production"
+    or os.getenv("VERCEL_ENV", "") == "production"
+)
 
-# Database
-DB_NAME = "dukaan.db"
+# ---- API Keys ----
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+if not GROQ_API_KEY:
+    warnings.warn(
+        "GROQ_API_KEY missing — AI features (parse, multi-parse, purchase, voice) disabled",
+        stacklevel=2,
+    )
 
-# Google Sheets
-SHEET_ID = "1FBOBFMsmygArr5HjpPUdpA6taAoKK8KBIr0EgGy2rnw"
-CREDENTIALS_FILE = "credentials.json"
-
-# AI Model
-# NOTE: llama-3.3-70b-versatile was decommissioned by Groq on Aug 16, 2026.
-# Migrated to openai/gpt-oss-120b (Groq's official recommended replacement).
-# Configurable via env var so future Groq deprecations don't require a code change.
+# ---- AI Models ----
 AI_MODEL = os.getenv("AI_MODEL", "openai/gpt-oss-20b")
 FAST_MODEL = os.getenv("FAST_MODEL", "qwen/qwen3.8-27b")
-
-# Whisper model for voice transcription (still active, not deprecated)
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "whisper-large-v3-turbo")
 
-# Validation
-if not GROQ_API_KEY:
-    raise ValueError("❌ GROQ_API_KEY missing — .env file check karo")
-
-# ---- NEW: Agent config ----
+# ---- Agent ----
 WORKER_URL = os.getenv("WORKER_URL", "http://localhost:8001")
 WORKER_API_KEY = os.getenv("WORKER_API_KEY", "")
+AGENT_ENABLED = os.getenv("AGENT_ENABLED", "false").lower() == "true"
 
-# WhatsApp app secret for webhook signature verification (Meta Cloud API)
+# ---- WhatsApp ----
 WHATSAPP_APP_SECRET = os.getenv("WHATSAPP_APP_SECRET", "")
 WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "dukaan-ai-verify")
 
-# Voice provider (Phase 3)
+# ---- CORS ----
+_allowed = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:8000,http://localhost:3000",
+)
+ALLOWED_ORIGINS = [o.strip() for o in _allowed.split(",") if o.strip()]
+if IS_PRODUCTION and "*" in ALLOWED_ORIGINS:
+    raise ValueError(
+        "❌ Production mein ALLOWED_ORIGINS mein '*' allowed nahi. "
+        "Specific origin set karein (e.g. https://your-app.vercel.app)"
+    )
+
+# ---- Voice (Phase 3) ----
 VAPI_API_KEY = os.getenv("VAPI_API_KEY", "")
 VAPI_PHONE_ID = os.getenv("VAPI_PHONE_ID", "")
 
-# Agent feature flags (can also be set per-shop in DB)
-AGENT_ENABLED = os.getenv("AGENT_ENABLED", "true").lower() == "true"    
+# ---- Production safety checks ----
+if IS_PRODUCTION and AGENT_ENABLED and not WHATSAPP_APP_SECRET:
+    raise ValueError(
+        "❌ Production mein WHATSAPP_APP_SECRET zaroori hai jab AGENT_ENABLED=true. "
+        "Warna webhook open hai — koi bhi fake messages bhej sakta hai."
+    )
+
+if IS_PRODUCTION and not GROQ_API_KEY:
+    warnings.warn(
+        "⚠️ Production mein GROQ_API_KEY missing — AI features disabled",
+        stacklevel=2,
+    )

@@ -125,7 +125,7 @@ Sirf JSON — kuch aur mat likho."""
 
 MULTI_ITEM_PROMPT = """Tu ek Karyana shop ka assistant hai.
 User batayega ke ek customer ne multiple items liye — Urdu script, Roman Urdu, ya English mein.
-Tujhe JSON array mein jawab dena hai — kuch aur mat likho.
+Tujhe EK JSON OBJECT dena hai (array NAHI) — kuch aur mat likho.
 
 """ + _OUTPUT_RULES + """
 
@@ -133,6 +133,8 @@ Rules:
 - customer: woh shakhs jisne cheez li
 - items: array of {item, quantity, price} — price 0 if not mentioned
 - Grammar words ignore: mein, me, par, ka, ne, liya, liye, aur, or / میں، نے، کا، کے، لیا، اور
+
+Output shape (EXACTLY yeh): {"customer": "...", "items": [{"item": "...", "quantity": N, "price": N}, ...]}
 
 Examples (Roman Urdu input):
 "Ali ne brite 2 aur surf excel 1 liya" → {"customer": "ali", "items": [{"item": "brite", "quantity": 2, "price": 0}, {"item": "surf excel", "quantity": 1, "price": 0}]}
@@ -142,7 +144,7 @@ Examples (Urdu script input — OUTPUT Roman Urdu):
 "بلال نے برائٹ 2 اور سرف ایکسل 1 لیا" → {"customer": "bilal", "items": [{"item": "brite", "quantity": 2, "price": 0}, {"item": "surf excel", "quantity": 1, "price": 0}]}
 "علی نے کیپسٹان 2، پیپسی 3، بریڈ 1 لیا" → {"customer": "ali", "items": [{"item": "capstan", "quantity": 2, "price": 0}, {"item": "pepsi", "quantity": 3, "price": 0}, {"item": "bread", "quantity": 1, "price": 0}]}
 
-Sirf JSON — kuch aur mat likho."""
+Sirf EK JSON OBJECT — kuch aur mat likho."""
 
 
 PURCHASE_PROMPT = """Tu ek Karyana shop ka assistant hai.

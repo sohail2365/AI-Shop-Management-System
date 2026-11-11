@@ -14,10 +14,6 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL missing — .env file check karo")
 
 # ---- Validation: direct-connection hostname (db.xxx.supabase.co) detect karo ----
-# Yeh hostname sirf IPv6 support karta hai — zyada tar home/office networks
-# (khaas kar Windows) IPv6 properly configure nahi hote, isliye "could not
-# translate host name" jaisa cryptic error aata hai. Pooler hostname
-# (aws-0-xxx.pooler.supabase.com) IPv4 bhi support karta hai — hamesha reliable.
 if re.search(r"db\.[a-z0-9]+\.supabase\.co", DATABASE_URL):
     raise ValueError(
         "\n❌ DATABASE_URL galat format mein hai — 'Direct Connection' hostname "
@@ -30,7 +26,6 @@ if re.search(r"db\.[a-z0-9]+\.supabase\.co", DATABASE_URL):
         ".env file mein DATABASE_URL ko is pooler wale se replace karo."
     )
 
-# Supabase/Postgres needs sslmode + NullPool works best on serverless (Vercel)
 if "sslmode" not in DATABASE_URL:
     DATABASE_URL += "?sslmode=require" if "?" not in DATABASE_URL else "&sslmode=require"
 IS_SERVERLESS = os.getenv("VERCEL", "") == "1"
@@ -38,13 +33,12 @@ IS_SERVERLESS = os.getenv("VERCEL", "") == "1"
 if IS_SERVERLESS:
     engine = create_engine(DATABASE_URL, poolclass=NullPool)
 else:
-    # Local — connection pool use karo
     engine = create_engine(
         DATABASE_URL,
-        pool_size=5,           # 5 persistent connections
-        max_overflow=10,       # +10 temporary
-        pool_pre_ping=True,    # dead connections detect
-        pool_recycle=300,      # 5 min pe refresh
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True,
+        pool_recycle=300,
     )
 
 
@@ -58,7 +52,7 @@ def get_connection():
 
 
 # =========================================================
-# CORE TABLES (existing)
+# CORE TABLES
 # =========================================================
 
 def setup_core_tables():
@@ -129,8 +123,20 @@ def setup_core_tables():
             )
         """))
 
+        # ---- NEW: supplier_payments table (was missing entirely) ----
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS supplier_payments (
+                id SERIAL PRIMARY KEY,
+                shop_id INTEGER NOT NULL REFERENCES shops(shop_id),
+                supplier_name TEXT NOT NULL,
+                amount REAL NOT NULL,
+                notes TEXT DEFAULT '',
+                date DATE DEFAULT CURRENT_DATE
+            )
+        """))
+
         # ---- Non-destructive migrations (safe on existing DBs) ----
-        # Soft delete: khaata + purchases par deleted_at column
+        # Soft delete columns
         conn.execute(text(
             "ALTER TABLE khaata ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL"
         ))
@@ -138,38 +144,70 @@ def setup_core_tables():
             "ALTER TABLE purchases ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL"
         ))
 
-        # Opening balance — "pehla udhaar" (purani register se migrate)
-        # Khaata page pe grand total = opening_balance + sum(entries)
+        # Opening balance
         conn.execute(text(
             "ALTER TABLE customers ADD COLUMN IF NOT EXISTS opening_balance REAL DEFAULT 0"
         ))
 
-        # Indexes for faster search + filtering
+        # ---- NEW: khaata inventory link + cost snapshot ----
+        # inventory_id  → historical reference to inventory row (no FK; inventory can be deleted)
+        # cost_price    → purchase_rate snapshot at time of sale (so profit reports are stable)
+        conn.execute(text(
+            "ALTER TABLE khaata ADD COLUMN IF NOT EXISTS inventory_id INTEGER"
+        ))
+        conn.execute(text(
+            "ALTER TABLE khaata ADD COLUMN IF NOT EXISTS cost_price REAL DEFAULT 0"
+        ))
+
+        # purchases.inventory_id (referenced by save_purchase / delete_purchase / edit_purchase)
+        conn.execute(text(
+            "ALTER TABLE purchases ADD COLUMN IF NOT EXISTS inventory_id INTEGER"
+        ))
+
+        # ---- Indexes ----
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_khaata_customer_deleted "
             "ON khaata(customer_id, deleted_at)"
         ))
         conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_khaata_date "
+            "ON khaata(date) WHERE deleted_at IS NULL"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_khaata_inventory "
+            "ON khaata(inventory_id) WHERE inventory_id IS NOT NULL"
+        ))
+        conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_customers_shop_name "
             "ON customers(shop_id, LOWER(name))"
         ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_inventory_shop_name "
+            "ON inventory(shop_id, LOWER(item_name))"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_purchases_shop_date "
+            "ON purchases(shop_id, date DESC)"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_expenses_shop_date "
+            "ON expenses(shop_id, date DESC)"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS idx_supplier_payments_shop_sup "
+            "ON supplier_payments(shop_id, LOWER(supplier_name))"
+        ))
+
         conn.commit()
 
 
 # =========================================================
-# PHASE 0 AGENT TABLES (agentic AI foundation)
+# PHASE 0 AGENT TABLES
 # =========================================================
 
 def setup_agent_tables():
-    """
-    Agentic AI foundation tables — conversations, tasks, audit, consents,
-    call_logs + customer/shop column additions.
-
-    Idempotent — dobara chalao to safe hai. sab IF NOT EXISTS / ADD COLUMN IF NOT EXISTS.
-    """
+    """Agentic AI foundation tables — conversations, tasks, audit, consents, call_logs."""
     with engine.connect() as conn:
-
-        # ---------- CONVERSATIONS ----------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS conversations (
                 id SERIAL PRIMARY KEY,
@@ -197,7 +235,6 @@ def setup_agent_tables():
             "ON conversations(customer_id) WHERE customer_id IS NOT NULL"
         ))
 
-        # ---------- MESSAGES ----------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS messages (
                 id SERIAL PRIMARY KEY,
@@ -216,7 +253,6 @@ def setup_agent_tables():
             "ON messages(conversation_id, created_at)"
         ))
 
-        # ---------- AGENT TASKS (background queue) ----------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS agent_tasks (
                 id SERIAL PRIMARY KEY,
@@ -247,7 +283,6 @@ def setup_agent_tables():
             "ON agent_tasks(locked_at) WHERE status = 'running'"
         ))
 
-        # ---------- AGENT AUDIT ----------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS agent_audit (
                 id SERIAL PRIMARY KEY,
@@ -275,7 +310,6 @@ def setup_agent_tables():
             "WHERE conversation_id IS NOT NULL"
         ))
 
-        # ---------- CONSENTS (DNC / opt-in-out) ----------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS consents (
                 id SERIAL PRIMARY KEY,
@@ -293,7 +327,6 @@ def setup_agent_tables():
             "ON consents(shop_id, customer_id, channel)"
         ))
 
-        # ---------- CALL LOGS (voice agents) ----------
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS call_logs (
                 id SERIAL PRIMARY KEY,
@@ -323,49 +356,37 @@ def setup_agent_tables():
             "WHERE customer_id IS NOT NULL"
         ))
 
-        # ---------- CUSTOMERS — agent columns ----------
         conn.execute(text(
-            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS "
-            "whatsapp_opted_in BOOLEAN DEFAULT TRUE"
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS whatsapp_opted_in BOOLEAN DEFAULT TRUE"
         ))
         conn.execute(text(
-            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS "
-            "voice_opted_in BOOLEAN DEFAULT TRUE"
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS voice_opted_in BOOLEAN DEFAULT TRUE"
         ))
         conn.execute(text(
-            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS "
-            "last_contacted_at TIMESTAMP DEFAULT NULL"
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS last_contacted_at TIMESTAMP DEFAULT NULL"
         ))
         conn.execute(text(
-            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS "
-            "tags JSONB DEFAULT '[]'::jsonb"
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS tags JSONB DEFAULT '[]'::jsonb"
         ))
         conn.execute(text(
-            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS "
-            "preferred_language TEXT DEFAULT 'roman_urdu'"
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferred_language TEXT DEFAULT 'roman_urdu'"
         ))
         conn.execute(text(
-            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS "
-            "preferred_channel TEXT DEFAULT 'whatsapp'"
+            "ALTER TABLE customers ADD COLUMN IF NOT EXISTS preferred_channel TEXT DEFAULT 'whatsapp'"
         ))
-
-        # ---------- SHOPS — agent settings ----------
         conn.execute(text(
-            "ALTER TABLE shops ADD COLUMN IF NOT EXISTS "
-            "agent_settings JSONB DEFAULT '{}'::jsonb"
+            "ALTER TABLE shops ADD COLUMN IF NOT EXISTS agent_settings JSONB DEFAULT '{}'::jsonb"
         ))
 
         conn.commit()
 
 
 # =========================================================
-# TRIGGERS (auto-update updated_at)
+# TRIGGERS
 # =========================================================
 
 def setup_triggers():
-    """agent_tasks.updated_at auto-update trigger."""
     with engine.connect() as conn:
-        # Function banao (idempotent — CREATE OR REPLACE)
         conn.execute(text("""
             CREATE OR REPLACE FUNCTION update_updated_at_column()
             RETURNS TRIGGER AS $$
@@ -375,7 +396,6 @@ def setup_triggers():
             END;
             $$ LANGUAGE plpgsql
         """))
-        # Trigger drop + recreate (Postgres mein CREATE TRIGGER IF NOT EXISTS nahi hota)
         conn.execute(text(
             "DROP TRIGGER IF EXISTS trg_agent_tasks_updated_at ON agent_tasks"
         ))
@@ -392,19 +412,11 @@ def setup_triggers():
 # =========================================================
 
 def setup_database():
-    """
-    Poora database setup — core + agent tables + triggers.
-    Idempotent — server start pe safely chalta hai.
-    """
     setup_core_tables()
     setup_agent_tables()
     setup_triggers()
     print("Database ready! (PostgreSQL — core + agent tables)")
 
-
-# =========================================================
-# OPTIONAL: manual run
-# =========================================================
 
 if __name__ == "__main__":
     setup_database()

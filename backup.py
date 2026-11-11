@@ -1,11 +1,12 @@
 # backup.py — Dukaan AI backup utility
+#
 # Usage:
-#   python backup.py                    # sab shops ka backup, JSON files banaya
+#   python backup.py                    # sab shops, JSON
 #   python backup.py --shop-id 1        # specific shop
 #   python backup.py --format csv       # CSV format
 #
-# Cron pe chalao (daily), ya Vercel Cron Job set karo.
-# Output: backups/backup_YYYY-MM-DD_shop{id}.json
+# Cron (daily):
+#   0 3 * * * cd /path/to/dukaan-ai && python backup.py --output /var/backups/dukaan
 
 import os
 import sys
@@ -46,13 +47,19 @@ def dump_shop(shop_id: int, output_dir: Path, fmt: str = "json") -> dict:
             return summary
         summary["shop_name"] = shop[0]
 
+        # Order matters for restore: parents before children
         tables = {
+            "shops": """SELECT shop_id, username, password, shop_name,
+                               created_at, agent_settings
+                        FROM shops WHERE shop_id = :sid""",
             "customers": "SELECT * FROM customers WHERE shop_id = :sid ORDER BY customer_id",
             "khaata": """SELECT k.* FROM khaata k
                          JOIN customers c ON c.customer_id = k.customer_id
                          WHERE c.shop_id = :sid ORDER BY k.id""",
             "inventory": "SELECT * FROM inventory WHERE shop_id = :sid ORDER BY id",
             "purchases": "SELECT * FROM purchases WHERE shop_id = :sid ORDER BY id",
+            "expenses": "SELECT * FROM expenses WHERE shop_id = :sid ORDER BY id",
+            "supplier_payments": "SELECT * FROM supplier_payments WHERE shop_id = :sid ORDER BY id",
         }
         data = {}
         for tname, q in tables.items():
@@ -60,7 +67,8 @@ def dump_shop(shop_id: int, output_dir: Path, fmt: str = "json") -> dict:
             data[tname] = [{k: _serialize(v) for k, v in r.items()} for r in rows]
             summary["tables"][tname] = len(rows)
 
-    filename = f"backup_{ts}_shop{shop_id}_{shop[1]}.{fmt}"
+    safe_username = (shop[1] or "shop").replace("/", "_").replace("\\", "_")
+    filename = f"backup_{ts}_shop{shop_id}_{safe_username}.{fmt}"
     filepath = output_dir / filename
 
     if fmt == "json":
@@ -72,10 +80,9 @@ def dump_shop(shop_id: int, output_dir: Path, fmt: str = "json") -> dict:
             "data": data,
         }
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(payload, f, indent=2, ensure_ascii=False)
+            json.dump(payload, f, indent=2, ensure_ascii=False, default=_serialize)
     elif fmt == "csv":
         import csv
-        # ek zip file mein multiple CSVs
         for tname, rows in data.items():
             if not rows:
                 continue
@@ -104,7 +111,9 @@ def main():
         if args.shop_id:
             shop_ids = [args.shop_id]
         else:
-            shop_ids = [r[0] for r in conn.execute(text("SELECT shop_id FROM shops ORDER BY shop_id")).fetchall()]
+            shop_ids = [r[0] for r in conn.execute(
+                text("SELECT shop_id FROM shops ORDER BY shop_id")
+            ).fetchall()]
 
     if not shop_ids:
         log.warning("Koi shop nahi mila")
