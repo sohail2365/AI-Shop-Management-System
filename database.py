@@ -384,6 +384,13 @@ def setup_agent_tables():
         conn.execute(text(
             "ALTER TABLE shops ADD COLUMN IF NOT EXISTS agent_settings JSONB DEFAULT '{}'::jsonb"
         ))
+                # ---- Shop Profile Settings ----
+        conn.execute(text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS phones TEXT DEFAULT '[]'"))
+        conn.execute(text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS offers_board TEXT DEFAULT ''"))
+        conn.execute(text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS receipt_greeting TEXT DEFAULT 'Shukriya! Dobara tashreef laayen.'"))
+        conn.execute(text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS show_offers BOOLEAN DEFAULT TRUE"))
+        conn.execute(text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS show_greeting BOOLEAN DEFAULT TRUE"))
+        conn.execute(text("ALTER TABLE shops ADD COLUMN IF NOT EXISTS logo_base64 TEXT DEFAULT ''"))
 
         conn.commit()
 

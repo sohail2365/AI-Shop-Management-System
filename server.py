@@ -355,7 +355,14 @@ class AgentMessageRequest(BaseModel):
     external_id: str
     message: str
     customer_id: Optional[int] = None
-
+class ShopProfileRequest(BaseModel):
+    shop_name: str
+    phones: List[str] = []
+    offers_board: str = ""
+    receipt_greeting: str = ""
+    show_offers: bool = True
+    show_greeting: bool = True
+    logo_base64: str = ""
 
 # ==================== HOME & AUTH ====================
 @app.get("/")
@@ -913,7 +920,75 @@ def process_return(req: ReturnRequest,
 
     log.info(f"Return: {req.customer} {req.item} x{req.quantity} Rs.{total} shop={shop_id}")
     return {"success": True, "total": total}
+# ==================== SHOP PROFILE ====================
+@app.get("/shop/profile")
+def get_shop_profile(authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return auth_err()
+    
+    with get_connection() as conn:
+        row = conn.execute(
+            text("""SELECT shop_name, phones, offers_board, receipt_greeting, 
+                           show_offers, show_greeting, logo_base64 
+                    FROM shops WHERE shop_id = :sid"""),
+            {"sid": shop_id}
+        ).fetchone()
+        
+    if not row:
+        return err("Shop nahi mili", 404)
+        
+    import json
+    try:
+        phones = json.loads(row[1]) if row[1] else []
+    except:
+        phones = []
+        
+    return {
+        "shop_name": row[0],
+        "phones": phones,
+        "offers_board": row[2] or "",
+        "receipt_greeting": row[3] or "",
+        "show_offers": row[4],
+        "show_greeting": row[5],
+        "logo_base64": row[6] or ""
+    }
 
+@app.put("/shop/profile")
+def update_shop_profile(req: ShopProfileRequest, authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return auth_err()
+        
+    import json
+    phones_json = json.dumps(req.phones)
+    
+    with get_connection() as conn:
+        conn.execute(
+            text("""UPDATE shops SET 
+                        shop_name = :name, 
+                        phones = :phones, 
+                        offers_board = :offers, 
+                        receipt_greeting = :greeting,
+                        show_offers = :show_offers,
+                        show_greeting = :show_greeting,
+                        logo_base64 = :logo
+                    WHERE shop_id = :sid"""),
+            {
+                "name": req.shop_name.strip(),
+                "phones": phones_json,
+                "offers": req.offers_board.strip(),
+                "greeting": req.receipt_greeting.strip(),
+                "show_offers": req.show_offers,
+                "show_greeting": req.show_greeting,
+                "logo": req.logo_base64,
+                "sid": shop_id
+            }
+        )
+        conn.commit()
+        
+    log.info(f"Shop profile updated: shop={shop_id}")
+    return {"success": True, "message": "Profile update ho gayi!"}
 
 # ==================== KHAATA & CUSTOMERS ====================
 @app.get("/khaata/{identifier}")

@@ -446,6 +446,11 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
       </div>
 
       <div class="nav-divider"></div>
+      <div class="nav-divider"></div>
+      <div class="nav-section">Settings</div>
+      <div class="nav-item" onclick="showPage('settings');loadShopProfile()" id="nav-settings">
+        <span class="nav-icon">⚙️</span><span>Shop Profile</span>
+      </div>
       <div class="nav-section">Stock</div>
       <div class="nav-item" onclick="showPage('inventory-check')" id="nav-inv-check">
         <span class="nav-icon">🔍</span><span>Inventory Check</span>
@@ -746,7 +751,69 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
       </div>
+      <!-- ===== PAGE: SHOP PROFILE ===== -->
+      <div class="page" id="page-settings">
+        <div class="page-header">
+          <div>
+            <div class="page-title">⚙️ Shop Profile & Settings</div>
+            <div class="page-subtitle">Apni dukaan ki details, logo aur receipt settings manage karein</div>
+          </div>
+          <button class="btn-success" onclick="saveShopProfile()" id="btn-save-profile">✓ Save Settings</button>
+        </div>
 
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <!-- Left Column -->
+          <div class="card">
+            <h3 style="font-size:16px; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:14px;">🏪 Basic Info</h3>
+            
+            <div class="form-group">
+              <label>Shop Name</label>
+              <input type="text" id="prof-shop-name" placeholder="Ali Karyana Store">
+            </div>
+            
+            <div class="form-group">
+              <label>Logo (Chhoti image upload karein)</label>
+              <input type="file" id="prof-logo-input" accept="image/*" onchange="handleLogoUpload(event)" style="padding:10px; border:1px dashed #cbd5e1; border-radius:8px; width:100%;">
+              <div id="logo-preview-wrap" style="display:none; margin-top:10px; text-align:center;">
+                <img id="logo-preview" style="max-height:80px; border-radius:8px; border:1px solid #e2e8f0;">
+                <button class="del-btn" onclick="removeLogo()" style="margin-top:5px; display:block; width:100%;">Remove Logo</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Phone Numbers (Ek se zyada add karein)</label>
+              <div id="phones-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
+              <button class="btn-outline" onclick="addPhoneField()" style="font-size:12px; padding:6px 10px;">+ Naya Number Add Karein</button>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="card">
+            <h3 style="font-size:16px; border-bottom:1px solid #e2e8f0; padding-bottom:10px; margin-bottom:14px;">🧾 Receipt Settings</h3>
+            
+            <div class="form-group">
+              <label>Offers Board (Bill ke upar ya neeche dikhega)</label>
+              <textarea id="prof-offers" rows="3" placeholder="Eid Sale: 10% off on all items!" style="width:100%; padding:10px; border:1.5px solid #e2e8f0; border-radius:8px; font-family:inherit;"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Customer Greeting (Bill ke end mein)</label>
+              <textarea id="prof-greeting" rows="2" placeholder="Shukriya! Dobara tashreef laayen." style="width:100%; padding:10px; border:1.5px solid #e2e8f0; border-radius:8px; font-family:inherit;"></textarea>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:15px; background:#f8fafc; padding:12px; border-radius:8px;">
+              <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer;">
+                <input type="checkbox" id="prof-show-offers" style="width:16px; height:16px;">
+                Offers ko print receipt par dikhayein
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer;">
+                <input type="checkbox" id="prof-show-greeting" style="width:16px; height:16px;">
+                Greeting ko print receipt par dikhayein
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- ===== PAGE: INVENTORY CHECK ===== -->
       <div class="page" id="page-inventory-check">
         <div class="page-header">
@@ -1750,9 +1817,25 @@ async function saveUdhaarEntry(withPrint) {
 }
 
 function printUdhaarReceipt(data) {
-  const shopName = toTitleCase(getShopName() || 'Dukaan AI');
+  const shopName = shopProfileData ? shopProfileData.shop_name : (getShopName() || 'Dukaan AI');
   const customerName = toTitleCase(data.customer || '');
   const dateStr = new Date().toLocaleDateString('en-PK');
+  
+  const logoHtml = (shopProfileData && shopProfileData.logo_base64) 
+    ? `<div style="text-align:center; margin-bottom:5px;"><img src="${shopProfileData.logo_base64}" style="max-height:50px;"></div>` 
+    : '';
+    
+  const phonesHtml = (shopProfileData && shopProfileData.phones && shopProfileData.phones.length) 
+    ? `<div class="center meta" style="font-size:9px;">${shopProfileData.phones.join(' | ')}</div>` 
+    : '';
+    
+  const offersHtml = (shopProfileData && shopProfileData.show_offers && shopProfileData.offers_board) 
+    ? `<div class="line"></div><div class="center meta bold" style="color:#b45309;">${esc(shopProfileData.offers_board)}</div>` 
+    : '';
+    
+  const greetingHtml = (shopProfileData && shopProfileData.show_greeting && shopProfileData.receipt_greeting) 
+    ? `<div class="center meta bold" style="margin-top:5px;">${esc(shopProfileData.receipt_greeting)}</div>` 
+    : '';
 
   const printWindow = window.open('', '_blank', 'width=360,height=640');
   if (!printWindow) throw new Error('print blocked');
@@ -1769,23 +1852,29 @@ function printUdhaarReceipt(data) {
       .no-print{margin-top:10px;}.print-btn{padding:8px 18px;background:#1e293b;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
       @media print{body{width:72mm;padding:0;}.no-print{display:none;}}
     </style></head><body>
+    ${logoHtml}
     <div class="center bold shop">${esc(shopName)}</div>
+    ${phonesHtml}
     <div class="center meta">Udhaar Receipt</div><div class="double-line"></div>
+    
     <div class="meta">Date: ${esc(dateStr)}</div>
     <div class="meta">Customer: <span class="bold">${esc(customerName)}</span></div>
     <div class="line"></div>
+    
     <table><thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead><tbody>
       ${data.items.map(item => `<tr><td class="item">${esc(toTitleCase(item.item))}</td><td class="qty">${item.quantity}</td><td class="rate">${item.price}</td><td class="amt">${item.total}</td></tr>`).join('')}
     </tbody><tfoot><tr><td colspan="4"><div class="line"></div></td></tr><tr class="total-row"><td colspan="3">TOTAL</td><td class="amt">Rs. ${data.grand_total}</td></tr></tfoot></table>
+    
+    ${offersHtml}
     <div class="double-line"></div>
-    <div class="center meta">Udhaar likh diya gaya hai</div>
-    <div class="center meta">Shukriya! Powered by Dukaan AI</div>
+    ${greetingHtml}
+    <div class="center meta" style="font-size:8px; margin-top:5px;">Powered by Dukaan AI</div>
+    
     <div class="center no-print"><button class="print-btn" onclick="window.print()">Print</button></div>
     <scr` + `ipt>setTimeout(()=>window.print(),500);</scr` + `ipt>
     </body></html>`);
   printWindow.document.close();
 }
-
 function defaultItemRenderer(it) {
   return `<div class="ac-row"><span class="ac-name">${esc(it.name)}</span><span class="ac-meta"><span class="ac-price">Rs. ${it.price}</span><span class="ac-stock ${it.stock > 0 ? '' : 'out'}">${it.stock > 0 ? it.stock + ' left' : 'out'}</span></span></div>`;
 }
@@ -3325,7 +3414,139 @@ async function populateSupplierDatalist() {
 
 // Add to window load
 window.addEventListener('load', populateSupplierDatalist);
+// ==================== SHOP PROFILE ====================
+let shopProfileData = null;
 
+async function loadShopProfile() {
+  try {
+    const res = await apiFetch('/shop/profile');
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    
+    shopProfileData = data;
+    
+    // UI update karein
+    document.getElementById('prof-shop-name').value = data.shop_name || '';
+    document.getElementById('prof-offers').value = data.offers_board || '';
+    document.getElementById('prof-greeting').value = data.receipt_greeting || '';
+    document.getElementById('prof-show-offers').checked = data.show_offers;
+    document.getElementById('prof-show-greeting').checked = data.show_greeting;
+    
+    // Logo preview
+    if (data.logo_base64) {
+      document.getElementById('logo-preview').src = data.logo_base64;
+      document.getElementById('logo-preview-wrap').style.display = 'block';
+      window._tempLogoBase64 = data.logo_base64;
+    } else {
+      document.getElementById('logo-preview-wrap').style.display = 'none';
+      window._tempLogoBase64 = null;
+    }
+
+    // Phones load karein
+    const phonesWrap = document.getElementById('phones-list');
+    phonesWrap.innerHTML = '';
+    if (data.phones && data.phones.length > 0) {
+      data.phones.forEach(p => addPhoneField(p));
+    } else {
+      addPhoneField(''); // Ek khali field
+    }
+    
+  } catch(e) { showToast('Profile load nahi hui', 'error'); }
+}
+
+function addPhoneField(val = '') {
+  const wrap = document.getElementById('phones-list');
+  const div = document.createElement('div');
+  div.style.display = 'flex';
+  div.style.gap = '8px';
+  div.innerHTML = `
+    <input type="text" class="phone-input" value="${esc(val)}" placeholder="03001234567" style="flex:1; padding:8px; border:1px solid #e2e8f0; border-radius:8px;">
+    <button class="del-btn" onclick="this.parentElement.remove()" style="padding:0 12px;">✕</button>
+  `;
+  wrap.appendChild(div);
+}
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  if (file.size > 500 * 1024) {
+    showToast('Image 500KB se choti honi chahiye!', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Image ko resize karein taake DB bloated na ho (max 300x300)
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if (width > 300) { height = Math.round(height * (300 / width)); width = 300; }
+      
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Compress to JPEG
+      const base64 = canvas.toDataURL('image/jpeg', 0.8);
+      window._tempLogoBase64 = base64;
+      
+      document.getElementById('logo-preview').src = base64;
+      document.getElementById('logo-preview-wrap').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  window._tempLogoBase64 = null;
+  document.getElementById('prof-logo-input').value = '';
+  document.getElementById('logo-preview-wrap').style.display = 'none';
+}
+
+async function saveShopProfile() {
+  const btn = document.getElementById('btn-save-profile');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  const phones = Array.from(document.querySelectorAll('.phone-input'))
+                     .map(i => i.value.trim())
+                     .filter(v => v.length > 0);
+
+  const payload = {
+    shop_name: document.getElementById('prof-shop-name').value.trim(),
+    phones: phones,
+    offers_board: document.getElementById('prof-offers').value.trim(),
+    receipt_greeting: document.getElementById('prof-greeting').value.trim(),
+    show_offers: document.getElementById('prof-show-offers').checked,
+    show_greeting: document.getElementById('prof-show-greeting').checked,
+    logo_base64: window._tempLogoBase64 || ""
+  };
+
+  if (!payload.shop_name) {
+    showToast('Shop ka naam zaroori hai!', 'error');
+    btn.disabled = false; btn.textContent = '✓ Save Settings';
+    return;
+  }
+
+  try {
+    const res = await apiFetch('/shop/profile', { method: 'PUT', body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    showToast('✅ Settings save ho gayin!');
+    // Topbar ka naam update karein
+    localStorage.setItem('shop_name', payload.shop_name);
+    document.getElementById('shop-name-display').textContent = payload.shop_name;
+    
+  } catch(e) { showToast(e.message || 'Save nahi hua', 'error'); }
+  
+  btn.disabled = false; btn.textContent = '✓ Save Settings';
+}
 // ==================== CUSTOMER RETURNS ====================
 attachAutocomplete({
   inputId: 'ret-item',
