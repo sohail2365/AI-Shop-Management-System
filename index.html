@@ -423,6 +423,9 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
       <div class="nav-divider"></div>
       <div class="nav-section">Main</div>
+      <div class="nav-item" onclick="showPage('udhaar-entry')" id="nav-udhaar-entry">
+        <span class="nav-icon">📝</span><span>Udhaar Entry (POS)</span>
+      </div>
       <div class="nav-item" onclick="showPage('entry')" id="nav-entry">
         <span class="nav-icon">📒</span><span>Khaata & Entry</span>
       </div>
@@ -466,6 +469,93 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
     <!-- Main Content -->
     <div class="main-content">
+      <!-- ===== PAGE: UDHAAR ENTRY (POS STYLE) ===== -->
+      <div class="page" id="page-udhaar-entry">
+        <div class="page-header">
+          <div>
+            <div class="page-title">📝 Udhaar Entry (POS Style)</div>
+            <div class="page-subtitle">Customer select karein, items add karein, ek click mein udhaar save karein</div>
+          </div>
+          <button class="btn-outline" onclick="openQuickPayment()" style="color:#16a34a; border-color:#16a34a;">💰 Quick Payment</button>
+        </div>
+
+        <!-- Customer Selection -->
+        <div class="card" style="border: 2px solid #6366f1;">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <div class="autocomplete-wrap" style="flex:1; min-width:280px;">
+              <input type="text" id="ud-customer" placeholder="🔍 Customer dhoondein ya naya naam likhein..." autocomplete="off" style="width:100%; padding:12px 14px; font-size:16px; border:2px solid #6366f1; border-radius:10px;">
+              <div id="ud-customer-suggest" class="autocomplete-dropdown"></div>
+            </div>
+          </div>
+
+          <!-- Selected customer info -->
+          <div id="ud-customer-info" style="display:none; margin-top:12px; padding:12px 14px; background:linear-gradient(135deg,#eff6ff,#dbeafe); border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+              <div>
+                <div style="font-weight:700; font-size:16px; color:#1e293b;" id="ud-cust-name">—</div>
+                <div style="font-size:12px; color:#64748b; margin-top:2px;" id="ud-cust-meta">—</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:1px;">Purana Baaki</div>
+                <div style="font-size:22px; font-weight:800; color:#dc2626;" id="ud-cust-baaki">Rs. 0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Item Entry (hidden until customer selected) -->
+        <div class="card" id="ud-item-card" style="display:none;">
+          <div class="card-title"><span class="icon">🛒</span> Items Add Karein</div>
+
+          <!-- Quick add row -->
+          <div class="quick-entry-row">
+            <div class="autocomplete-wrap" style="flex:3; min-width:200px;">
+              <input type="text" id="ud-item" placeholder="Item name (autocomplete)..." autocomplete="off" style="width:100%;">
+              <div id="ud-item-suggest" class="autocomplete-dropdown"></div>
+            </div>
+            <input type="number" id="ud-qty" placeholder="Qty" value="1" min="0.01" step="0.01" style="width:80px; text-align:center;">
+            <input type="number" id="ud-rate" placeholder="Rate" style="width:100px; text-align:right;">
+            <button onclick="addUdhaarItem()" class="btn-success" style="padding:8px 16px; font-weight:bold;">+ Add</button>
+          </div>
+
+          <!-- Cart -->
+          <div id="udhaar-cart-wrap" style="display:none; margin-top:14px;">
+            <div class="table-responsive" style="max-height:320px; overflow-y:auto;">
+              <table class="khaata-table" style="font-size:14px;">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th style="text-align:center;">Qty</th>
+                    <th style="text-align:right;">Rate</th>
+                    <th style="text-align:right;">Total</th>
+                    <th style="text-align:center; width:60px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="udhaar-cart-body"></tbody>
+              </table>
+            </div>
+
+            <!-- Totals -->
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:linear-gradient(135deg,#fef3c7,#fde68a); border-radius:10px;">
+              <div>
+                <div style="font-size:11px; color:#92400e; font-weight:600; text-transform:uppercase; letter-spacing:1px;">Total Bill</div>
+                <div style="font-size:26px; font-weight:800; color:#b45309; margin-top:2px;" id="ud-total">Rs. 0</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:11px; color:#92400e;">Naya Baaki (Purana + Aaj)</div>
+                <div style="font-size:20px; font-weight:800; color:#dc2626; margin-top:2px;" id="ud-new-baaki">Rs. 0</div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn-success" onclick="saveUdhaarEntry(false)" id="ud-save-btn" style="flex:1; min-width:180px; padding:12px;">✓ Udhaar Save karein</button>
+              <button class="btn-success" onclick="saveUdhaarEntry(true)" style="background:#0891b2; flex:1; min-width:140px; padding:12px;">✓ Save + Print</button>
+              <button class="btn-outline" onclick="clearUdhaarCart()" style="padding:12px;">✗ Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ===== PAGE: ENTRY & KHAATA (Unified) ===== -->
       <div class="page" id="page-entry">
@@ -1447,6 +1537,240 @@ function attachAutocomplete(opts) {
     dropdown.querySelectorAll('.ac-item').forEach((el, i) => { el.classList.toggle('active', i === activeIndex); });
     if (activeIndex >= 0) { const el = dropdown.querySelector(`.ac-item[data-idx="${activeIndex}"]`); if (el) el.scrollIntoView({ block: 'nearest' }); }
   }
+}
+// ==================== UDHAAR ENTRY (POS STYLE) ====================
+let udhaarCustomer = null;
+let udhaarCart = [];
+
+attachAutocomplete({
+  inputId: 'ud-customer',
+  dropdownId: 'ud-customer-suggest',
+  endpoint: '/customers/search',
+  listKey: 'customers',
+  limit: 10,
+  renderItem: customerRenderer,
+  onSelect: (customer) => {
+    document.getElementById('ud-customer').value = customer.name;
+    setUdhaarCustomer({
+      id: customer.id,
+      name: customer.name,
+      phone: customer.phone,
+      baaki: customer.baaki || 0,
+      isNew: false,
+    });
+  },
+  onEnter: () => {
+    const val = document.getElementById('ud-customer').value.trim();
+    if (val && !udhaarCustomer) {
+      setUdhaarCustomer({ id: null, name: val, phone: 'unknown', baaki: 0, isNew: true });
+    }
+  }
+});
+
+function setUdhaarCustomer(cust) {
+  udhaarCustomer = cust;
+  document.getElementById('ud-cust-name').textContent = toTitleCase(cust.name);
+  document.getElementById('ud-cust-meta').textContent = cust.isNew
+    ? 'Naya customer — pehli save pe create hoga'
+    : `Khaata #${cust.id}${cust.phone && cust.phone !== 'unknown' ? ' · ' + cust.phone : ''}`;
+  document.getElementById('ud-cust-baaki').textContent = `Rs. ${cust.baaki || 0}`;
+  document.getElementById('ud-customer-info').style.display = 'block';
+  document.getElementById('ud-item-card').style.display = 'block';
+  setTimeout(() => document.getElementById('ud-item').focus(), 100);
+}
+
+attachAutocomplete({
+  inputId: 'ud-item',
+  dropdownId: 'ud-item-suggest',
+  onSelect: (item) => {
+    document.getElementById('ud-item').value = item.name;
+    document.getElementById('ud-rate').value = item.price;
+    window._ud_inventory_id = item.id;
+    setTimeout(() => {
+      const qtyEl = document.getElementById('ud-qty');
+      qtyEl.focus();
+      qtyEl.select();
+    }, 50);
+  },
+  onEnter: () => addUdhaarItem()
+});
+
+function addUdhaarItem() {
+  const itemEl = document.getElementById('ud-item');
+  const qtyEl = document.getElementById('ud-qty');
+  const rateEl = document.getElementById('ud-rate');
+
+  const item = itemEl.value.trim();
+  const qty = parseFloat(qtyEl.value);
+  const rate = parseFloat(rateEl.value);
+
+  if (!item) { showToast('Item naam daalein', 'error'); itemEl.focus(); return; }
+  if (!qty || qty <= 0) { showToast('Valid quantity daalein', 'error'); qtyEl.focus(); return; }
+  if (!rate || rate <= 0) { showToast('Valid rate daalein', 'error'); rateEl.focus(); return; }
+
+  udhaarCart.push({
+    item: item,
+    quantity: qty,
+    price: rate,
+    inventory_id: window._ud_inventory_id || null,
+    found: !!window._ud_inventory_id,
+    total: round2(qty * rate),
+  });
+
+  itemEl.value = '';
+  qtyEl.value = '1';
+  rateEl.value = '';
+  window._ud_inventory_id = null;
+  itemEl.focus();
+  renderUdhaarCart();
+}
+
+function renderUdhaarCart() {
+  const wrap = document.getElementById('udhaar-cart-wrap');
+  const tbody = document.getElementById('udhaar-cart-body');
+
+  if (udhaarCart.length === 0) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'block';
+
+  let total = 0;
+  tbody.innerHTML = udhaarCart.map((item, i) => {
+    total += item.total;
+    return `<tr>
+      <td style="font-weight:600;">${esc(toTitleCase(item.item))}</td>
+      <td style="text-align:center;">${item.quantity}</td>
+      <td style="text-align:right;">Rs. ${item.price}</td>
+      <td style="text-align:right; font-weight:700;">Rs. ${item.total}</td>
+      <td style="text-align:center;"><button class="del-btn" onclick="removeUdhaarItem(${i})" style="padding:3px 10px;">x</button></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('ud-total').textContent = `Rs. ${round2(total)}`;
+  const oldBaaki = parseFloat(udhaarCustomer?.baaki || 0);
+  document.getElementById('ud-new-baaki').textContent = `Rs. ${round2(oldBaaki + total)}`;
+}
+
+function removeUdhaarItem(index) {
+  udhaarCart.splice(index, 1);
+  renderUdhaarCart();
+}
+
+function clearUdhaarCart() {
+  if (udhaarCart.length && !confirm('Cart khali karein?')) return;
+  udhaarCart = [];
+  document.getElementById('ud-item').value = '';
+  document.getElementById('ud-qty').value = '1';
+  document.getElementById('ud-rate').value = '';
+  window._ud_inventory_id = null;
+  renderUdhaarCart();
+}
+
+async function saveUdhaarEntry(withPrint) {
+  if (!udhaarCustomer) { showToast('Pehle customer select karein', 'error'); return; }
+  if (!udhaarCart.length) { showToast('Koi item nahi hai', 'error'); return; }
+
+  const btn = document.getElementById('ud-save-btn');
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Save ho raha hai...';
+
+  const custId = udhaarCustomer.id;
+  const custName = udhaarCustomer.name;
+
+  try {
+    const payload = {
+      customer: custName.toLowerCase(),
+      items: udhaarCart.map(i => ({
+        item: i.item,
+        quantity: i.quantity,
+        price: i.price,
+        inventory_id: i.inventory_id,
+        found: i.found,
+      }))
+    };
+    const res = await apiFetch('/entry/multi/save', {
+      method: 'POST', body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    showToast(`✅ ${data.items_saved} items udhaar save! Total: Rs. ${data.grand_total}`);
+
+    if (withPrint) {
+      try { printUdhaarReceipt(data); }
+      catch (e) { showToast('Print window blocked', 'error'); }
+    }
+
+    if (data.whatsapp) {
+      showWhatsAppPrompt(data.whatsapp, 'Udhaar receipt tayyar hai —', custName);
+    }
+
+    // Reset
+    udhaarCart = [];
+    window._ud_inventory_id = null;
+    renderUdhaarCart();
+
+    // Reload customer to refresh baaki (by id, or by name if new)
+    setTimeout(async () => {
+      try {
+        const url = custId ? `/khaata/${custId}` : `/khaata/${encodeURIComponent(custName.toLowerCase())}`;
+        const r = await apiFetch(url);
+        const d = await r.json();
+        if (!d.error && d.customer_id) {
+          document.getElementById('ud-customer').value = d.customer;
+          setUdhaarCustomer({
+            id: d.customer_id,
+            name: d.customer,
+            phone: d.phone,
+            baaki: d.total_baaki,
+            isNew: false,
+          });
+        }
+      } catch (e) {}
+    }, 400);
+  } catch (e) {
+    showToast(e.message || 'Save nahi hua', 'error');
+  }
+
+  btn.disabled = false; btn.textContent = origText;
+}
+
+function printUdhaarReceipt(data) {
+  const shopName = toTitleCase(getShopName() || 'Dukaan AI');
+  const customerName = toTitleCase(data.customer || '');
+  const dateStr = new Date().toLocaleDateString('en-PK');
+
+  const printWindow = window.open('', '_blank', 'width=360,height=640');
+  if (!printWindow) throw new Error('print blocked');
+
+  printWindow.document.write(`
+    <!DOCTYPE html><html><head><title>Udhaar Receipt</title><style>
+      *{margin:0;padding:0;box-sizing:border-box;}@page{size:80mm auto;margin:3mm;}
+      body{width:72mm;margin:0 auto;padding:3mm 2mm;font-family:'Courier New',monospace;font-size:11px;color:#111;background:#fff;}
+      .center{text-align:center;}.bold{font-weight:bold;}.shop{font-size:15px;line-height:1.2;}.meta{font-size:10px;line-height:1.45;}
+      .line{border-top:1px dashed #111;margin:6px 0;}.double-line{border-top:2px solid #111;margin:7px 0;}
+      table{width:100%;border-collapse:collapse;table-layout:fixed;}td,th{padding:2px 0;vertical-align:top;}
+      th{font-size:10px;text-align:left;}.item{width:42%;word-break:break-word;}.qty{width:14%;text-align:right;}
+      .rate{width:20%;text-align:right;}.amt{width:24%;text-align:right;}.total-row td{font-weight:bold;font-size:13px;padding-top:4px;}
+      .no-print{margin-top:10px;}.print-btn{padding:8px 18px;background:#1e293b;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+      @media print{body{width:72mm;padding:0;}.no-print{display:none;}}
+    </style></head><body>
+    <div class="center bold shop">${esc(shopName)}</div>
+    <div class="center meta">Udhaar Receipt</div><div class="double-line"></div>
+    <div class="meta">Date: ${esc(dateStr)}</div>
+    <div class="meta">Customer: <span class="bold">${esc(customerName)}</span></div>
+    <div class="line"></div>
+    <table><thead><tr><th class="item">Item</th><th class="qty">Qty</th><th class="rate">Rate</th><th class="amt">Total</th></tr></thead><tbody>
+      ${data.items.map(item => `<tr><td class="item">${esc(toTitleCase(item.item))}</td><td class="qty">${item.quantity}</td><td class="rate">${item.price}</td><td class="amt">${item.total}</td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="4"><div class="line"></div></td></tr><tr class="total-row"><td colspan="3">TOTAL</td><td class="amt">Rs. ${data.grand_total}</td></tr></tfoot></table>
+    <div class="double-line"></div>
+    <div class="center meta">Udhaar likh diya gaya hai</div>
+    <div class="center meta">Shukriya! Powered by Dukaan AI</div>
+    <div class="center no-print"><button class="print-btn" onclick="window.print()">Print</button></div>
+    <script>setTimeout(()=>window.print(),500);</script>
+    </body></html>`);
+  printWindow.document.close();
 }
 
 function defaultItemRenderer(it) {
