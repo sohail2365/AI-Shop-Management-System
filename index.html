@@ -507,7 +507,23 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
             </div>
           </div>
         </div>
-
+        <!-- Customer Purchase History -->
+        <div class="card" id="ud-history-card" style="display:none; max-height:350px; overflow-y:auto; border-left: 4px solid #6366f1;">
+          <div class="card-title" style="margin-bottom:10px; border-bottom:none; padding-bottom:0;">
+            <span class="icon">📜</span> Purani Khareedari (Purchase History)
+          </div>
+          <table class="khaata-table" style="font-size:13px; margin-top:10px; border: 1px solid #cbd5e1;">
+            <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+              <tr>
+                <th style="width:25%;">Date</th>
+                <th>Item</th>
+                <th style="text-align:center;">Qty</th>
+                <th style="text-align:right;">Total</th>
+              </tr>
+            </thead>
+            <tbody id="ud-history-body"></tbody>
+          </table>
+        </div>
         <!-- Item Entry (hidden until customer selected) -->
         <div class="card" id="ud-item-card" style="display:none;">
           <div class="card-title"><span class="icon">🛒</span> Items Add Karein</div>
@@ -1656,7 +1672,57 @@ function setUdhaarCustomer(cust) {
   document.getElementById('ud-cust-baaki').textContent = `Rs. ${cust.baaki || 0}`;
   document.getElementById('ud-customer-info').style.display = 'block';
   document.getElementById('ud-item-card').style.display = 'block';
+  
+  // NAYA CODE: Yeh check karega ke purana customer hai ya naya
+  if (!cust.isNew && cust.id) {
+    loadUdhaarCustomerHistory(cust.id);
+  } else {
+    document.getElementById('ud-history-card').style.display = 'none';
+  }
+  
   setTimeout(() => document.getElementById('ud-item').focus(), 100);
+}
+
+// NAYA FUNCTION: Yeh database se purani entries layega
+async function loadUdhaarCustomerHistory(custId) {
+  const card = document.getElementById('ud-history-card');
+  const tbody = document.getElementById('ud-history-body');
+  
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#64748b;">Loading history...</td></tr>';
+  card.style.display = 'block';
+
+  try {
+    const res = await apiFetch(`/khaata/${custId}`);
+    const data = await res.json();
+    
+    if (data.error || !data.entries || data.entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#94a3b8;">Is customer ki koi purani entry nahi hai.</td></tr>';
+      return;
+    }
+
+    const entries = data.entries.slice().reverse();
+
+    tbody.innerHTML = entries.map(e => {
+      const isPayment = e.item.toUpperCase() === 'PAYMENT';
+      const isReturn = e.item.toUpperCase() === 'RETURN';
+      let itemColor = '#1e293b';
+      let totalColor = '#1e293b';
+      
+      if (isPayment) { itemColor = '#16a34a'; totalColor = '#16a34a'; }
+      if (isReturn) { itemColor = '#dc2626'; totalColor = '#dc2626'; }
+
+      return `
+      <tr>
+        <td style="color:#64748b; font-size:12px; padding-left:10px;">${esc(e.date)}</td>
+        <td style="font-weight:600; color:${itemColor}; text-transform:uppercase;">${esc(e.item)}</td>
+        <td style="text-align:center;">${e.quantity}</td>
+        <td style="text-align:right; font-weight:700; color:${totalColor}; padding-right:10px;">Rs. ${e.total}</td>
+      </tr>
+    `}).join('');
+    
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:15px; color:#dc2626;">History load nahi ho saki.</td></tr>';
+  }
 }
 
 attachAutocomplete({
