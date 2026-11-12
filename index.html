@@ -1561,9 +1561,22 @@ attachAutocomplete({
   },
   onEnter: () => {
     const val = document.getElementById('ud-customer').value.trim();
-    if (val && !udhaarCustomer) {
+    if (val) {
+      // Agar pehle se wahi customer select hai, toh kuch na karein
+      if (udhaarCustomer && val.toLowerCase() === udhaarCustomer.name.toLowerCase()) return;
+      // Nahi toh naye customer ke taur par set karein
       setUdhaarCustomer({ id: null, name: val, phone: 'unknown', baaki: 0, isNew: true });
     }
+  }
+});
+
+// NAYA FIX: Jab user type kare aur naya naam likhe, toh purana customer clear ho jaye
+document.getElementById('ud-customer').addEventListener('input', (e) => {
+  const typed = e.target.value.trim().toLowerCase();
+  if (udhaarCustomer && typed !== udhaarCustomer.name.toLowerCase()) {
+    // Purana customer clear karein
+    udhaarCustomer = null;
+    document.getElementById('ud-customer-info').style.display = 'none';
   }
 });
 
