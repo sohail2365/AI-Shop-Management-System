@@ -1681,7 +1681,7 @@ def bulk_add_purchase(req: BulkPurchaseRequest,
         except Exception as e:
             conn.rollback()
             log.error(f"bulk_add_purchase failed: {e}")
-            return err("Bulk purchase save nahi hui", 500)
+            return err(f"Bulk purchase save nahi hui: {str(e)}", 500)
 
     log.info(f"Bulk Purchase: {supplier} - {items_saved} items, Rs.{total_bill} shop={shop_id}")
     return {"success": True, "total_cost": total_bill, "items_saved": items_saved}

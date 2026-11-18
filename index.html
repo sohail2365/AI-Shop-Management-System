@@ -3862,30 +3862,38 @@ async function loadSupplierLedger() {
 }
 
 async function savePurchaseCart() {
-    if (purchaseCart.length === 0) return alert("Cart khali hai!");
-    const supplier = document.getElementById('qp-supplier').value.trim() || 'unknown supplier';
-    try {
-        const res = await apiFetch('/purchase/bulk-add', {
-            method: 'POST',
-            body: JSON.stringify({
-                supplier: supplier,
-                items: purchaseCart.map(p => ({
-                    item: p.item, quantity: p.qty, rate: p.rate,
-                    inventory_id: p.inventory_id || null
-                }))
-            })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        showToast(`✅ Purchase save! Total: Rs. ${data.total_cost}`, 'success');
-        purchaseCart = [];
-        renderPurchaseCart();
-        document.getElementById('qp-supplier').value = '';
-        if(typeof loadJournal === 'function') loadJournal();
-        if(typeof loadSupplierSuggestions === 'function') loadSupplierSuggestions();
-    } catch(e) {
-        showToast(e.message || 'Purchase save nahi hui', 'error');
-    }
+  if (purchaseCart.length === 0) return alert("Cart khali hai!");
+  const supplier = document.getElementById('qp-supplier').value.trim() || 'unknown supplier';
+  
+  try {
+      const res = await apiFetch('/purchase/bulk-add', {
+          method: 'POST',
+          body: JSON.stringify({
+              supplier: supplier,
+              items: purchaseCart.map(p => ({
+                  item: p.item, quantity: p.qty, rate: p.rate,
+                  inventory_id: p.inventory_id || null
+              }))
+          })
+      });
+      const data = await res.json();
+      
+      // AGAR BACKEND SE ERROR AAYE TOH DIKHAO
+      if (!res.ok) {
+          throw new Error(data.error || 'Server error aya hai');
+      }
+      
+      showToast(`✅ Purchase save! Total: Rs. ${data.total_cost}`, 'success');
+      purchaseCart = [];
+      renderPurchaseCart();
+      document.getElementById('qp-supplier').value = '';
+      if(typeof loadJournal === 'function') loadJournal();
+      if(typeof loadSupplierSuggestions === 'function') loadSupplierSuggestions();
+  } catch(e) {
+      // Asli error message screen par dikhao
+      showToast(e.message || 'Purchase save nahi hui', 'error');
+      console.error("Purchase Error:", e);
+  }
 }
 
 async function saveSaleCart() {
