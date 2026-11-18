@@ -994,32 +994,74 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
           </div>
         </div>
 
-        <!-- Quick Entry Forms (Inko rehne dein taake purane buttons kaam karein) -->
-        <div class="card glass-card" style="margin-bottom: 16px; padding:12px;">
-          <div class="quick-entry-row" style="margin-bottom:8px;">
-            <input type="text" id="qs-customer" placeholder="Customer (Khali=Walk-in)" list="quick-cust-list" style="flex:1.2;">
-            <datalist id="quick-cust-list"></datalist>
-            <div class="autocomplete-wrap" style="flex:2;">
-              <input type="text" id="qs-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
-              <div id="qs-item-suggest" class="autocomplete-dropdown"></div>
+        <!-- ===== NEW MULTI-ITEM CART SYSTEM ===== -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+            
+            <!-- SALE CART -->
+            <div class="card glass-card" style="padding:12px; border-top: 4px solid #0369a1;">
+              <div style="font-weight:bold; margin-bottom:10px; color:#0369a1; font-size: 15px;">
+                  <span>🛒 Sale Entry (Cart)</span>
+              </div>
+              
+              <div class="quick-entry-row" style="margin-bottom:8px; flex-wrap:wrap;">
+                <input type="text" id="qs-customer" placeholder="Customer (Khali=Walk-in)" list="quick-cust-list" style="flex:1; min-width:120px;">
+                <datalist id="quick-cust-list"></datalist>
+                <div class="autocomplete-wrap" style="flex:2; min-width:150px;">
+                  <input type="text" id="qs-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
+                  <div id="qs-item-suggest" class="autocomplete-dropdown"></div>
+                </div>
+                <input type="number" id="qs-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;">
+                <input type="number" id="qs-price" placeholder="Rate" style="width:80px; text-align:right;">
+                <button onclick="addToSaleCart()" class="btn-success" style="padding:8px 15px; border-radius:6px; font-weight:bold; width:100%; margin-top:5px;">+ Add Item to Cart</button>
+              </div>
+              
+              <!-- Sale Cart Table -->
+              <div id="sale-cart-wrap" style="display:none; margin-top:10px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; max-height:250px; overflow-y:auto;">
+                <table class="inv-table" style="font-size:13px; margin:0;">
+                  <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th><th style="text-align:center;">X</th></tr></thead>
+                  <tbody id="sale-cart-body"></tbody>
+                </table>
+              </div>
+              <div id="sale-cart-footer" style="display:none; background:#f8fafc; padding:10px; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 6px 6px;">
+                  <div style="font-weight:bold; color:#0369a1; font-size: 15px;">Total: <span id="sale-cart-total">Rs. 0</span></div>
+                  <div style="display:flex; gap:10px; align-items:center;">
+                    <input type="number" id="qs-cash" placeholder="Cash Received" style="padding:6px; border:1px solid #cbd5e1; border-radius:4px; width:110px; text-align:right; color:#16a34a; font-weight:600; font-size: 13px;">
+                    <button onclick="saveSaleCart()" class="btn-success" style="padding:8px 16px; font-size:13px; font-weight:bold;">✓ Save Complete Sale</button>
+                  </div>
+              </div>
             </div>
-            <input type="number" id="qs-qty" placeholder="Qty" value="1" min="1" style="width:70px; text-align:center;">
-            <input type="number" id="qs-price" placeholder="Rate" style="width:90px; text-align:right;">
-            <input type="number" id="qs-cash" placeholder="Cash" style="width:90px; text-align:right; color:#16a34a; font-weight:600;">
-            <button onclick="submitQuickSale()" class="btn-success" style="padding:8px 15px; border-radius:6px; font-weight:bold;">+ Sale Add</button>
-          </div>
-          
-          <div class="quick-purchase-row" style="margin-bottom:0;">
-             <input type="text" id="qp-supplier" placeholder="Supplier..." list="supplier-list" style="flex:1;">
-             <datalist id="supplier-list"></datalist>
-             <div class="autocomplete-wrap" style="flex:2;">
-               <input type="text" id="qp-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
-               <div id="qp-item-suggest" class="autocomplete-dropdown"></div>
-             </div>
-             <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;">
-             <input type="number" id="qp-rate" placeholder="Rate" style="width:80px; text-align:right;">
-             <button onclick="addQuickPurchaseItem()" class="btn-outline" style="padding:6px 12px; border-radius:4px; font-weight:bold; color:#d97706; border-color:#d97706;">+ Purchase</button>
-          </div>
+
+            <!-- PURCHASE CART -->
+            <div class="card glass-card" style="padding:12px; border-top: 4px solid #d97706;">
+              <div style="font-weight:bold; margin-bottom:10px; color:#d97706; font-size: 15px;">
+                  <span>🛍️ Purchase Entry (Cart)</span>
+              </div>
+              
+              <div class="quick-purchase-row" style="margin-bottom:8px; flex-wrap:wrap;">
+                 <input type="text" id="qp-supplier" placeholder="Supplier..." list="supplier-list" style="flex:1; min-width:120px;">
+                 <datalist id="supplier-list"></datalist>
+                 <div class="autocomplete-wrap" style="flex:2; min-width:150px;">
+                   <input type="text" id="qp-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
+                   <div id="qp-item-suggest" class="autocomplete-dropdown"></div>
+                 </div>
+                 <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;">
+                 <input type="number" id="qp-rate" placeholder="Rate" style="width:80px; text-align:right;">
+                 <button onclick="addToPurchaseCart()" class="btn-outline" style="padding:8px 15px; border-radius:6px; font-weight:bold; color:#d97706; border-color:#d97706; width:100%; margin-top:5px;">+ Add Item to Cart</button>
+              </div>
+
+              <!-- Purchase Cart Table -->
+              <div id="purchase-cart-wrap" style="display:none; margin-top:10px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; max-height:250px; overflow-y:auto;">
+                <table class="inv-table" style="font-size:13px; margin:0;">
+                  <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th><th style="text-align:center;">X</th></tr></thead>
+                  <tbody id="purchase-cart-body"></tbody>
+                </table>
+              </div>
+              <div id="purchase-cart-footer" style="display:none; background:#f8fafc; padding:10px; justify-content:space-between; align-items:center; border:1px solid #e2e8f0; border-top:none; border-radius:0 0 6px 6px;">
+                  <div style="font-weight:bold; color:#d97706; font-size: 15px;">Total: <span id="purchase-cart-total">Rs. 0</span></div>
+                  <button onclick="savePurchaseCart()" class="btn-outline" style="padding:8px 16px; font-size:13px; font-weight:bold; color:#d97706; border-color:#d97706;">✓ Save Complete Purchase</button>
+              </div>
+            </div>
+
         </div>
 
         <!-- Simple Summary Bar -->
@@ -2991,7 +3033,7 @@ async function loadJournal() {
   } catch (e) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#dc2626;">Register load nahi hua.</td></tr>';
   }
-}
+} 
 // Quick Sale Entry Logic
 async function submitQuickSale() {
   const custEl = document.getElementById('qs-customer');
@@ -3555,6 +3597,152 @@ async function saveCustomerReturn() {
     
     loadJournal(); // Dashboard refresh
   } catch (e) { showToast('Return save nahi hua', 'error'); }
+}
+// ==========================================
+// EXACT REPLACEMENT: MULTI-ITEM CART LOGIC
+// ==========================================
+let saleCart = [];
+let purchaseCart = [];
+
+// --- SALE CART FUNCTIONS ---
+function addToSaleCart() {
+    const item = document.getElementById('qs-item').value.trim();
+    const qty = parseFloat(document.getElementById('qs-qty').value) || 1;
+    const price = parseFloat(document.getElementById('qs-price').value) || 0;
+    
+    if (!item) return alert('Item ka naam likhein!');
+    if (price <= 0) return alert('Rate likhein!');
+    
+    saleCart.push({ item, qty, price });
+    
+    // Inputs clear karein
+    document.getElementById('qs-item').value = '';
+    document.getElementById('qs-qty').value = '1';
+    document.getElementById('qs-price').value = '';
+    document.getElementById('qs-item').focus();
+    
+    renderSaleCart();
+}
+
+function renderSaleCart() {
+    const wrap = document.getElementById('sale-cart-wrap');
+    const footer = document.getElementById('sale-cart-footer');
+    const tbody = document.getElementById('sale-cart-body');
+    let total = 0;
+    
+    if (saleCart.length === 0) {
+        wrap.style.display = 'none';
+        footer.style.display = 'none';
+        return;
+    }
+    
+    wrap.style.display = 'block';
+    footer.style.display = 'flex';
+    
+    tbody.innerHTML = saleCart.map((c, i) => {
+        const rowTotal = c.qty * c.price;
+        total += rowTotal;
+        return `<tr>
+            <td>${c.item}</td>
+            <td style="text-align:center;">${c.qty}</td>
+            <td style="text-align:right;">Rs. ${c.price}</td>
+            <td style="text-align:right; font-weight:bold;">Rs. ${rowTotal}</td>
+            <td style="text-align:center;"><button class="del-btn" onclick="removeSaleCartItem(${i})" style="padding:2px 6px;">X</button></td>
+        </tr>`;
+    }).join('');
+    
+    document.getElementById('sale-cart-total').innerText = `Rs. ${total}`;
+}
+
+function removeSaleCartItem(index) {
+    saleCart.splice(index, 1);
+    renderSaleCart();
+}
+
+async function saveSaleCart() {
+    if (saleCart.length === 0) return alert("Cart khali hai!");
+    
+    const customer = document.getElementById('qs-customer').value.trim() || 'Walk-in';
+    const cash = parseFloat(document.getElementById('qs-cash').value) || 0;
+    
+    // Future API Integration yahan lagega
+    console.log('Saving Whole Sale:', { customer, items: saleCart, cashReceived: cash });
+    
+    alert('Sale successfully save ho gayi!');
+    saleCart = [];
+    renderSaleCart();
+    document.getElementById('qs-customer').value = '';
+    document.getElementById('qs-cash').value = '';
+    if(typeof loadJournal === 'function') loadJournal(); 
+}
+
+// --- PURCHASE CART FUNCTIONS ---
+function addToPurchaseCart() {
+    const item = document.getElementById('qp-item').value.trim();
+    const qty = parseFloat(document.getElementById('qp-qty').value) || 1;
+    const rate = parseFloat(document.getElementById('qp-rate').value) || 0;
+    
+    if (!item) return alert('Item ka naam likhein!');
+    if (rate <= 0) return alert('Rate likhein!');
+    
+    purchaseCart.push({ item, qty, rate });
+    
+    document.getElementById('qp-item').value = '';
+    document.getElementById('qp-qty').value = '1';
+    document.getElementById('qp-rate').value = '';
+    document.getElementById('qp-item').focus();
+    
+    renderPurchaseCart();
+}
+
+function renderPurchaseCart() {
+    const wrap = document.getElementById('purchase-cart-wrap');
+    const footer = document.getElementById('purchase-cart-footer');
+    const tbody = document.getElementById('purchase-cart-body');
+    let total = 0;
+    
+    if (purchaseCart.length === 0) {
+        wrap.style.display = 'none';
+        footer.style.display = 'none';
+        return;
+    }
+    
+    wrap.style.display = 'block';
+    footer.style.display = 'flex';
+    
+    tbody.innerHTML = purchaseCart.map((c, i) => {
+        const rowTotal = c.qty * c.rate;
+        total += rowTotal;
+        return `<tr>
+            <td>${c.item}</td>
+            <td style="text-align:center;">${c.qty}</td>
+            <td style="text-align:right;">Rs. ${c.rate}</td>
+            <td style="text-align:right; font-weight:bold;">Rs. ${rowTotal}</td>
+            <td style="text-align:center;"><button class="del-btn" onclick="removePurchaseCartItem(${i})" style="padding:2px 6px;">X</button></td>
+        </tr>`;
+    }).join('');
+    
+    document.getElementById('purchase-cart-total').innerText = `Rs. ${total}`;
+}
+
+function removePurchaseCartItem(index) {
+    purchaseCart.splice(index, 1);
+    renderPurchaseCart();
+}
+
+async function savePurchaseCart() {
+    if (purchaseCart.length === 0) return alert("Cart khali hai!");
+    
+    const supplier = document.getElementById('qp-supplier').value.trim() || 'Unknown';
+    
+    // Future API Integration yahan lagega
+    console.log('Saving Whole Purchase:', { supplier, items: purchaseCart });
+    
+    alert('Purchase successfully save ho gayi!');
+    purchaseCart = [];
+    renderPurchaseCart();
+    document.getElementById('qp-supplier').value = '';
+    if(typeof loadJournal === 'function') loadJournal();
 }
 </script>
 </body>
