@@ -1686,7 +1686,22 @@ def bulk_add_purchase(req: BulkPurchaseRequest,
     log.info(f"Bulk Purchase: {supplier} - {items_saved} items, Rs.{total_bill} shop={shop_id}")
     return {"success": True, "total_cost": total_bill, "items_saved": items_saved}
 
-
+@app.get("/suppliers/list")
+def list_suppliers(authorization: Optional[str] = Header(None)):
+    shop_id = get_shop_id(authorization)
+    if not shop_id:
+        return auth_err()
+    with get_connection() as conn:
+        rows = conn.execute(
+            text("""SELECT DISTINCT LOWER(supplier_name) as sup 
+                    FROM purchases 
+                    WHERE shop_id = :sid 
+                      AND supplier_name != 'unknown' 
+                      AND supplier_name != 'unknown supplier'
+                    ORDER BY sup ASC"""),
+            {"sid": shop_id}
+        ).fetchall()
+    return {"suppliers": [r[0] for r in rows if r[0]]}
 # ==================== SUPPLIER ====================
 @app.get("/supplier/ledger")
 def supplier_ledger(supplier: str,

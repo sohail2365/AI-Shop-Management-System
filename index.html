@@ -1004,14 +1004,14 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
               </div>
               
               <div class="quick-entry-row" style="margin-bottom:8px; flex-wrap:wrap;">
-                <input type="text" id="qs-customer" placeholder="Customer (Khali=Walk-in)" list="quick-cust-list" style="flex:1; min-width:120px;">
+                <input type="text" id="qs-customer" placeholder="Customer (Khali=Walk-in)" list="quick-cust-list" style="flex:1; min-width:120px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('qs-item').focus();}">
                 <datalist id="quick-cust-list"></datalist>
                 <div class="autocomplete-wrap" style="flex:2; min-width:150px;">
-                  <input type="text" id="qs-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
+                  <input type="text" id="qs-item" placeholder="Item Name" autocomplete="off" style="width:100%;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToSaleCart();}">
                   <div id="qs-item-suggest" class="autocomplete-dropdown"></div>
                 </div>
-                <input type="number" id="qs-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;">
-                <input type="number" id="qs-price" placeholder="Rate" style="width:80px; text-align:right;">
+                <input type="number" id="qs-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToSaleCart();}">
+                <input type="number" id="qs-price" placeholder="Rate" style="width:80px; text-align:right;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToSaleCart();}">
                 <button onclick="addToSaleCart()" class="btn-success" style="padding:8px 15px; border-radius:6px; font-weight:bold; width:100%; margin-top:5px;">+ Add Item to Cart</button>
               </div>
               
@@ -1047,7 +1047,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
                 <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToPurchaseCart();}">
                 <input type="number" id="qp-rate" placeholder="Rate" style="width:80px; text-align:right;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToPurchaseCart();}">
                 <button onclick="addToPurchaseCart()" class="btn-outline" style="padding:8px 15px; border-radius:6px; font-weight:bold; color:#d97706; border-color:#d97706; width:100%; margin-top:5px;">+ Add Item to Cart</button>
-              </div>
+             </div>
 
               <!-- Purchase Cart Table -->
               <div id="purchase-cart-wrap" style="display:none; margin-top:10px; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; max-height:250px; overflow-y:auto;">
@@ -3774,7 +3774,151 @@ async function loadSupplierSuggestions() {
 document.addEventListener('DOMContentLoaded', () => {
     loadSupplierSuggestions();
 });
+// ==========================================
+// NAYA CODE — Supplier Ledger + Auto-Suggest + Real Save APIs
+// Yeh code purane functions ko override kar dega
+// ==========================================
 
+async function loadSupplierSuggestions() {
+    try {
+        const res = await apiFetch('/suppliers/list');
+        const data = await res.json();
+        if (data.suppliers && data.suppliers.length > 0) {
+            const sorted = data.suppliers.sort((a, b) => a.localeCompare(b));
+            const dl = document.getElementById('ledger-supplier-list');
+            if(dl) dl.innerHTML = sorted.map(s => `<option value="${s}">`).join('');
+            const qpDl = document.getElementById('supplier-list');
+            if(qpDl) qpDl.innerHTML = sorted.map(s => `<option value="${s}">`).join('');
+        }
+    } catch(e) { console.log("Supplier suggestions error:", e); }
+}
+
+async function loadSupplierLedger() {
+    const supplierInput = document.getElementById('ledger-supplier-search');
+    if (!supplierInput) return;
+    const supplier = supplierInput.value.trim().toLowerCase();
+    if (!supplier) { showToast('Pehle supplier ka naam likhein!', 'error'); return; }
+
+    const resultsDiv = document.getElementById('ledger-results');
+    const billsContainer = document.getElementById('ledger-bills-container');
+    const monthTotalEl = document.getElementById('ledger-month-total');
+    const allTotalEl = document.getElementById('ledger-all-total');
+
+    resultsDiv.style.display = 'block';
+    billsContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Data load ho raha hai...</div>';
+
+    try {
+        // SAHI URL: /supplier/ledger (slash)
+        const res = await apiFetch(`/supplier/ledger?supplier=${encodeURIComponent(supplier)}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        const purchases = data.purchases || [];
+        const totalPurchases = data.total_purchases || 0;
+
+        if (monthTotalEl) monthTotalEl.textContent = `Rs. ${totalPurchases}`;
+        if (allTotalEl) allTotalEl.textContent = `Rs. ${totalPurchases}`;
+
+        if (purchases.length === 0) {
+            billsContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">Is supplier ka koi hisaab nahi mila.</div>';
+            return;
+        }
+
+        const grouped = {};
+        purchases.forEach(p => {
+            const d = p.date || 'Unknown';
+            if (!grouped[d]) grouped[d] = [];
+            grouped[d].push(p);
+        });
+
+        billsContainer.innerHTML = Object.keys(grouped).sort().reverse().map(date => {
+            const items = grouped[date];
+            const dayTotal = items.reduce((sum, i) => sum + parseFloat(i.total || 0), 0);
+            return `
+            <div class="card" style="margin-bottom:10px; border-left: 4px solid #6366f1; padding:12px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:bold; color:#1e293b; flex-wrap:wrap;">
+                    <span>📅 Date: ${date}</span>
+                    <span style="color:#d97706;">Total: Rs. ${dayTotal.toFixed(2)}</span>
+                </div>
+                <table class="inv-table" style="font-size:13px; margin:0;">
+                    <thead><tr><th>Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Total</th></tr></thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr>
+                                <td>${item.item || 'Unknown'}</td>
+                                <td style="text-align:center;">${item.qty}</td>
+                                <td style="text-align:right;">Rs. ${item.rate}</td>
+                                <td style="text-align:right; font-weight:bold;">Rs. ${item.total}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+        }).join('');
+    } catch (e) {
+        console.error("Ledger Error:", e);
+        billsContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc2626;">Data load nahi hua: ${e.message}</div>`;
+    }
+}
+
+async function savePurchaseCart() {
+    if (purchaseCart.length === 0) return alert("Cart khali hai!");
+    const supplier = document.getElementById('qp-supplier').value.trim() || 'unknown supplier';
+    try {
+        const res = await apiFetch('/purchase/bulk-add', {
+            method: 'POST',
+            body: JSON.stringify({
+                supplier: supplier,
+                items: purchaseCart.map(p => ({
+                    item: p.item, quantity: p.qty, rate: p.rate,
+                    inventory_id: p.inventory_id || null
+                }))
+            })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        showToast(`✅ Purchase save! Total: Rs. ${data.total_cost}`, 'success');
+        purchaseCart = [];
+        renderPurchaseCart();
+        document.getElementById('qp-supplier').value = '';
+        if(typeof loadJournal === 'function') loadJournal();
+        if(typeof loadSupplierSuggestions === 'function') loadSupplierSuggestions();
+    } catch(e) {
+        showToast(e.message || 'Purchase save nahi hui', 'error');
+    }
+}
+
+async function saveSaleCart() {
+    if (saleCart.length === 0) return alert("Cart khali hai!");
+    const customer = document.getElementById('qs-customer').value.trim() || 'Walk-in';
+    try {
+        const res = await apiFetch('/entry/multi/save', {
+            method: 'POST',
+            body: JSON.stringify({
+                customer: customer.toLowerCase(),
+                items: saleCart.map(s => ({
+                    item: s.item, quantity: s.qty, price: s.price,
+                    inventory_id: s.inventory_id || null
+                }))
+            })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        showToast(`✅ Sale save! Total: Rs. ${data.grand_total}`, 'success');
+        saleCart = [];
+        renderSaleCart();
+        document.getElementById('qs-customer').value = '';
+        document.getElementById('qs-cash').value = '';
+        if(typeof loadJournal === 'function') loadJournal();
+    } catch(e) {
+        showToast(e.message || 'Sale save nahi hui', 'error');
+    }
+}
+
+// Page load hote hi suppliers load karein
+document.addEventListener('DOMContentLoaded', () => {
+    loadSupplierSuggestions();
+});
 </script>
 </body>
 </html>
