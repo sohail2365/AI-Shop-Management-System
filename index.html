@@ -1038,15 +1038,15 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
               </div>
               
               <div class="quick-purchase-row" style="margin-bottom:8px; flex-wrap:wrap;">
-                 <input type="text" id="qp-supplier" placeholder="Supplier..." list="supplier-list" style="flex:1; min-width:120px;">
-                 <datalist id="supplier-list"></datalist>
-                 <div class="autocomplete-wrap" style="flex:2; min-width:150px;">
-                   <input type="text" id="qp-item" placeholder="Item Name" autocomplete="off" style="width:100%;">
-                   <div id="qp-item-suggest" class="autocomplete-dropdown"></div>
-                 </div>
-                 <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;">
-                 <input type="number" id="qp-rate" placeholder="Rate" style="width:80px; text-align:right;">
-                 <button onclick="addToPurchaseCart()" class="btn-outline" style="padding:8px 15px; border-radius:6px; font-weight:bold; color:#d97706; border-color:#d97706; width:100%; margin-top:5px;">+ Add Item to Cart</button>
+                <input type="text" id="qp-supplier" placeholder="Supplier..." list="supplier-list" style="flex:1; min-width:120px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('qp-item').focus();}">
+                <datalist id="supplier-list"></datalist>
+                <div class="autocomplete-wrap" style="flex:2; min-width:150px;">
+                  <input type="text" id="qp-item" placeholder="Item Name" autocomplete="off" style="width:100%;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToPurchaseCart();}">
+                  <div id="qp-item-suggest" class="autocomplete-dropdown"></div>
+                </div>
+                <input type="number" id="qp-qty" placeholder="Qty" value="1" min="1" style="width:60px; text-align:center;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToPurchaseCart();}">
+                <input type="number" id="qp-rate" placeholder="Rate" style="width:80px; text-align:right;" onkeydown="if(event.key==='Enter'){event.preventDefault(); addToPurchaseCart();}">
+                <button onclick="addToPurchaseCart()" class="btn-outline" style="padding:8px 15px; border-radius:6px; font-weight:bold; color:#d97706; border-color:#d97706; width:100%; margin-top:5px;">+ Add Item to Cart</button>
               </div>
 
               <!-- Purchase Cart Table -->
@@ -1104,7 +1104,7 @@ button:disabled{background:#94a3b8;cursor:not-allowed;}
 
         <div class="card" style="padding:14px; border: 2px solid #6366f1; margin-bottom:16px;">
           <div class="autocomplete-wrap">
-            <input type="text" id="ledger-supplier-search" placeholder="🔍 Supplier/Traders ka naam likhein..." list="ledger-supplier-list" autocomplete="off" style="width:100%; font-size:16px; padding:12px;">
+            <input type="text" id="ledger-supplier-search" placeholder="🔍 Supplier/Traders ka naam likhein..." list="ledger-supplier-list" autocomplete="off" style="width:100%; font-size:16px; padding:12px;" onkeydown="if(event.key==='Enter'){event.preventDefault(); loadSupplierLedger();}">
             <datalist id="ledger-supplier-list"></datalist>
           </div>
           <div style="margin-top:10px;">
@@ -3744,6 +3744,37 @@ async function savePurchaseCart() {
     document.getElementById('qp-supplier').value = '';
     if(typeof loadJournal === 'function') loadJournal();
 }
+// ==========================================
+// SUPPLIER AUTO-SUGGEST & LEDGER FIX
+// ==========================================
+async function loadSupplierSuggestions() {
+    try {
+        // Aapke backend API ka route yahan aayega (e.g., '/suppliers/list')
+        const res = await apiFetch('/suppliers/list');
+        const data = await res.json();
+        
+        if (data.suppliers && data.suppliers.length > 0) {
+            // Alphabetic order mein sort karein
+            const sortedSuppliers = data.suppliers.sort((a, b) => a.localeCompare(b));
+            
+            // Supplier Datalist populate karein
+            const dl = document.getElementById('ledger-supplier-list');
+            if(dl) dl.innerHTML = sortedSuppliers.map(s => `<option value="${s}">`).join('');
+
+            // Quick Purchase cart ka datalist bhi populate karein
+            const qpDl = document.getElementById('supplier-list');
+            if(qpDl) qpDl.innerHTML = sortedSuppliers.map(s => `<option value="${s}">`).join('');
+        }
+    } catch(e) {
+        console.log("Supplier suggestions load nahi hui:", e);
+    }
+}
+
+// Page load hote hi suppliers load karein
+document.addEventListener('DOMContentLoaded', () => {
+    loadSupplierSuggestions();
+});
+
 </script>
 </body>
 </html>
